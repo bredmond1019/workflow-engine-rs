@@ -1,15 +1,15 @@
-# AI System Rust - Production-Ready AI Workflow Orchestration Platform
+# AI Workflow Engine - Production-Ready AI Workflow Orchestration Platform
 
 [![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/bredmond1019/workflow-engine-rs/actions)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
 
 A cutting-edge AI workflow orchestration platform built in Rust, featuring event sourcing, microservices architecture, Model Context Protocol (MCP) integration, and advanced AI capabilities. Designed for production environments with enterprise-grade scalability, observability, and reliability.
 
 ## 🚀 Overview
 
-**AI System Rust** is a comprehensive platform for building, deploying, and managing AI-powered workflows at scale. It combines modern distributed systems patterns with AI-first design principles to deliver unparalleled performance and flexibility.
+**AI Workflow Engine** is a comprehensive platform for building, deploying, and managing AI-powered workflows at scale. It combines modern distributed systems patterns with AI-first design principles to deliver unparalleled performance and flexibility.
 
 ### Key Capabilities
 
@@ -30,8 +30,8 @@ Get the entire platform running in minutes:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ai-system-rust.git
-cd ai-system-rust
+git clone https://github.com/bredmond1019/workflow-engine-rs.git
+cd workflow-engine-rs
 
 # Start all services with monitoring
 docker-compose up -d
@@ -187,7 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              AI System Rust Platform                                   │
+│                              AI Workflow Engine Platform                               │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
                                            │
            ┌───────────────────────────────┼───────────────────────────────┐
@@ -466,7 +466,7 @@ class AISystemClient {
     
     setupEventHandlers() {
         this.ws.onopen = () => {
-            console.log('Connected to AI System');
+            console.log('Connected to AI Workflow Engine');
             
             // Subscribe to AI analysis updates
             this.send({
@@ -923,20 +923,20 @@ Memory Usage: Stable at ~500MB
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ai-system-rust
+  name: ai-workflow-engine
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: ai-system-rust
+      app: ai-workflow-engine
   template:
     metadata:
       labels:
-        app: ai-system-rust
+        app: ai-workflow-engine
     spec:
       containers:
-      - name: ai-system-rust
-        image: ai-system-rust:latest
+      - name: ai-workflow-engine
+        image: ai-workflow-engine:latest
         ports:
         - containerPort: 8080
         env:
@@ -981,8 +981,8 @@ We welcome contributions! This project represents the cutting edge of AI workflo
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/yourusername/ai-system-rust.git
-cd ai-system-rust
+git clone https://github.com/bredmond1019/workflow-engine-rs.git
+cd workflow-engine-rs
 
 # 2. Setup development environment
 ./scripts/setup.sh
@@ -1078,8 +1078,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Community & Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ai-system-rust/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/ai-system-rust/discussions)
-- **Documentation**: [Project Wiki](https://github.com/yourusername/ai-system-rust/wiki)
+- **Issues**: [GitHub Issues](https://github.com/bredmond1019/workflow-engine-rs/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/bredmond1019/workflow-engine-rs/discussions)
+- **Documentation**: [Project Wiki](https://github.com/bredmond1019/workflow-engine-rs/wiki)
 
-*Built with ❤️ by the AI System Rust community*
+*Built with ❤️ by the AI Workflow Engine community*
