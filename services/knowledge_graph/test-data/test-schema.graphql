@@ -1,0 +1,106 @@
+# DGraph Test Schema for Integration Testing
+# Simplified version of the main schema for testing purposes
+
+# Core test concept type
+type TestConcept {
+  id: ID!
+  name: String! @search(by: [exact, term, fulltext])
+  description: String @search(by: [fulltext])
+  difficulty: String @search(by: [exact])
+  category: String! @search(by: [exact, term])
+  tags: [String] @search(by: [exact])
+  
+  # Relationships for testing
+  prerequisites: [TestConcept] @hasInverse(field: enabledBy)
+  enabledBy: [TestConcept] @hasInverse(field: prerequisites)
+  relatedTo: [TestConcept]
+  subtopics: [TestConcept] @hasInverse(field: parentTopic)
+  parentTopic: TestConcept @hasInverse(field: subtopics)
+  
+  # Test resources
+  resources: [TestResource]
+  
+  # Numeric fields for testing
+  qualityScore: Float @search
+  estimatedTime: Float
+  
+  # Timestamps
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+  version: Int!
+}
+
+# Test learning resource
+type TestResource {
+  id: ID!
+  url: String! @search(by: [exact])
+  title: String! @search(by: [term, fulltext])
+  resourceType: String! @search(by: [exact])
+  quality: Float @search
+  difficulty: String @search(by: [exact])
+  duration: Int
+  language: String @search(by: [exact])
+  
+  # Back-reference to concepts
+  concepts: [TestConcept] @hasInverse(field: resources)
+  
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+}
+
+# Test learning path
+type TestLearningPath {
+  id: ID!
+  name: String! @search(by: [exact, term, fulltext])
+  description: String @search(by: [fulltext])
+  targetAudience: String @search(by: [term])
+  
+  # Path concepts with ordering
+  pathConcepts: [TestPathConcept!]
+  estimatedTime: Float
+  difficultyProgression: String
+  learningOutcomes: [String]
+  
+  creator: String
+  isCustom: Boolean!
+  
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+}
+
+# Intermediate type for path ordering
+type TestPathConcept {
+  concept: TestConcept!
+  order: Int!
+  isOptional: Boolean!
+  alternativeConcepts: [TestConcept]
+}
+
+# User progress tracking for testing
+type TestUserProgress {
+  id: ID!
+  userId: String! @search(by: [exact])
+  concept: TestConcept!
+  status: String! @search(by: [exact])
+  percentComplete: Float
+  timeSpent: Int
+  resourcesCompleted: Int
+  difficultyRating: Float
+  notes: String
+  
+  startedAt: DateTime
+  completedAt: DateTime
+  lastAccessedAt: DateTime! @search
+}
+
+# Search analytics for testing
+type TestSearchQuery {
+  id: ID!
+  query: String! @search(by: [term, fulltext])
+  userId: String @search(by: [exact])
+  resultCount: Int
+  selectedConcepts: [TestConcept]
+  wasSuccessful: Boolean
+  searchType: String @search(by: [exact])
+  createdAt: DateTime! @search
+}

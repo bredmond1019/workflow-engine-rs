@@ -1,0 +1,96 @@
+# DGraph deployment configuration for Knowledge Graph Engine
+# This sets up a single-node DGraph instance for development
+# For production, use a multi-node cluster configuration
+
+version: "3.8"
+
+services:
+  # DGraph Zero - cluster coordinator
+  dgraph-zero:
+    image: dgraph/dgraph:v23.1.0
+    container_name: knowledge_graph_dgraph_zero
+    volumes:
+      - dgraph_zero_data:/dgraph
+    ports:
+      - "5080:5080"  # Zero gRPC port
+      - "6080:6080"  # Zero HTTP port for admin
+    restart: unless-stopped
+    command: dgraph zero --my=dgraph-zero:5080 --bindall --expose_trace --profile_mode block --block_rate 10
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # DGraph Alpha - data node
+  dgraph-alpha:
+    image: dgraph/dgraph:v23.1.0
+    container_name: knowledge_graph_dgraph_alpha
+    volumes:
+      - dgraph_alpha_data:/dgraph
+    ports:
+      - "8080:8080"  # Alpha HTTP port for queries
+      - "9080:9080"  # Alpha gRPC port
+    restart: unless-stopped
+    command: >
+      dgraph alpha 
+      --my=dgraph-alpha:7080 
+      --zero=dgraph-zero:5080 
+      --security whitelist=0.0.0.0/0
+      --expose_trace
+      --profile_mode block
+      --block_rate 10
+      --cache_mb 2048
+    depends_on:
+      dgraph-zero:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Ratel UI - DGraph web interface (optional, for development)
+  dgraph-ratel:
+    image: dgraph/ratel:v21.03.0
+    container_name: knowledge_graph_dgraph_ratel
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - dgraph-alpha
+
+  # Schema loader - initializes the GraphQL schema
+  schema-loader:
+    image: curlimages/curl:latest
+    container_name: knowledge_graph_schema_loader
+    depends_on:
+      dgraph-alpha:
+        condition: service_healthy
+    volumes:
+      - ./schema.graphql:/schema.graphql:ro
+      - ./init-schema.sh:/init-schema.sh:ro
+    entrypoint: /bin/sh
+    command: /init-schema.sh
+    restart: "no"
+
+volumes:
+  dgraph_zero_data:
+    name: knowledge_graph_dgraph_zero_data
+  dgraph_alpha_data:
+    name: knowledge_graph_dgraph_alpha_data
+
+networks:
+  default:
+    name: knowledge_graph_network
+    driver: bridge
+
+# Environment variables for configuration
+# Copy .env.example to .env and adjust as needed
+# DGRAPH_ALPHA_HOST=localhost
+# DGRAPH_ALPHA_GRPC_PORT=9080
+# DGRAPH_ALPHA_HTTP_PORT=8080
+# DGRAPH_CACHE_MB=2048
+# DGRAPH_WHITELIST=0.0.0.0/0

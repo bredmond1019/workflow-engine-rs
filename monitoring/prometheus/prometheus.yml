@@ -1,0 +1,90 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ai-workflow-system'
+    environment: 'development'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # AI Workflow System main service
+  - job_name: 'ai-workflow-system'
+    static_configs:
+      - targets: ['ai-workflow-system:8080']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 4s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # AI Tutor Service
+  - job_name: 'ai-tutor-service'
+    static_configs:
+      - targets: ['ai-tutor-service:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # MCP Servers
+  - job_name: 'notion-mcp'
+    static_configs:
+      - targets: ['notion-mcp:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'helpscout-mcp'
+    static_configs:
+      - targets: ['helpscout-mcp:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'slack-mcp'
+    static_configs:
+      - targets: ['slack-mcp:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Infrastructure services
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # System metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 10s
+
+  # Monitoring stack itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: '/metrics'
+    scrape_interval: 30s

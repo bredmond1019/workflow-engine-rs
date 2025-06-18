@@ -1,0 +1,98 @@
+# DGraph deployment configuration for Integration Testing
+# This sets up an isolated DGraph instance specifically for testing
+# Uses different ports from development to avoid conflicts
+
+version: "3.8"
+
+services:
+  # DGraph Zero - cluster coordinator for testing
+  dgraph-zero-test:
+    image: dgraph/dgraph:v23.1.0
+    container_name: knowledge_graph_dgraph_zero_test
+    volumes:
+      - dgraph_zero_test_data:/dgraph
+    ports:
+      - "15080:5080"  # Zero gRPC port (test)
+      - "16080:6080"  # Zero HTTP port for admin (test)
+    restart: "no"  # Don't auto-restart test containers
+    command: dgraph zero --my=dgraph-zero-test:5080 --bindall --expose_trace --profile_mode block --block_rate 10
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - test-network
+
+  # DGraph Alpha - data node for testing
+  dgraph-alpha-test:
+    image: dgraph/dgraph:v23.1.0
+    container_name: knowledge_graph_dgraph_alpha_test
+    volumes:
+      - dgraph_alpha_test_data:/dgraph
+      - ./test-data:/test-data:ro
+    ports:
+      - "18080:8080"  # Alpha HTTP port for queries (test)
+      - "19080:9080"  # Alpha gRPC port (test)
+    restart: "no"  # Don't auto-restart test containers
+    command: >
+      dgraph alpha 
+      --my=dgraph-alpha-test:7080 
+      --zero=dgraph-zero-test:5080 
+      --security whitelist=0.0.0.0/0
+      --expose_trace
+      --profile_mode block
+      --block_rate 10
+      --cache_mb 512
+    depends_on:
+      dgraph-zero-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - test-network
+
+  # Schema and Test Data Loader
+  test-data-loader:
+    image: curlimages/curl:latest
+    container_name: knowledge_graph_test_data_loader
+    depends_on:
+      dgraph-alpha-test:
+        condition: service_healthy
+    volumes:
+      - ./test-data:/test-data:ro
+    networks:
+      - test-network
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo 'Loading test schema...';
+      curl -X POST dgraph-alpha-test:8080/admin/schema --data-binary '@/test-data/test-schema.graphql';
+      echo 'Loading test data...';
+      curl -X POST dgraph-alpha-test:8080/mutate?commitNow=true -H 'Content-Type: application/json' --data-binary '@/test-data/sample-data.json';
+      echo 'Test environment ready!';
+      "
+    restart: "no"
+
+volumes:
+  dgraph_zero_test_data:
+    name: knowledge_graph_dgraph_zero_test_data
+  dgraph_alpha_test_data:
+    name: knowledge_graph_dgraph_alpha_test_data
+
+networks:
+  test-network:
+    name: knowledge_graph_test_network
+    driver: bridge
+
+# Environment variables for test configuration
+# DGRAPH_TEST_ALPHA_HOST=localhost
+# DGRAPH_TEST_ALPHA_GRPC_PORT=19080
+# DGRAPH_TEST_ALPHA_HTTP_PORT=18080
+# DGRAPH_TEST_ZERO_GRPC_PORT=15080
+# DGRAPH_TEST_ZERO_HTTP_PORT=16080

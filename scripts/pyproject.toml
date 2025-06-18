@@ -1,0 +1,12 @@
+[project]
+name = "ai-system-mcp-servers"
+version = "0.1.0"
+description = "MCP servers for AI system integration testing"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.9.2",
+]
+
+[tool.uv]
+package = false

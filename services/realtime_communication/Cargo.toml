@@ -1,0 +1,58 @@
+[package]
+name = "realtime_communication"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.36.0", features = ["full"] }
+futures-util = "0.3.28"
+
+# Web framework and WebSocket
+actix-web = { version = "4.11.0", features = ["macros"] }
+actix-ws = "0.2"
+actix-web-actors = "4.3"
+actix = "0.13"
+actix-cors = "0.7.1"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+# Redis for message queue and session persistence
+redis = { version = "0.23", features = ["aio", "tokio-comp", "streams", "connection-manager"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+tokio-postgres = "0.7"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0.12"
+
+# Logging and tracing
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
+tracing-opentelemetry = "0.22"
+opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry-otlp = "0.14"
+
+# Metrics
+prometheus = "0.13.4"
+
+# Authentication and JWT
+jsonwebtoken = "9.0"
+url = "2.5"
+
+# Utilities
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+dashmap = "5.0"
+tokio-stream = "0.1"
+num_cpus = "1.0"
+regex = "1.0"
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.12.1"

@@ -1,0 +1,15 @@
+# AI Workflow System Python Client Dependencies
+
+# HTTP client
+aiohttp>=3.9.0
+
+# Data validation and serialization
+pydantic>=2.0.0
+
+# Async support
+asyncio-mqtt>=0.16.0
+
+# JSON handling (included in Python stdlib)
+# UUID support (included in Python stdlib)
+# Datetime support (included in Python stdlib)
+# Logging support (included in Python stdlib)

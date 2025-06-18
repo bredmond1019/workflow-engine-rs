@@ -1,0 +1,95 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # AI Workflow System logs
+  - job_name: ai-workflow-system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ai-workflow-system
+          service: ai-workflow-system
+          __path__: /app/logs/ai-workflow-system.log
+
+  # AI Tutor Service logs
+  - job_name: ai-tutor-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ai-tutor-service
+          service: ai-tutor-service
+          __path__: /app/logs/ai-tutor-service.log
+
+  # MCP Server logs
+  - job_name: mcp-servers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mcp-servers
+          service: mcp-servers
+          __path__: /app/logs/mcp-*.log
+
+  # System logs
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          service: system
+          __path__: /var/log/*.log
+
+  # Docker container logs (if using file logging driver)
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          service: docker
+          __path__: /var/log/containers/*.log
+
+# Pipeline stages for log processing
+  - job_name: structured-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: structured-logs
+          __path__: /app/logs/*.json
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            service: service
+            correlation_id: correlation_id
+            message: message
+            module: module
+      
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      
+      # Set log level
+      - labels:
+          level:
+          service:
+          correlation_id:
+          module:
+      
+      # Output formatting
+      - output:
+          source: message

@@ -1,0 +1,233 @@
+name: Dgraph Integration Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'services/knowledge_graph/**'
+      - 'tests/knowledge_graph_*_tests.rs'
+      - '.github/workflows/dgraph-integration-tests.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'services/knowledge_graph/**'
+      - 'tests/knowledge_graph_*_tests.rs'
+      - '.github/workflows/dgraph-integration-tests.yml'
+  workflow_dispatch:
+    inputs:
+      test_category:
+        description: 'Test category to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - query-tests
+          - mutation-tests
+          - transaction-tests
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  dgraph-integration-tests:
+    name: Dgraph Integration Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      # Note: We'll use our custom Docker setup instead of GitHub services
+      # to have more control over the Dgraph configuration
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+        
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl netcat-openbsd
+        
+    - name: Verify Docker and Docker Compose
+      run: |
+        docker --version
+        docker-compose --version
+        
+    - name: Check available disk space
+      run: |
+        df -h
+        docker system df
+        
+    - name: Build Rust project
+      run: |
+        cd services/knowledge_graph
+        cargo build --verbose
+        
+    - name: Run Rust unit tests
+      run: |
+        cd services/knowledge_graph
+        cargo test --verbose --lib
+        
+    - name: Set test category
+      id: test-category
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "category=${{ github.event.inputs.test_category }}" >> $GITHUB_OUTPUT
+        else
+          echo "category=all" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Run Dgraph integration tests
+      run: |
+        cd services/knowledge_graph
+        chmod +x scripts/run-integration-tests.sh
+        
+        case "${{ steps.test-category.outputs.category }}" in
+          "query-tests")
+            ./scripts/run-integration-tests.sh --query-tests
+            ;;
+          "mutation-tests")
+            ./scripts/run-integration-tests.sh --mutation-tests
+            ;;
+          "transaction-tests")
+            ./scripts/run-integration-tests.sh --transaction-tests
+            ;;
+          "all"|*)
+            ./scripts/run-integration-tests.sh --all-tests
+            ;;
+        esac
+      timeout-minutes: 15
+      
+    - name: Collect Docker logs on failure
+      if: failure()
+      run: |
+        echo "=== Docker containers ==="
+        docker ps -a
+        
+        echo "=== Docker compose logs ==="
+        cd services/knowledge_graph
+        docker-compose -f docker-compose.test.yml logs || true
+        
+        echo "=== Docker system info ==="
+        docker system df
+        
+    - name: Cleanup on failure
+      if: failure()
+      run: |
+        cd services/knowledge_graph
+        ./scripts/test-dgraph-teardown.sh --images || true
+        docker system prune -f || true
+        
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-logs-${{ github.run_number }}
+        path: |
+          services/knowledge_graph/target/debug/deps/knowledge_graph_*
+          /tmp/dgraph-*
+        retention-days: 7
+        if-no-files-found: ignore
+
+  # Optional: Run tests in parallel for different categories
+  dgraph-parallel-tests:
+    name: Dgraph Parallel Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'main')
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        test-category: [query-tests, mutation-tests, transaction-tests]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.test-category }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl netcat-openbsd
+        
+    - name: Build project
+      run: |
+        cd services/knowledge_graph
+        cargo build --verbose
+        
+    - name: Run specific test category
+      run: |
+        cd services/knowledge_graph
+        chmod +x scripts/run-integration-tests.sh
+        ./scripts/run-integration-tests.sh --${{ matrix.test-category }}
+      timeout-minutes: 10
+      
+    - name: Cleanup
+      if: always()
+      run: |
+        cd services/knowledge_graph
+        ./scripts/test-dgraph-teardown.sh || true
+
+  # Performance benchmarks (optional, run on schedule)
+  dgraph-performance-tests:
+    name: Dgraph Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_category == 'performance')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl netcat-openbsd
+        
+    - name: Setup Dgraph for performance testing
+      run: |
+        cd services/knowledge_graph
+        ./scripts/test-dgraph-setup.sh
+        
+    - name: Run performance benchmarks
+      run: |
+        cd services/knowledge_graph
+        # Run benchmarks with release build for better performance
+        cargo test --release benchmarks --ignored -- --test-threads=1
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        cd services/knowledge_graph
+        ./scripts/test-dgraph-teardown.sh || true

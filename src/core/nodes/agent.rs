@@ -1,0 +1,707 @@
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use std::sync::Arc;
+use tokio::sync::mpsc;
+use futures_util::stream::{Stream, StreamExt};
+use std::pin::Pin;
+
+use crate::core::error::WorkflowError;
+use crate::core::mcp::clients::MCPClient;
+use crate::core::nodes::Node;
+use crate::core::task::TaskContext;
+
+/// Supported model providers
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ModelProvider {
+    OpenAI,
+    AzureOpenAI,
+    Anthropic,
+    Gemini,
+    Ollama,
+    Bedrock,
+}
+
+/// Configuration for an agent node
+#[derive(Debug, Clone)]
+pub struct AgentConfig {
+    pub system_prompt: String,
+    pub model_provider: ModelProvider,
+    pub model_name: String,
+    pub mcp_server_uri: Option<String>,
+}
+
+/// Base trait for agent nodes that process tasks using AI models
+#[async_trait]
+pub trait AgentNode: Node {
+    /// Get the configuration for this agent
+    fn get_agent_config(&self) -> AgentConfig;
+
+    /// Process the task context using the configured AI model
+    async fn process_with_ai(
+        &self,
+        task_context: TaskContext,
+    ) -> Result<TaskContext, WorkflowError>;
+}
+
+/// A basic implementation of an agent node
+#[derive(Debug)]
+pub struct BaseAgentNode {
+    config: AgentConfig,
+    client: Arc<reqwest::Client>,
+    mcp_client: Option<Arc<tokio::sync::Mutex<Box<dyn MCPClient>>>>,
+}
+
+impl BaseAgentNode {
+    pub fn new(config: AgentConfig) -> Self {
+        Self {
+            config,
+            client: Arc::new(reqwest::Client::new()),
+            mcp_client: None,
+        }
+    }
+
+    pub fn with_mcp_client(mut self, mcp_client: Box<dyn MCPClient>) -> Self {
+        self.mcp_client = Some(Arc::new(tokio::sync::Mutex::new(mcp_client)));
+        self
+    }
+
+    pub fn set_mcp_client(&mut self, mcp_client: Box<dyn MCPClient>) {
+        self.mcp_client = Some(Arc::new(tokio::sync::Mutex::new(mcp_client)));
+    }
+
+    pub fn has_mcp_client(&self) -> bool {
+        self.mcp_client.is_some()
+    }
+
+    pub async fn get_mcp_tools(
+        &self,
+    ) -> Result<Vec<crate::core::mcp::protocol::ToolDefinition>, WorkflowError> {
+        if let Some(ref client) = self.mcp_client {
+            let mut client_guard = client.lock().await;
+            client_guard.list_tools().await
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub async fn call_mcp_tool(
+        &self,
+        name: &str,
+        arguments: Option<std::collections::HashMap<String, serde_json::Value>>,
+    ) -> Result<crate::core::mcp::protocol::CallToolResult, WorkflowError> {
+        if let Some(ref client) = self.mcp_client {
+            let mut client_guard = client.lock().await;
+            client_guard.call_tool(name, arguments).await
+        } else {
+            Err(WorkflowError::MCPError {
+                message: "No MCP client configured".to_string(),
+            })
+        }
+    }
+
+    async fn get_model_instance(&self) -> Result<Box<dyn ModelInstance>, WorkflowError> {
+        match self.config.model_provider {
+            ModelProvider::OpenAI => {
+                let instance = OpenAIModelInstance {
+                    client: self.client.clone(),
+                    model_name: self.config.model_name.clone(),
+                    system_prompt: self.config.system_prompt.clone(),
+                };
+                Ok(Box::new(instance))
+            }
+            ModelProvider::AzureOpenAI => {
+                // For now, Azure OpenAI uses the same implementation as OpenAI
+                // In production, you might want to handle Azure-specific endpoints
+                let instance = OpenAIModelInstance {
+                    client: self.client.clone(),
+                    model_name: self.config.model_name.clone(),
+                    system_prompt: self.config.system_prompt.clone(),
+                };
+                Ok(Box::new(instance))
+            }
+            ModelProvider::Anthropic => {
+                let instance = AnthropicModelInstance {
+                    client: self.client.clone(),
+                    model_name: self.config.model_name.clone(),
+                    system_prompt: self.config.system_prompt.clone(),
+                };
+                Ok(Box::new(instance))
+            }
+            ModelProvider::Gemini => {
+                // Gemini implementation would go here
+                Err(WorkflowError::ConfigurationError(
+                    "Gemini provider not yet implemented".to_string()
+                ))
+            }
+            ModelProvider::Ollama => {
+                // Ollama implementation would go here
+                Err(WorkflowError::ConfigurationError(
+                    "Ollama provider not yet implemented".to_string()
+                ))
+            }
+            ModelProvider::Bedrock => {
+                let instance = BedrockModelInstance {
+                    model_name: self.config.model_name.clone(),
+                    system_prompt: self.config.system_prompt.clone(),
+                };
+                Ok(Box::new(instance))
+            }
+        }
+    }
+    
+    /// Extract prompt from the task context
+    fn extract_prompt_from_context(&self, task_context: &TaskContext) -> Result<String, WorkflowError> {
+        // Try various common fields for the prompt
+        if let Ok(Some(prompt)) = task_context.get_data::<serde_json::Value>("prompt") {
+            if let Some(prompt_str) = prompt.as_str() {
+                return Ok(prompt_str.to_string());
+            }
+        }
+        
+        if let Ok(Some(message)) = task_context.get_data::<serde_json::Value>("message") {
+            if let Some(message_str) = message.as_str() {
+                return Ok(message_str.to_string());
+            }
+        }
+        
+        if let Ok(Some(query)) = task_context.get_data::<serde_json::Value>("query") {
+            if let Some(query_str) = query.as_str() {
+                return Ok(query_str.to_string());
+            }
+        }
+        
+        // Fallback to the entire event data as a string
+        Ok(serde_json::to_string_pretty(&task_context.event_data)
+            .unwrap_or_else(|_| task_context.event_data.to_string()))
+    }
+    
+    /// Enhance prompt with MCP tool results if available
+    async fn enhance_prompt_with_mcp(
+        &self,
+        original_prompt: &str,
+        task_context: &TaskContext,
+    ) -> Result<String, WorkflowError> {
+        // This is a simplified version - in practice, you'd want more sophisticated tool selection
+        if let Some(ref mcp_client) = self.mcp_client {
+            let mut client_guard = mcp_client.lock().await;
+            
+            // Get available tools
+            let tools = client_guard.list_tools().await?;
+            
+            // Select relevant tools based on the prompt
+            let relevant_tools = self.select_relevant_tools(&tools, original_prompt)?;
+            
+            if relevant_tools.is_empty() {
+                return Ok(original_prompt.to_string());
+            }
+            
+            // Call tools and collect results
+            let mut tool_results = Vec::new();
+            for tool in relevant_tools {
+                let args = self.prepare_tool_arguments(task_context, &tool)?;
+                match client_guard.call_tool(&tool.name, Some(args)).await {
+                    Ok(result) => tool_results.push((tool.name.clone(), result)),
+                    Err(e) => {
+                        // Log error but continue with other tools
+                        log::warn!("Failed to call tool {}: {}", tool.name, e);
+                    }
+                }
+            }
+            
+            // Enhance the prompt with tool results
+            self.enhance_prompt_with_tool_results(original_prompt, &tool_results)
+        } else {
+            Ok(original_prompt.to_string())
+        }
+    }
+    
+    fn select_relevant_tools(
+        &self,
+        tools: &[crate::core::mcp::protocol::ToolDefinition],
+        prompt: &str,
+    ) -> Result<Vec<crate::core::mcp::protocol::ToolDefinition>, WorkflowError> {
+        // Simple keyword-based relevance matching
+        let prompt_lower = prompt.to_lowercase();
+        let relevant_tools: Vec<_> = tools
+            .iter()
+            .filter(|tool| {
+                let tool_name_lower = tool.name.to_lowercase();
+                let description_lower = tool.description
+                    .as_ref()
+                    .map(|d| d.to_lowercase())
+                    .unwrap_or_default();
+                
+                // Check if tool name or description is mentioned in prompt
+                prompt_lower.contains(&tool_name_lower) ||
+                (!description_lower.is_empty() && 
+                 description_lower.split_whitespace()
+                    .any(|word| prompt_lower.contains(word)))
+            })
+            .cloned()
+            .collect();
+        
+        Ok(relevant_tools)
+    }
+    
+    fn prepare_tool_arguments(
+        &self,
+        task_context: &TaskContext,
+        tool: &crate::core::mcp::protocol::ToolDefinition,
+    ) -> Result<std::collections::HashMap<String, serde_json::Value>, WorkflowError> {
+        let mut args = std::collections::HashMap::new();
+        
+        // Add context data
+        args.insert("context_data".to_string(), 
+                   serde_json::to_value(task_context.get_all_data())?);
+        
+        // Add metadata if available
+        let metadata = task_context.get_all_metadata();
+        if !metadata.is_empty() {
+            args.insert("metadata".to_string(), 
+                       serde_json::to_value(metadata)?);
+        }
+        
+        Ok(args)
+    }
+    
+    fn enhance_prompt_with_tool_results(
+        &self,
+        original_prompt: &str,
+        tool_results: &[(String, crate::core::mcp::protocol::CallToolResult)],
+    ) -> Result<String, WorkflowError> {
+        if tool_results.is_empty() {
+            return Ok(original_prompt.to_string());
+        }
+        
+        let mut enhanced = format!("User request: {}\n\nAdditional context from tools:\n", original_prompt);
+        
+        for (tool_name, result) in tool_results {
+            enhanced.push_str(&format!("\n[{}]:\n", tool_name));
+            for content in &result.content {
+                match content {
+                    crate::core::mcp::protocol::ToolContent::Text { text } => {
+                        enhanced.push_str(text);
+                        enhanced.push('\n');
+                    }
+                    _ => {
+                        enhanced.push_str("(non-text content)\n");
+                    }
+                }
+            }
+        }
+        
+        enhanced.push_str("\nPlease provide a response based on the user request and the additional context above.");
+        
+        Ok(enhanced)
+    }
+}
+
+impl Node for BaseAgentNode {
+    fn process(&self, task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        // Create a runtime to execute async code
+        let runtime = tokio::runtime::Runtime::new()
+            .map_err(|e| WorkflowError::RuntimeError {
+                message: format!("Failed to create runtime: {}", e),
+            })?;
+        
+        // Block on the async process_with_ai method
+        runtime.block_on(self.process_with_ai(task_context))
+    }
+}
+
+#[async_trait]
+impl AgentNode for BaseAgentNode {
+    fn get_agent_config(&self) -> AgentConfig {
+        self.config.clone()
+    }
+
+    async fn process_with_ai(
+        &self,
+        mut task_context: TaskContext,
+    ) -> Result<TaskContext, WorkflowError> {
+        let model = self.get_model_instance().await?;
+        
+        // Extract prompt from context
+        let prompt = self.extract_prompt_from_context(&task_context)?;
+        
+        // If we have an MCP client, enhance the prompt with tool results
+        let enhanced_prompt = if self.mcp_client.is_some() {
+            self.enhance_prompt_with_mcp(&prompt, &task_context).await?
+        } else {
+            prompt
+        };
+        
+        // Process the request with the model
+        let response = model.process_request(&enhanced_prompt).await?;
+        
+        // Store the response in the task context
+        task_context.update_node("ai_response", serde_json::json!({
+            "response": response,
+            "model": self.config.model_name.clone(),
+            "provider": format!("{:?}", self.config.model_provider),
+            "timestamp": chrono::Utc::now()
+        }));
+        
+        Ok(task_context)
+    }
+}
+
+/// Trait for model instances that can process requests
+#[async_trait]
+pub trait ModelInstance: Send + Sync + Debug {
+    /// Process a request and return the complete response
+    async fn process_request(&self, prompt: &str) -> Result<String, WorkflowError>;
+    
+    /// Process a request and return a stream of response chunks
+    async fn process_request_stream(
+        &self,
+        prompt: &str,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, WorkflowError>> + Send>>, WorkflowError> {
+        // Default implementation: return the complete response as a single-item stream
+        let response = self.process_request(prompt).await?;
+        let stream = futures_util::stream::once(async move { Ok(response) });
+        Ok(Box::pin(stream))
+    }
+}
+
+/// Response chunk for streaming
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamChunk {
+    pub content: String,
+    pub is_final: bool,
+}
+
+/// Configuration for streaming responses
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamConfig {
+    pub enabled: bool,
+    pub chunk_size: Option<usize>,
+}
+
+impl Default for StreamConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            chunk_size: None,
+        }
+    }
+}
+
+/// OpenAI model instance implementation
+#[derive(Debug)]
+struct OpenAIModelInstance {
+    client: Arc<reqwest::Client>,
+    model_name: String,
+    system_prompt: String,
+}
+
+#[async_trait]
+impl ModelInstance for OpenAIModelInstance {
+    async fn process_request(&self, prompt: &str) -> Result<String, WorkflowError> {
+        let api_key = std::env::var("OPENAI_API_KEY")
+            .map_err(|_| WorkflowError::ConfigurationError("OPENAI_API_KEY not set".to_string()))?;
+        
+        let response = self.client
+            .post("https://api.openai.com/v1/chat/completions")
+            .header("Authorization", format!("Bearer {}", api_key))
+            .json(&serde_json::json!({
+                "model": &self.model_name,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": &self.system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "stream": false
+            }))
+            .send()
+            .await
+            .map_err(|e| WorkflowError::ApiError {
+                message: format!("OpenAI API request failed: {}", e),
+            })?;
+        
+        let status = response.status();
+        if !status.is_success() {
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(WorkflowError::ApiError {
+                message: format!("OpenAI API error: {} - {}", status, error_body),
+            });
+        }
+        
+        let result = response
+            .json::<serde_json::Value>()
+            .await
+            .map_err(|e| WorkflowError::ApiError {
+                message: format!("Failed to parse OpenAI response: {}", e),
+            })?;
+        
+        result["choices"][0]["message"]["content"]
+            .as_str()
+            .ok_or_else(|| WorkflowError::ApiError {
+                message: "Invalid response structure from OpenAI".to_string(),
+            })
+            .map(|s| s.to_string())
+    }
+    
+    // Real streaming support using the streaming module
+    async fn process_request_stream(
+        &self,
+        prompt: &str,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, WorkflowError>> + Send>>, WorkflowError> {
+        use crate::core::streaming::providers::OpenAIStreamingProvider;
+        use crate::core::streaming::types::{StreamConfig, StreamingProvider};
+        
+        let provider = OpenAIStreamingProvider::new(
+            self.client.clone(),
+            self.model_name.clone(),
+            self.system_prompt.clone(),
+        );
+        
+        let config = StreamConfig::default();
+        let chunk_stream = provider.stream_response(prompt, &config);
+        
+        // Convert StreamChunk stream to String stream
+        let string_stream = chunk_stream.map(|chunk_result| {
+            chunk_result.map(|chunk| chunk.content)
+        });
+        
+        Ok(Box::pin(string_stream))
+    }
+}
+
+/// Anthropic model instance implementation
+#[derive(Debug)]
+struct AnthropicModelInstance {
+    client: Arc<reqwest::Client>,
+    model_name: String,
+    system_prompt: String,
+}
+
+#[async_trait]
+impl ModelInstance for AnthropicModelInstance {
+    async fn process_request(&self, prompt: &str) -> Result<String, WorkflowError> {
+        let api_key = std::env::var("ANTHROPIC_API_KEY")
+            .map_err(|_| WorkflowError::ConfigurationError("ANTHROPIC_API_KEY not set".to_string()))?;
+        
+        let response = self.client
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("content-type", "application/json")
+            .json(&serde_json::json!({
+                "model": &self.model_name,
+                "max_tokens": 4096,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "system": &self.system_prompt
+            }))
+            .send()
+            .await
+            .map_err(|e| WorkflowError::ApiError {
+                message: format!("Anthropic API request failed: {}", e),
+            })?;
+        
+        let status = response.status();
+        if !status.is_success() {
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(WorkflowError::ApiError {
+                message: format!("Anthropic API error: {} - {}", status, error_body),
+            });
+        }
+        
+        let result = response
+            .json::<serde_json::Value>()
+            .await
+            .map_err(|e| WorkflowError::ApiError {
+                message: format!("Failed to parse Anthropic response: {}", e),
+            })?;
+        
+        result["content"][0]["text"]
+            .as_str()
+            .ok_or_else(|| WorkflowError::ApiError {
+                message: "Invalid response structure from Anthropic".to_string(),
+            })
+            .map(|s| s.to_string())
+    }
+    
+    // Real streaming support using the streaming module
+    async fn process_request_stream(
+        &self,
+        prompt: &str,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, WorkflowError>> + Send>>, WorkflowError> {
+        use crate::core::streaming::providers::AnthropicStreamingProvider;
+        use crate::core::streaming::types::{StreamConfig, StreamingProvider};
+        
+        let provider = AnthropicStreamingProvider::new(
+            self.client.clone(),
+            self.model_name.clone(),
+            self.system_prompt.clone(),
+        );
+        
+        let config = StreamConfig::default();
+        let chunk_stream = provider.stream_response(prompt, &config);
+        
+        // Convert StreamChunk stream to String stream
+        let string_stream = chunk_stream.map(|chunk_result| {
+            chunk_result.map(|chunk| chunk.content)
+        });
+        
+        Ok(Box::pin(string_stream))
+    }
+}
+
+/// AWS Bedrock model instance implementation
+#[derive(Debug)]
+struct BedrockModelInstance {
+    model_name: String,
+    system_prompt: String,
+}
+
+#[async_trait]
+impl ModelInstance for BedrockModelInstance {
+    async fn process_request(&self, prompt: &str) -> Result<String, WorkflowError> {
+        use aws_sdk_bedrockruntime::{primitives::Blob, Client};
+        
+        // Initialize AWS SDK
+        let config = aws_config::load_from_env().await;
+        let client = Client::new(&config);
+        
+        // Prepare the request body based on the model
+        let request_body = if self.model_name.starts_with("anthropic.claude") {
+            serde_json::json!({
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": [{
+                    "role": "user",
+                    "content": prompt
+                }],
+                "system": &self.system_prompt
+            })
+        } else if self.model_name.starts_with("amazon.titan") {
+            serde_json::json!({
+                "inputText": format!("{}\n\n{}", self.system_prompt, prompt),
+                "textGenerationConfig": {
+                    "maxTokenCount": 4096,
+                    "temperature": 0.7,
+                    "topP": 0.9
+                }
+            })
+        } else {
+            return Err(WorkflowError::ConfigurationError(
+                format!("Unsupported Bedrock model: {}", self.model_name)
+            ));
+        };
+        
+        let body = Blob::new(serde_json::to_vec(&request_body).map_err(|e| {
+            WorkflowError::SerializationError {
+                message: format!("Failed to serialize request body: {}", e),
+            }
+        })?);
+        
+        let response = client
+            .invoke_model()
+            .model_id(&self.model_name)
+            .content_type("application/json")
+            .accept("application/json")
+            .body(body)
+            .send()
+            .await
+            .map_err(|e| WorkflowError::ApiError {
+                message: format!("Bedrock API request failed: {}", e),
+            })?;
+        
+        let response_body = response.body().as_ref();
+        let response_json: serde_json::Value = serde_json::from_slice(response_body)
+            .map_err(|e| WorkflowError::DeserializationError {
+                message: format!("Failed to parse Bedrock response: {}", e),
+            })?;
+        
+        // Extract text based on model response format
+        if self.model_name.starts_with("anthropic.claude") {
+            response_json["content"][0]["text"]
+                .as_str()
+                .ok_or_else(|| WorkflowError::ApiError {
+                    message: "Invalid response structure from Bedrock Claude".to_string(),
+                })
+                .map(|s| s.to_string())
+        } else if self.model_name.starts_with("amazon.titan") {
+            response_json["results"][0]["outputText"]
+                .as_str()
+                .ok_or_else(|| WorkflowError::ApiError {
+                    message: "Invalid response structure from Bedrock Titan".to_string(),
+                })
+                .map(|s| s.to_string())
+        } else {
+            Err(WorkflowError::ApiError {
+                message: "Unknown response format".to_string(),
+            })
+        }
+    }
+    
+    // Real streaming support using the streaming module
+    async fn process_request_stream(
+        &self,
+        prompt: &str,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, WorkflowError>> + Send>>, WorkflowError> {
+        use crate::core::streaming::providers::BedrockStreamingProvider;
+        use crate::core::streaming::types::{StreamConfig, StreamingProvider};
+        
+        let provider = BedrockStreamingProvider::new(
+            self.model_name.clone(),
+            self.system_prompt.clone(),
+        );
+        
+        let config = StreamConfig::default();
+        let chunk_stream = provider.stream_response(prompt, &config);
+        
+        // Convert StreamChunk stream to String stream
+        let string_stream = chunk_stream.map(|chunk_result| {
+            chunk_result.map(|chunk| chunk.content)
+        });
+        
+        Ok(Box::pin(string_stream))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_config_creation() {
+        let config = AgentConfig {
+            system_prompt: "Test prompt".to_string(),
+            model_provider: ModelProvider::OpenAI,
+            model_name: "gpt-4".to_string(),
+            mcp_server_uri: None,
+        };
+
+        assert_eq!(config.model_provider, ModelProvider::OpenAI);
+        assert_eq!(config.model_name, "gpt-4");
+    }
+
+    #[test]
+    fn test_base_agent_node_creation() {
+        let config = AgentConfig {
+            system_prompt: "Test prompt".to_string(),
+            model_provider: ModelProvider::OpenAI,
+            model_name: "gpt-4".to_string(),
+            mcp_server_uri: None,
+        };
+
+        let agent = BaseAgentNode::new(config);
+        assert_eq!(
+            agent.get_agent_config().model_provider,
+            ModelProvider::OpenAI
+        );
+    }
+}

@@ -1,0 +1,574 @@
+warning: unused manifest key: build
+   Compiling backend v0.1.0 (/Users/brandon/Documents/Projects/AIArchitecture/ai-system-rust)
+warning: unused import: `LoadBalancingStrategy`
+ --> tests/bootstrap_tests.rs:6:5
+  |
+6 |     LoadBalancingStrategy, ServiceLifecycleHooks,
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused `std::result::Result` that must be used
+  --> tests/mcp_integration_test.rs:40:9
+   |
+40 |         task_context.set_data("processed_by", serde_json::Value::String(self.name.clone()));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+   = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+   |
+40 |         let _ = task_context.set_data("processed_by", serde_json::Value::String(self.name.clone()));
+   |         +++++++
+
+warning: unused `std::result::Result` that must be used
+  --> tests/mcp_integration_test.rs:41:9
+   |
+41 |         task_context.set_data("test_result", serde_json::Value::String("success".to_string()));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+   |
+41 |         let _ = task_context.set_data("test_result", serde_json::Value::String("success".to_string()));
+   |         +++++++
+
+warning: unused import: `tempfile::TempDir`
+  --> tests/event_sourcing_tests.rs:12:5
+   |
+12 | use tempfile::TempDir;
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::Arc`
+   --> tests/event_sourcing_tests.rs:375:13
+    |
+375 |         use std::sync::Arc;
+    |             ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::RwLock`
+   --> tests/event_sourcing_tests.rs:376:13
+    |
+376 |         use tokio::sync::RwLock;
+    |             ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::*`
+   --> tests/event_sourcing_tests.rs:543:9
+    |
+543 |     use super::*;
+    |         ^^^^^^^^
+
+warning: unused variable: `pool`
+   --> tests/mcp_connection_tests.rs:198:9
+    |
+198 |     let pool = MCPConnectionPool::new(config);
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `pool_health`
+   --> tests/mcp_connection_tests.rs:209:9
+    |
+209 |     let pool_health = MCPConnectionPool::new(config_health);
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_health`
+
+warning: unused variable: `pool_random`
+   --> tests/mcp_connection_tests.rs:218:9
+    |
+218 |     let pool_random = MCPConnectionPool::new(config_random);
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_random`
+
+warning: unused variable: `pool_least`
+   --> tests/mcp_connection_tests.rs:227:9
+    |
+227 |     let pool_least = MCPConnectionPool::new(config_least);
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_least`
+
+warning: unused variable: `pool`
+   --> tests/mcp_connection_tests.rs:340:9
+    |
+340 |     let pool = MCPConnectionPool::new(config);
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+
+warning: struct `MockMCPClient` is never constructed
+  --> tests/mcp_connection_tests.rs:17:8
+   |
+17 | struct MockMCPClient {
+   |        ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: associated items `new` and `with_failure` are never used
+  --> tests/mcp_connection_tests.rs:24:8
+   |
+23 | impl MockMCPClient {
+   | ------------------ associated items in this implementation
+24 |     fn new() -> Self {
+   |        ^^^
+...
+32 |     fn with_failure(mut self, should_fail: bool) -> Self {
+   |        ^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> tests/mcp_agent_integration_test.rs:2:5
+  |
+2 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: variable does not need to be mutable
+   --> tests/event_sourcing_tests.rs:151:13
+    |
+151 |         let mut dispatcher = EventDispatcher::new(event_store);
+    |             ----^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `matching_event`
+   --> tests/event_sourcing_tests.rs:317:13
+    |
+317 |         let matching_event = create_test_event(
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_matching_event`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `non_matching_event`
+   --> tests/event_sourcing_tests.rs:324:13
+    |
+324 |         let non_matching_event = create_test_event(
+    |             ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_non_matching_event`
+
+warning: `backend` (test "mcp_integration_test") generated 2 warnings
+warning: `backend` (test "mcp_connection_tests") generated 7 warnings
+warning: `backend` (test "mcp_agent_integration_test") generated 1 warning (run `cargo fix --test "mcp_agent_integration_test"` to apply 1 suggestion)
+warning: `backend` (test "bootstrap_tests") generated 1 warning (run `cargo fix --test "bootstrap_tests"` to apply 1 suggestion)
+warning: unused import: `backend::core::error::WorkflowError`
+ --> tests/streaming_tests.rs:7:5
+  |
+7 | use backend::core::error::WorkflowError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `backend` (test "event_sourcing_tests") generated 7 warnings (run `cargo fix --test "event_sourcing_tests"` to apply 5 suggestions)
+warning: unused import: `workflow::Workflow`
+ --> examples/knowledge_base_example.rs:6:31
+  |
+6 |     core::{task::TaskContext, workflow::Workflow},
+  |                               ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `backend::db::events::error_integration::*`
+ --> tests/event_sourcing_resilience_tests.rs:6:5
+  |
+6 | use backend::db::events::error_integration::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `Duration` and `Instant`
+  --> tests/event_sourcing_resilience_tests.rs:15:17
+   |
+15 | use std::time::{Duration, Instant};
+   |                 ^^^^^^^^  ^^^^^^^
+
+warning: unused variable: `error_details`
+   --> tests/event_sourcing_resilience_tests.rs:145:13
+    |
+145 |             error_details: serde_json::Value,
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_details`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:252:13
+    |
+252 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:302:13
+    |
+302 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:355:13
+    |
+355 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:611:13
+    |
+611 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: field `circuit_breaker_opens` is never read
+   --> tests/event_sourcing_resilience_tests.rs:193:9
+    |
+191 |     pub struct MockEventSourcingMetrics {
+    |                ------------------------ field in this struct
+192 |         operation_failures: Arc<tokio::sync::RwLock<Vec<String>>>,
+193 |         circuit_breaker_opens: Arc<tokio::sync::RwLock<Vec<String>>>,
+    |         ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: methods `record_operation_success`, `record_operation_failure`, `record_circuit_breaker_open`, `record_dlq_success`, and `record_dlq_failure` are never used
+   --> tests/event_sourcing_resilience_tests.rs:204:12
+    |
+196 |     impl MockEventSourcingMetrics {
+    |     ----------------------------- methods in this implementation
+...
+204 |         fn record_operation_success(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+208 |         fn record_operation_failure(&self, operation: &str, _error: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+212 |         fn record_circuit_breaker_open(&self, operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+216 |         fn record_dlq_success(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+220 |         fn record_dlq_failure(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ValidationRule`
+ --> tests/template_tests.rs:8:24
+  |
+8 |     TemplateValidator, ValidationRule, TemplateRegistry,
+  |                        ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `StorageBackend`
+ --> tests/template_tests.rs:7:50
+  |
+7 |     OutputFormat, VariableType, TemplateStorage, StorageBackend,
+  |                                                  ^^^^^^^^^^^^^^
+
+warning: `backend` (test "streaming_tests") generated 1 warning (run `cargo fix --test "streaming_tests"` to apply 1 suggestion)
+warning: `backend` (example "knowledge_base_example") generated 1 warning (run `cargo fix --example "knowledge_base_example"` to apply 1 suggestion)
+warning: `backend` (test "event_sourcing_resilience_tests") generated 9 warnings (run `cargo fix --test "event_sourcing_resilience_tests"` to apply 2 suggestions)
+warning: `backend` (test "template_tests") generated 2 warnings (run `cargo fix --test "template_tests"` to apply 1 suggestion)
+warning: unused import: `backend::core::ai::tokens::pricing::PricingSource`
+  --> tests/token_tests.rs:13:5
+   |
+13 | use backend::core::ai::tokens::pricing::PricingSource;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `AlertScope`, `AlertThreshold`, `AlertingConfig`, `GlobalLimits`, `NotificationChannel`, and `ThresholdType`
+  --> tests/token_tests.rs:15:5
+   |
+15 |     GlobalLimits, AlertingConfig, AlertThreshold, ThresholdType, AlertScope, NotificationChannel,
+   |     ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `backend::db::events::types::*`
+ --> tests/postgresql_event_store_tests.rs:7:5
+  |
+7 | use backend::db::events::types::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::Arc`
+  --> tests/postgresql_event_store_tests.rs:14:5
+   |
+14 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused import: `CostBreakdown`
+ --> examples/token_usage_demo.rs:4:34
+  |
+4 |     Model, Provider, TokenUsage, CostBreakdown, UsageRecord,
+  |                                  ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `backend` (test "postgresql_event_store_tests") generated 2 warnings (run `cargo fix --test "postgresql_event_store_tests"` to apply 2 suggestions)
+warning: `backend` (test "token_tests") generated 2 warnings (run `cargo fix --test "token_tests"` to apply 2 suggestions)
+warning: `backend` (example "token_usage_demo") generated 1 warning (run `cargo fix --example "token_usage_demo"` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.24s
+     Running unittests src/lib.rs (target/debug/deps/backend-9bc5e9014b095177)
+
+running 270 tests
+test api::middleware::auth::tests::test_middleware_allows_auth_endpoints ... ok
+test api::middleware::auth::tests::test_middleware_allows_health_check ... ok
+test api::metrics::tests::test_metrics_endpoint ... ok
+test api::metrics::tests::test_live_endpoint ... ok
+test api::metrics::tests::test_health_check ... ok
+test api::routes::auth::tests::test_generate_token_endpoint ... ok
+test api::routes::health::tests::test_health_check_endpoint ... ok
+test api::routes::auth::tests::test_verify_invalid_token ... ok
+test api::routes::health::tests::test_health_check_no_auth_required ... ok
+test api::routes::auth::tests::test_verify_token_endpoint ... ok
+test api::middleware::auth::tests::test_claims_extraction ... ok
+test api::middleware::auth::tests::test_middleware_allows_with_valid_token ... ok
+test api::metrics::tests::test_ready_endpoint ... ok
+test bootstrap::config::tests::test_configuration_manager ... ok
+test bootstrap::config::tests::test_dependency_validation ... ok
+test bootstrap::discovery::tests::test_discovery_client_caching ... ok
+test bootstrap::discovery::tests::test_registry_discovery ... ok
+test api::routes::registry::tests::test_list_agents_requires_auth ... ok
+test api::routes::registry::tests::test_register_agent_endpoint ... ok
+test api::routes::registry::tests::test_heartbeat_endpoint ... ok
+test api::routes::registry::tests::test_discover_agents_endpoint ... ok
+test bootstrap::lifecycle::tests::test_lifecycle_manager ... ok
+test bootstrap::lifecycle::tests::test_dependency_ordering ... ok
+test bootstrap::registry::tests::test_service_registration ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_capabilities ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_endpoint ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_name ... ok
+test bootstrap::service::tests::test_service_config_builder ... ok
+test bootstrap::service::tests::test_service_config_creation ... ok
+test core::ai::templates::engine::tests::test_basic_rendering ... ok
+test core::ai::templates::engine::tests::test_conditionals ... ok
+test core::ai::templates::engine::tests::test_helper_functions ... ok
+test core::ai::templates::engine::tests::test_loops ... ok
+test core::ai::templates::engine::tests::test_strict_mode ... ok
+test core::ai::templates::parser::tests::test_extract_variables ... ok
+test bootstrap::registry::tests::test_load_balancing ... FAILED
+test core::ai::templates::parser::tests::test_parse_conditional ... ok
+test core::ai::templates::parser::tests::test_parse_loop ... ok
+test core::ai::templates::parser::tests::test_parse_simple_text ... ok
+test api::routes::health::tests::test_detailed_health_check_endpoint ... ok
+test core::ai::templates::registry::tests::test_context_index ... ok
+test core::ai::templates::parser::tests::test_parse_variable ... ok
+test core::ai::templates::registry::tests::test_circular_dependency_detection ... FAILED
+test core::ai::templates::registry::tests::test_registry_basic_operations ... ok
+test core::ai::templates::registry::tests::test_default_registry ... ok
+test core::ai::templates::registry::tests::test_stats ... ok
+test core::ai::templates::storage::tests::test_memory_storage ... ok
+test core::ai::templates::storage::tests::test_search ... ok
+test core::ai::templates::tests::test_template_manager_basic ... ok
+test core::ai::templates::types::tests::test_template_creation ... ok
+test core::ai::templates::types::tests::test_template_metrics ... ok
+test core::ai::templates::types::tests::test_template_variables ... ok
+test core::ai::templates::types::tests::test_variable_type_matching ... ok
+test core::ai::templates::tests::test_contextual_selection ... FAILED
+test core::ai::templates::tests::test_quick_render ... ok
+test core::ai::templates::validator::tests::test_basic_validation ... ok
+test core::ai::templates::validator::tests::test_security_validation ... ok
+test core::ai::templates::validator::tests::test_size_limit ... ok
+test core::ai::templates::validator::tests::test_strict_validation ... ok
+test core::ai::templates::validator::tests::test_syntax_validation ... ok
+test core::ai::tokens::integration_example::integration_tests::test_cost_comparison_integration ... ok
+test core::ai::templates::validator::tests::test_validation_rules ... ok
+test core::ai::tokens::integration_example::integration_tests::test_usage_tracking_integration ... ok
+test core::ai::tokens::tests::tests::test_budget_limits_basic ... ok
+test core::ai::tokens::tests::tests::test_cost_breakdown ... ok
+test core::ai::tokens::tests::tests::test_model_provider_mapping ... ok
+test core::ai::tokens::tests::tests::test_pricing_engine_basic ... ok
+test core::ai::tokens::tests::tests::test_token_usage_operations ... ok
+test bootstrap::health::tests::test_health_monitor_creation ... ok
+test api::workflows::tests::test_list_workflows ... ok
+test api::workflows::tests::test_workflow_service_creation ... ok
+test core::ai::tokens::tests::tests::test_usage_record_builder ... ok
+test core::ai_agents::openai::tests::test_openai_agent_creation ... ok
+test core::ai_agents::anthropic::tests::test_anthropic_agent_creation ... ok
+test core::auth::jwt::tests::test_create_claims ... ok
+test core::auth::jwt::tests::test_extract_bearer_token ... ok
+test core::auth::jwt::tests::test_generate_and_validate_token ... ok
+test core::auth::jwt::tests::test_expired_token ... ok
+test core::auth::jwt::tests::test_invalid_token ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_blocks_when_open ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_metrics ... ok
+test core::error::context::tests::test_error_context_builder ... ok
+test core::error::context::tests::test_error_categorization ... ok
+test core::error::context::tests::test_request_context_provider ... ok
+test core::error::metrics::tests::test_error_metrics_creation ... ok
+test core::error::metrics::tests::test_error_pattern_detector ... ok
+test core::error::metrics::tests::test_error_rate_calculator ... ok
+test core::error::recovery::tests::test_cache_recovery ... ok
+test core::error::recovery::tests::test_recovery_metrics ... ok
+test core::error::recovery::tests::test_with_fallback ... ok
+test core::error::recovery::tests::test_with_fallback_fn ... ok
+test core::error::retry::tests::test_fixed_retry_policy ... ok
+test core::error::retry::tests::test_retry_builder ... ok
+test core::error::retry::tests::test_retry_permanent_failure ... ok
+test core::error::retry::tests::test_retry_policy_delay_calculation ... ok
+test bootstrap::manager::tests::test_builder_pattern ... ok
+test bootstrap::manager::tests::test_bootstrap_manager_creation ... ok
+test api::workflows::tests::test_trigger_workflow_api ... ok
+test core::error::tests::test_error_metadata ... ok
+test core::mcp::clients::helpscout::tests::tests::test_get_article_arguments ... ok
+test core::error::tests::test_default_error_handler ... ok
+test core::mcp::clients::helpscout::tests::tests::test_create_article_arguments ... ok
+test core::mcp::clients::helpscout::tests::tests::test_execute_tool_when_not_connected ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_auth_config_generation ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_default_config ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_http_config ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_without_auth ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_stdio_config ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_node_trait ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_config_from_env ... ok
+test core::mcp::clients::helpscout::tests::tests::test_list_tools_when_not_connected ... ok
+test core::mcp::clients::helpscout::tests::tests::test_search_articles_arguments ... ok
+test core::mcp::clients::http::tests::test_client_info_setting ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_websocket_config ... ok
+test core::mcp::clients::http::tests::test_http_mcp_client_creation ... ok
+test core::mcp::clients::http::tests::test_ensure_initialized_fails_when_not_initialized ... ok
+test core::mcp::clients::http::tests::test_http_mcp_client_with_auth ... ok
+test core::mcp::clients::notion::tests::tests::test_error_parsing ... ok
+test core::mcp::clients::notion::tests::tests::test_config_serialization ... ok
+test core::mcp::clients::notion::tests::tests::test_notion_config_creation ... ok
+test core::mcp::clients::notion::tests::tests::test_notion_client_builder ... ok
+test core::mcp::clients::notion::tests::tests::test_search_pages_arguments ... ok
+test core::mcp::clients::notion::tests::tests::test_node_implementation ... ok
+test core::mcp::clients::slack::tests::tests::test_create_channel_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_execute_tool_when_not_connected ... ok
+test core::mcp::clients::slack::tests::tests::test_get_channel_history_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_list_channels_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_get_user_info_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_list_tools_when_not_connected ... ok
+test core::mcp::clients::slack::tests::tests::test_search_messages_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_send_message_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_auth_config_generation ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_default_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_http_config ... ok
+test bootstrap::health::tests::test_http_health_check ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_node_trait ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_stdio_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_websocket_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_with_bot_token_only ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_with_user_token_only ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_without_tokens ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_config_from_env ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_tool_method_coverage ... ok
+test core::mcp::config::tests::test_customer_support_server_config ... ok
+test core::mcp::config::tests::test_mcp_config_default ... ok
+test core::mcp::config::tests::test_mcp_config_from_env_enabled ... ok
+test core::mcp::config::tests::test_external_server_config ... FAILED
+test core::mcp::connection_pool::tests::test_cleanup_expired_connections ... ok
+test core::mcp::config::tests::test_mcp_config_from_env_disabled ... ok
+test core::mcp::connection_pool::tests::test_connection_pool_creation ... ok
+test core::mcp::connection_pool::tests::test_server_registration ... ok
+test core::mcp::config::tests::test_get_enabled_servers ... FAILED
+test core::mcp::health::tests::test_connection_health_monitor_creation ... ok
+test core::mcp::health::tests::test_health_config_default ... ok
+test core::mcp::connection_pool::tests::test_pool_stats ... ok
+test core::mcp::health::tests::test_health_metrics_creation ... ok
+test core::mcp::health::tests::test_health_metrics_success_update ... ok
+test core::mcp::health::tests::test_health_summary ... ok
+test core::mcp::health::tests::test_health_metrics_failure_update ... ok
+test core::mcp::health::tests::test_start_stop_monitoring ... ok
+test core::mcp::metrics::tests::test_metrics_collector_creation ... ok
+test core::mcp::server::tests::test_handle_list_tools_request ... ok
+test core::mcp::metrics::tests::test_record_connection_request ... ok
+test core::mcp::metrics::tests::test_record_health_check ... ok
+test core::mcp::server::tests::test_mcp_tool_server_creation ... ok
+test core::mcp::metrics::tests::test_transport_metrics ... ok
+test core::mcp::server::tests::test_tool_metadata_generation ... ok
+test core::models::unified::tests::test_message_priority_ordering ... ok
+test core::models::unified::tests::test_message_priority ... ok
+test core::mcp::server::tests::test_register_node_as_tool ... ok
+test core::models::unified::tests::test_message_ttl ... ok
+test core::models::unified::tests::test_message_with_correlation_id ... ok
+test core::models::unified::tests::test_service_message_creation ... ok
+test core::models::unified::tests::test_service_request_response ... ok
+test core::models::unified::tests::test_task_status_display ... ok
+test core::models::unified::tests::test_task_failure ... ok
+test core::models::unified::tests::test_task_status_transitions ... ok
+test core::models::unified::tests::test_unified_task_creation ... ok
+test core::nodes::agent::tests::test_agent_config_creation ... ok
+test core::nodes::agent::tests::test_base_agent_node_creation ... ok
+test core::nodes::external_config::tests::test_config_builder ... ok
+test core::nodes::external_config::tests::test_config_without_auth ... ok
+test core::nodes::external_config::tests::test_default_external_config ... ok
+test core::nodes::external_config::tests::test_env_config_loader ... ok
+test core::nodes::external_config::tests::test_helpscout_auth_config ... ok
+test core::nodes::template_agent::tests::test_template_agent_builder ... ok
+test core::nodes::external_config::tests::test_notion_auth_config ... ok
+test core::nodes::external_config::tests::test_slack_auth_config ... ok
+test core::registry::agent_registry::tests::test_agent_registration_creation ... ok
+test core::registry::agent_registry::tests::test_agent_registration_serialization ... ok
+test core::registry::background_tasks::tests::test_custom_config ... ok
+test core::registry::background_tasks::tests::test_background_task_creation ... ok
+test core::registry::background_tasks::tests::test_default_config ... ok
+test core::streaming::handlers::tests::test_streaming_health ... ok
+test core::streaming::backpressure::tests::test_backpressure_handler ... FAILED
+test core::streaming::providers::tests::test_create_streaming_provider ... ok
+test core::streaming::handlers::tests::test_get_streaming_config ... ok
+test core::streaming::sse::tests::test_anthropic_sse_parsing ... ok
+test core::streaming::sse::tests::test_openai_sse_parsing ... ok
+test core::streaming::handlers::tests::test_streaming_request_deserialization ... FAILED
+test db::agent::tests::test_agent_with_metadata ... ok
+test db::agent::tests::test_new_agent_creation ... ok
+test db::agent::tests::test_update_agent_heartbeat ... ok
+test core::streaming::websocket::tests::test_websocket_message_serialization ... ok
+test core::streaming::websocket::tests::test_stream_event_serialization ... ok
+test db::agent::tests::test_update_agent_set_inactive ... ok
+test db::event_driven_sync::tests::test_consistency_policy ... ok
+test db::event_driven_sync::tests::test_cross_service_event_flow ... ok
+test db::event_driven_sync::tests::test_saga_creation ... ok
+test db::event_driven_sync::tests::test_saga_step_progression ... ok
+test db::migration::tests::test_migration_checksum ... ok
+test db::events::error_integration::tests::test_resilient_event_store_retry ... ok
+test db::migration::tests::test_parse_migration_filename ... ok
+test db::event_driven_sync::tests::test_saga_failure_and_compensation ... FAILED
+test db::service_isolation::tests::test_cross_service_event_creation ... ok
+test db::service_isolation::tests::test_service_boundary_creation ... ok
+test integrations::cross_system::tests::test_external_service_config_creation ... ok
+test integrations::cross_system::tests::test_external_service_config_builder ... ok
+test integrations::cross_system::tests::test_http_cross_system_client_creation ... ok
+test monitoring::correlation::tests::test_correlation_context_with_id ... ok
+test monitoring::correlation::tests::test_correlation_context ... ok
+test monitoring::correlation::tests::test_correlation_id_middleware ... ok
+test monitoring::logging::tests::test_log_entry_with_fields ... ok
+test monitoring::logging::tests::test_log_entry_json_serialization ... ok
+test monitoring::logging::tests::test_log_fields_helper ... ok
+test monitoring::logging::tests::test_structured_log_entry ... ok
+test monitoring::metrics::tests::test_api_metrics ... ok
+test monitoring::metrics::tests::test_metrics_export ... ok
+test monitoring::metrics::tests::test_metrics_initialization ... FAILED
+test monitoring::tracing::tests::test_child_span ... ok
+test monitoring::metrics::tests::test_workflow_metrics ... ok
+test monitoring::tracing::tests::test_span_creation ... ok
+test monitoring::tracing::tests::test_span_tags_and_logs ... ok
+test monitoring::tracing::tests::test_span_error ... ok
+test monitoring::tracing::tests::test_trace_with_span_macro ... ok
+test workflows::executor::tests::test_cross_system_executor ... ok
+test workflows::executor::tests::test_template_engine ... ok
+test workflows::executor::tests::test_workflow_factory ... ok
+test workflows::knowledge_base_workflow::tests::test_create_knowledge_base_workflow ... ok
+test workflows::knowledge_base_workflow::tests::test_extract_keywords ... ok
+test workflows::knowledge_base_workflow::tests::test_query_router_node ... ok
+test workflows::knowledge_base_workflow::tests::test_spam_filter_node ... ok
+test workflows::knowledge_base_workflow::tests::test_validate_query_node ... ok
+test workflows::knowledge_base_workflow::tests::test_workflow_node_registration ... ok
+test workflows::nodes::notion_client::tests::test_notion_step_structure ... ok
+test workflows::nodes::notion_client::tests::test_template_engine_integration ... ok
+test workflows::parser::tests::test_cycle_detection ... ok
+test workflows::parser::tests::test_instance_creation ... ok
+test workflows::parser::tests::test_template_loading ... ok
+test workflows::parser::tests::test_workflow_registry ... ok
+test workflows::parser::tests::test_yaml_parsing ... ok
+test workflows::registry::tests::test_categories_and_tags ... ok
+test workflows::registry::tests::test_registry_creation ... ok
+test workflows::registry::tests::test_statistics ... ok
+test workflows::registry::tests::test_template_retrieval ... ok
+test workflows::registry::tests::test_template_search ... ok
+test workflows::registry::tests::test_template_search_by_complexity ... ok
+test workflows::registry::tests::test_template_search_by_tags ... ok
+test workflows::schema::tests::test_step_type_variants ... ok
+test workflows::schema::tests::test_workflow_definition_serialization ... ok
+test workflows::schema::tests::test_workflow_instance_creation ... ok
+test monitoring::tracing::tests::test_trace_macro ... ok
+test monitoring::metrics::tests::test_cross_system_metrics ... ok
+test core::streaming::backpressure::tests::test_rate_limited_stream ... ok
+test core::mcp::metrics::tests::test_metrics_manager ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_state_transitions ... ok
+test core::error::retry::tests::test_retry_success ... ok
+test core::ai::tokens::tests::tests::test_basic_token_counting ... ok
+test core::ai::tokens::integration_example::integration_tests::test_basic_integration ... ok
+test core::ai::tokens::tests::tests::test_usage_analytics_basic has been running for over 60 seconds

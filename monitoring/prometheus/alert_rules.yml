@@ -1,0 +1,152 @@
+groups:
+  - name: ai_workflow_system_alerts
+    interval: 30s
+    rules:
+      # Service availability alerts
+      - alert: ServiceDown
+        expr: up{job=~"ai.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      # High error rate alerts
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{job="ai-workflow-system",status=~"5.."}[5m]) /
+            rate(http_requests_total{job="ai-workflow-system"}[5m])
+          ) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: "api"
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes."
+
+      # Workflow execution failures
+      - alert: WorkflowExecutionFailures
+        expr: |
+          rate(ai_workflow_executions_total{status="failed"}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: warning
+          component: "workflow"
+        annotations:
+          summary: "High workflow failure rate"
+          description: "Workflow failures are occurring at {{ $value }} failures per second."
+
+      # Cross-system call failures
+      - alert: CrossSystemCallFailures
+        expr: |
+          rate(ai_workflow_cross_system_calls_total{status="failure"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: "cross-system"
+        annotations:
+          summary: "High cross-system call failure rate"
+          description: "Cross-system calls to {{ $labels.target_system }} are failing at {{ $value }} failures per second."
+
+      # High response time alerts
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket{job="ai-workflow-system"}[5m])
+          ) > 2
+        for: 3m
+        labels:
+          severity: warning
+          component: "api"
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for the last 5 minutes."
+
+      # Resource usage alerts
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg(irate(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: "system"
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }} for the last 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes{job="node-exporter"} / 
+                node_memory_MemTotal_bytes{job="node-exporter"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: "system"
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} for the last 5 minutes."
+
+      # Database connectivity
+      - alert: DatabaseConnectionFailure
+        expr: |
+          increase(db_connection_errors_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          component: "database"
+        annotations:
+          summary: "Database connection failures"
+          description: "Database connection errors have increased by {{ $value }} in the last 5 minutes."
+
+      # Correlation ID tracking
+      - alert: MissingCorrelationIDs
+        expr: |
+          (
+            rate(http_requests_total{job="ai-workflow-system"}[5m]) -
+            rate(http_requests_total{job="ai-workflow-system",has_correlation_id="true"}[5m])
+          ) / rate(http_requests_total{job="ai-workflow-system"}[5m]) * 100 > 10
+        for: 2m
+        labels:
+          severity: info
+          component: "correlation"
+        annotations:
+          summary: "High percentage of requests without correlation IDs"
+          description: "{{ $value | humanizePercentage }} of requests are missing correlation IDs."
+
+  - name: monitoring_stack_alerts
+    interval: 60s
+    rules:
+      # Monitoring stack health
+      - alert: PrometheusTargetDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: "monitoring"
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus has been down for more than 1 minute."
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: "monitoring"
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana has been down for more than 2 minutes."
+
+      - alert: LokiDown
+        expr: up{job="loki"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          component: "monitoring"
+        annotations:
+          summary: "Loki is down"
+          description: "Loki log aggregation service has been down for more than 1 minute."

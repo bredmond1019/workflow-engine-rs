@@ -1,0 +1,45 @@
+# Development overrides for docker-compose.yml
+# This file is automatically loaded by docker-compose
+
+version: '3.8'
+
+services:
+  # Development overrides for AI Workflow System
+  ai-workflow-system:
+    build:
+      target: builder  # Use builder stage for development
+    volumes:
+      - ./src:/app/src:ro
+      - ./Cargo.toml:/app/Cargo.toml:ro
+      - ./Cargo.lock:/app/Cargo.lock:ro
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      RUST_LOG: debug
+      RUST_BACKTRACE: 1
+    command: cargo watch -x run
+
+  # Development database with exposed query logs
+  postgres:
+    environment:
+      POSTGRES_LOG_STATEMENT: all
+    command: 
+      - "postgres"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_duration=on"
+
+  # Development tools container
+  dev-tools:
+    image: busybox
+    container_name: ai-workflow-dev-tools
+    volumes:
+      - ./scripts:/scripts:ro
+    command: tail -f /dev/null
+    networks:
+      - ai-workflow-net
+
+volumes:
+  cargo-cache:
+  target-cache:

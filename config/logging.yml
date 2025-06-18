@@ -1,0 +1,115 @@
+# Structured Logging Configuration for AI Workflow System
+#
+# This configuration file defines the structured logging format
+# and settings for the AI Workflow System.
+
+# Log format configuration
+format:
+  # JSON format for production environments
+  json:
+    enabled: true
+    pretty_print: false
+    include_timestamp: true
+    timestamp_format: "rfc3339"
+    
+  # Human-readable format for development
+  text:
+    enabled: false
+    pattern: "[{timestamp}] [{correlation_id}] {level} - {module} - {message}"
+
+# Fields to include in every log entry
+standard_fields:
+  - service: "ai-workflow-system"
+  - environment: "${ENVIRONMENT:-development}"
+  - version: "${APP_VERSION:-0.1.0}"
+  - host: "${HOSTNAME}"
+
+# Log levels per module
+modules:
+  # Default level
+  default: "info"
+  
+  # Module-specific levels
+  backend::api: "info"
+  backend::workflows: "debug"
+  backend::core::mcp: "debug"
+  backend::monitoring: "debug"
+  backend::db: "warn"
+  
+  # Third-party crates
+  actix_web: "info"
+  diesel: "warn"
+  reqwest: "warn"
+  tokio: "warn"
+
+# Correlation ID configuration
+correlation:
+  # Header names to check for correlation ID
+  headers:
+    - "X-Correlation-ID"
+    - "X-Request-ID"
+    - "X-Trace-ID"
+    - "Correlation-ID"
+  
+  # Generate new ID if none provided
+  generate_if_missing: true
+  
+  # ID format (uuid, ulid, custom)
+  format: "uuid"
+
+# Output configuration
+outputs:
+  # Console output
+  console:
+    enabled: true
+    target: "stdout"  # stdout or stderr
+    
+  # File output
+  file:
+    enabled: false
+    path: "/var/log/ai-workflow/app.log"
+    rotation: "daily"
+    max_files: 7
+    max_size: "100MB"
+    
+  # Syslog output (for production)
+  syslog:
+    enabled: false
+    address: "localhost:514"
+    facility: "local0"
+    
+# Performance settings
+performance:
+  # Buffer size for async logging
+  buffer_size: 8192
+  
+  # Flush interval in milliseconds
+  flush_interval: 1000
+  
+  # Maximum log message size
+  max_message_size: 8192
+
+# Sampling configuration (for high-volume scenarios)
+sampling:
+  enabled: false
+  
+  # Sample rate (1.0 = 100%, 0.1 = 10%)
+  rate: 1.0
+  
+  # Always log these levels regardless of sampling
+  always_log:
+    - "error"
+    - "warn"
+
+# Integration with monitoring systems
+integrations:
+  # Send logs to OpenTelemetry collector
+  opentelemetry:
+    enabled: false
+    endpoint: "http://localhost:4317"
+    
+  # Send logs to Elasticsearch
+  elasticsearch:
+    enabled: false
+    url: "http://localhost:9200"
+    index: "ai-workflow-logs"

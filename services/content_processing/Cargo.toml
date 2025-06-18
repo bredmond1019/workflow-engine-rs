@@ -1,0 +1,63 @@
+[package]
+name = "content_processing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.36.0", features = ["full"] }
+tokio-stream = "0.1"
+async-trait = "0.1"
+futures = "0.3"
+
+# Web framework
+actix-web = { version = "4.11.0", features = ["macros"] }
+actix-cors = "0.7.1"
+
+# Database drivers
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "json", "uuid", "chrono", "migrate"] }
+pgvector = { version = "0.3", features = ["sqlx"] }
+
+# Redis for caching
+redis = { version = "0.23", features = ["aio", "tokio-comp"] }
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+# Plugin system
+wasmtime = "27.0"
+wasm-bindgen = "0.2"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0.12"
+
+# Logging and tracing
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
+tracing-opentelemetry = "0.22"
+opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry-otlp = "0.14"
+
+# Metrics
+prometheus = "0.13.4"
+
+# Utilities
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+once_cell = "1.19.0"
+regex = "1.10"
+
+# Document parsing
+scraper = "0.17"              # HTML parsing
+pulldown-cmark = "0.9"        # Markdown parsing  
+pdf-extract = "0.6"           # PDF text extraction
+quick-xml = "0.31"            # XML parsing
+
+# Language detection
+whatlang = "0.16"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.12.1"

@@ -1,0 +1,112 @@
+global:
+  scrape_interval: 5s      # More frequent scraping in development
+  evaluation_interval: 5s
+  external_labels:
+    cluster: 'ai-workflow-dev'
+    environment: 'development'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # AI Workflow System main service (with debug endpoints)
+  - job_name: 'ai-workflow-system'
+    static_configs:
+      - targets: ['ai-workflow-system:8080']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 2s  # Very frequent for development
+    scrape_timeout: 2s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+      debug: ['true']  # Enable debug metrics
+
+  # Development database metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 10s
+
+  # Development Redis metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 10s
+
+  # MCP Servers with debug endpoints
+  - job_name: 'notion-mcp-dev'
+    static_configs:
+      - targets: ['notion-mcp:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    params:
+      debug: ['true']
+
+  - job_name: 'helpscout-mcp-dev'
+    static_configs:
+      - targets: ['helpscout-mcp:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    params:
+      debug: ['true']
+
+  - job_name: 'slack-mcp-dev'
+    static_configs:
+      - targets: ['slack-mcp:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    params:
+      debug: ['true']
+
+  # Development tools monitoring
+  - job_name: 'pgadmin'
+    static_configs:
+      - targets: ['pgadmin:80']
+    scrape_interval: 30s
+
+  - job_name: 'mailcatcher'
+    static_configs:
+      - targets: ['mailcatcher:1080']
+    scrape_interval: 30s
+
+  # Docker metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 5s
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+
+  # Monitoring stack itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 5s
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: '/metrics'
+    scrape_interval: 10s

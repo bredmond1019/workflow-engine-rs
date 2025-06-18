@@ -1,0 +1,997 @@
+warning: unused manifest key: build
+       Fresh unicode-ident v1.0.18
+       Fresh cfg-if v1.0.0
+       Fresh autocfg v1.4.0
+       Fresh smallvec v1.15.0
+       Fresh pin-project-lite v0.2.16
+       Fresh proc-macro2 v1.0.95
+       Fresh scopeguard v1.2.0
+       Fresh itoa v1.0.15
+       Fresh fnv v1.0.7
+       Fresh once_cell v1.21.3
+       Fresh futures-core v0.3.31
+       Fresh shlex v1.3.0
+       Fresh quote v1.0.40
+       Fresh libc v0.2.172
+       Fresh version_check v0.9.5
+       Fresh futures-sink v0.3.31
+       Fresh pin-utils v0.1.0
+       Fresh memchr v2.7.4
+       Fresh syn v2.0.101
+       Fresh lock_api v0.4.12
+       Fresh parking_lot_core v0.9.10
+       Fresh socket2 v0.5.10
+       Fresh signal-hook-registry v1.4.5
+       Fresh mio v1.0.4
+       Fresh jobserver v0.1.33
+       Fresh futures-task v0.3.31
+       Fresh parking_lot v0.12.3
+       Fresh tokio-macros v2.5.0
+       Fresh cc v1.2.24
+       Fresh serde_derive v1.0.219
+       Fresh slab v0.4.9
+       Fresh tracing-attributes v0.1.28
+       Fresh futures-macro v0.3.31
+       Fresh bitflags v2.9.1
+       Fresh ryu v1.0.20
+       Fresh http v0.2.12
+       Fresh tokio v1.45.1
+       Fresh futures-util v0.3.31
+       Fresh time-core v0.1.4
+       Fresh num-conv v0.1.0
+       Fresh powerfmt v0.2.0
+       Fresh tokio-util v0.7.15
+       Fresh deranged v0.4.0
+       Fresh time-macros v0.2.22
+       Fresh http v1.3.1
+       Fresh core-foundation-sys v0.8.7
+       Fresh equivalent v1.0.2
+       Fresh hashbrown v0.15.3
+       Fresh typenum v1.18.0
+       Fresh time v0.3.41
+       Fresh num-traits v0.2.19
+       Fresh subtle v2.6.1
+       Fresh indexmap v2.9.0
+       Fresh synstructure v0.13.2
+       Fresh http-body v1.0.1
+       Fresh http-body v0.4.6
+       Fresh generic-array v0.14.7
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.0
+       Fresh num-integer v0.1.46
+       Fresh cpufeatures v0.2.17
+       Fresh percent-encoding v2.3.1
+       Fresh zeroize v1.8.1
+       Fresh stable_deref_trait v1.2.0
+       Fresh crypto-common v0.1.6
+       Fresh block-buffer v0.10.4
+       Fresh httparse v1.10.1
+       Fresh getrandom v0.3.3
+       Fresh zerofrom v0.1.6
+       Fresh getrandom v0.2.16
+       Fresh crc32fast v1.4.2
+       Fresh zerovec-derive v0.11.1
+       Fresh aho-corasick v1.1.3
+       Fresh yoke v0.8.0
+       Fresh untrusted v0.9.0
+       Fresh regex-syntax v0.8.5
+       Fresh vsimd v0.8.0
+       Fresh outref v0.5.2
+       Fresh bytes-utils v0.1.4
+       Fresh http-body-util v0.1.3
+       Fresh security-framework-sys v2.14.0
+       Fresh cmake v0.1.54
+       Fresh zerovec v0.11.2
+       Fresh base64-simd v0.8.0
+       Fresh displaydoc v0.2.5
+       Fresh fs_extra v1.3.0
+       Fresh dunce v1.0.5
+       Fresh h2 v0.3.26
+       Fresh httpdate v1.0.3
+       Fresh form_urlencoded v1.2.1
+       Fresh core-foundation v0.9.4
+       Fresh aws-smithy-types v1.3.1
+       Fresh try-lock v0.2.5
+       Fresh tinystr v0.8.1
+       Fresh futures-channel v0.3.31
+       Fresh tower-service v0.3.3
+       Fresh litemap v0.8.0
+       Fresh writeable v0.6.1
+       Fresh want v0.3.1
+       Fresh ring v0.17.14
+       Fresh icu_locale_core v2.0.0
+       Fresh potential_utf v0.1.2
+       Fresh zerotrie v0.2.2
+       Fresh security-framework v2.11.1
+       Fresh aws-smithy-async v1.2.5
+       Fresh icu_collections v2.0.0
+       Fresh icu_provider v2.0.0
+       Fresh aws-lc-sys v0.29.0
+       Fresh aws-smithy-runtime-api v1.8.0
+       Fresh rustls-pki-types v1.12.0
+       Fresh base64 v0.21.7
+       Fresh icu_normalizer_data v2.0.0
+       Fresh aws-lc-rs v1.13.1
+       Fresh zerocopy v0.8.25
+       Fresh atomic-waker v1.1.2
+       Fresh fastrand v2.3.0
+       Fresh regex-lite v0.1.6
+       Fresh icu_properties_data v2.0.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh h2 v0.4.10
+       Fresh icu_normalizer v2.0.0
+       Fresh rustls-webpki v0.103.3
+       Fresh rustls-pemfile v1.0.4
+       Fresh icu_properties v2.0.1
+       Fresh hyper v0.14.32
+       Fresh sct v0.7.1
+       Fresh rustls-webpki v0.101.7
+       Fresh core-foundation v0.10.1
+       Fresh pkg-config v0.3.32
+       Fresh adler2 v2.0.0
+       Fresh rustls v0.23.27
+       Fresh semver v1.0.26
+       Fresh rustls v0.21.12
+       Fresh miniz_oxide v0.8.8
+       Fresh idna_adapter v1.2.1
+       Fresh security-framework v3.2.0
+       Fresh hyper v1.6.0
+       Fresh serde_json v1.0.140
+       Fresh utf8_iter v1.0.4
+       Fresh strsim v0.11.1
+       Fresh ident_case v1.0.1
+       Fresh hyper-util v0.1.13
+       Fresh rustc_version v0.4.1
+       Fresh tokio-rustls v0.24.1
+       Fresh rustls-native-certs v0.8.1
+       Fresh tokio-rustls v0.26.2
+       Fresh rustls-native-certs v0.6.3
+       Fresh idna v1.0.3
+       Fresh darling_core v0.20.11
+       Fresh aws-smithy-eventstream v0.60.8
+       Fresh tower-layer v0.3.3
+       Fresh hyper-rustls v0.27.6
+       Fresh hyper-rustls v0.24.2
+       Fresh aws-credential-types v1.2.3
+       Fresh thiserror-impl v2.0.12
+       Fresh aws-smithy-http v0.62.1
+       Fresh url v2.5.4
+       Fresh tower v0.5.2
+       Fresh darling_macro v0.20.11
+       Fresh local-waker v0.1.4
+       Fresh alloc-no-stdlib v2.0.4
+       Fresh aws-smithy-http-client v1.0.2
+       Fresh darling v0.20.11
+       Fresh thiserror v2.0.12
+       Fresh alloc-stdlib v0.2.2
+       Fresh zstd-sys v2.0.15+zstd.1.5.7
+       Fresh aws-smithy-observability v0.1.3
+       Fresh hmac v0.12.1
+       Fresh sha1 v0.10.6
+       Fresh rand_core v0.9.3
+       Fresh uuid v1.17.0
+       Fresh actix-rt v2.10.0
+       Fresh unicode-xid v0.2.6
+       Fresh mime v0.3.17
+       Fresh log v0.4.27
+       Fresh tracing-core v0.1.33
+       Fresh bytes v1.10.1
+       Fresh byteorder v1.5.0
+       Fresh base64 v0.22.1
+       Fresh hex v0.4.3
+       Fresh tracing v0.1.41
+       Fresh rand_chacha v0.9.0
+       Fresh derive_more-impl v2.0.1
+       Fresh aws-smithy-runtime v1.8.3
+       Fresh zstd-safe v7.2.4
+       Fresh brotli-decompressor v5.0.0
+       Fresh aws-sigv4 v1.3.2
+       Fresh serde v1.0.219
+       Fresh actix-utils v3.0.1
+       Fresh aws-types v1.3.7
+       Fresh regex-automata v0.4.9
+       Fresh errno v0.3.12
+       Fresh actix-service v2.0.3
+       Fresh encoding_rs v0.8.35
+       Fresh bytestring v1.4.0
+       Fresh same-file v1.0.6
+       Fresh rustix v1.0.7
+       Fresh aws-runtime v1.5.7
+       Fresh regex v1.11.1
+       Fresh walkdir v2.5.0
+       Fresh derive_more v2.0.1
+       Fresh brotli v8.0.1
+       Fresh zstd v0.13.3
+       Fresh rand v0.9.1
+       Fresh local-channel v0.1.5
+       Fresh aws-smithy-json v0.61.3
+       Fresh serde_urlencoded v0.7.1
+       Fresh digest v0.10.7
+       Fresh actix-codec v0.5.2
+       Fresh actix-macros v0.2.4
+       Fresh thiserror-impl v1.0.69
+       Fresh language-tags v0.3.2
+       Fresh lazy_static v1.5.0
+       Fresh foldhash v0.1.5
+       Fresh ucd-trie v0.1.7
+       Fresh sha2 v0.10.9
+       Fresh thiserror v1.0.69
+       Fresh syn v1.0.109
+       Fresh actix-router v0.5.3
+       Fresh proc-macro-error-attr v1.0.4
+       Fresh actix-http v3.11.0
+       Fresh pest v2.8.0
+       Fresh cookie v0.16.2
+       Fresh tempfile v3.20.0
+       Fresh actix-web-codegen v4.3.0
+       Fresh actix-server v2.6.0
+       Fresh flate2 v1.1.1
+       Fresh rand_core v0.6.4
+       Fresh unicase v2.8.1
+       Fresh anstyle v1.0.10
+       Fresh impl-more v0.1.9
+       Fresh native-tls v0.2.14
+       Fresh rand_chacha v0.3.1
+       Fresh pest_meta v2.8.0
+       Fresh zip v0.6.6
+       Fresh proc-macro-error v1.0.4
+       Fresh crossbeam-utils v0.8.21
+       Fresh actix-web v4.11.0
+       Fresh derive_builder_core v0.20.2
+       Fresh regex-syntax v0.6.29
+       Fresh urlencoding v2.1.3
+       Fresh bit-vec v0.6.3
+       Fresh heck v0.5.0
+       Fresh xmlparser v0.13.6
+       Fresh utf8parse v0.2.2
+       Fresh either v1.15.0
+       Fresh bit-set v0.5.3
+       Fresh derive_builder_macro v0.20.2
+       Fresh system-configuration-sys v0.5.0
+       Fresh aws-smithy-query v0.60.7
+       Fresh anstyle-parse v0.2.6
+       Fresh dsl_auto_type v0.1.3
+       Fresh aws-smithy-xml v0.60.9
+       Fresh regex-automata v0.1.10
+       Fresh rust-embed-impl v8.7.2
+       Fresh pest_generator v2.8.0
+       Fresh rand v0.8.5
+       Fresh tokio-native-tls v0.3.1
+       Fresh crossbeam-channel v0.5.15
+       Fresh utoipa-gen v4.3.1
+       Fresh rust-embed-utils v8.7.2
+       Fresh num-bigint v0.4.6
+       Fresh iana-time-zone v0.1.63
+       Fresh scheduled-thread-pool v0.2.7
+       Fresh objc2-core-foundation v0.3.1
+       Fresh diesel_table_macro_syntax v0.2.0
+       Fresh actix_derive v0.6.2
+       Fresh anstyle-query v1.1.2
+       Fresh utf-8 v0.7.6
+       Fresh is_terminal_polyfill v1.70.1
+       Fresh bitflags v1.3.2
+       Fresh data-encoding v2.9.0
+       Fresh num-modular v0.6.1
+       Fresh overload v0.1.1
+       Fresh colorchoice v1.0.3
+       Fresh r2d2 v0.8.10
+       Fresh nu-ansi-term v0.46.0
+       Fresh num-order v1.2.0
+       Fresh system-configuration v0.5.1
+       Fresh tungstenite v0.21.0
+       Fresh anstream v0.6.18
+       Fresh simple_asn1 v0.6.3
+       Fresh chrono v0.4.41
+       Fresh rust-embed v8.7.2
+       Fresh objc2-io-kit v0.3.1
+       Fresh diesel_derives v2.2.5
+       Fresh mime_guess v2.0.5
+       Fresh actix v0.13.5
+       Fresh utoipa v4.2.3
+       Fresh pest_derive v2.8.0
+       Fresh matchers v0.1.0
+       Fresh aws-sdk-sts v1.72.0
+       Fresh hyper-tls v0.5.0
+       Fresh pq-sys v0.7.1
+       Fresh derive_builder v0.20.2
+       Fresh anyhow v1.0.98
+       Fresh fancy-regex v0.12.0
+       Fresh protobuf v2.28.0
+       Fresh sharded-slab v0.1.7
+       Fresh aws-sdk-sso v1.71.0
+       Fresh aws-sdk-ssooidc v1.72.0
+       Fresh pem v3.0.5
+       Fresh env_filter v0.1.3
+       Fresh bstr v1.12.0
+       Fresh tracing-serde v0.2.0
+       Fresh async-stream-impl v0.3.6
+       Fresh tracing-log v0.2.0
+       Fresh thread_local v1.1.8
+       Fresh sync_wrapper v0.1.2
+       Fresh arrayvec v0.7.6
+       Fresh rustc-hash v1.1.0
+       Fresh jiff v0.2.14
+       Fresh ipnet v2.11.0
+       Fresh unsafe-libyaml v0.2.11
+       Fresh tiktoken-rs v0.5.9
+       Fresh tracing-subscriber v0.3.19
+       Fresh rust_decimal v1.37.1
+       Fresh reqwest v0.11.27
+       Fresh env_logger v0.11.8
+       Fresh async-stream v0.3.6
+       Fresh jsonwebtoken v9.3.1
+       Fresh prometheus v0.13.4
+       Fresh aws-config v1.6.3
+       Fresh serde_yaml v0.9.34+deprecated
+       Fresh diesel v2.2.10
+       Fresh handlebars v6.3.2
+       Fresh sysinfo v0.35.2
+       Fresh utoipa-swagger-ui v6.0.0
+       Fresh actix-web-actors v4.3.1+deprecated
+       Fresh tokio-tungstenite v0.21.0
+       Fresh actix-cors v0.7.1
+       Fresh uptime_lib v0.3.1
+       Fresh aws-sdk-bedrockruntime v1.91.0
+       Fresh tokio-stream v0.1.17
+       Fresh async-trait v0.1.88
+       Fresh dotenv v0.15.0
+       Fresh predicates-core v1.0.9
+       Fresh unicode-segmentation v1.12.0
+       Fresh termtree v0.5.1
+       Fresh mockall_derive v0.12.1
+       Fresh downcast v0.11.0
+       Fresh fragile v2.0.1
+       Fresh predicates v3.1.3
+       Fresh predicates-tree v1.0.12
+       Fresh mockall v0.12.1
+warning: unused imports: `AnthropicStreamingProvider`, `BedrockStreamingProvider`, `OpenAIStreamingProvider`, and `StreamingRequest`
+ --> tests/streaming_integration_test.rs:8:58
+  |
+8 |     handlers::{complete_ai_response, stream_ai_response, StreamingRequest},
+  |                                                          ^^^^^^^^^^^^^^^^
+9 |     providers::{create_streaming_provider, OpenAIStreamingProvider, AnthropicStreamingProvider, BedrockStreamingProvider},
+  |                                            ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `initial_delay`
+   --> tests/streaming_integration_test.rs:234:9
+    |
+234 |     let initial_delay = controller.get_current_delay();
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_initial_delay`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: variable `heartbeat_count` is assigned to, but never used
+   --> tests/streaming_integration_test.rs:255:13
+    |
+255 |     let mut heartbeat_count = 0;
+    |             ^^^^^^^^^^^^^^^
+    |
+    = note: consider using `_heartbeat_count` instead
+
+warning: unused import: `tempfile::TempDir`
+  --> tests/event_sourcing_tests.rs:12:5
+   |
+12 | use tempfile::TempDir;
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::Arc`
+   --> tests/event_sourcing_tests.rs:375:13
+    |
+375 |         use std::sync::Arc;
+    |             ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::RwLock`
+   --> tests/event_sourcing_tests.rs:376:13
+    |
+376 |         use tokio::sync::RwLock;
+    |             ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::*`
+   --> tests/event_sourcing_tests.rs:543:9
+    |
+543 |     use super::*;
+    |         ^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> tests/event_sourcing_tests.rs:151:13
+    |
+151 |         let mut dispatcher = EventDispatcher::new(event_store);
+    |             ----^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `matching_event`
+   --> tests/event_sourcing_tests.rs:317:13
+    |
+317 |         let matching_event = create_test_event(
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_matching_event`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `non_matching_event`
+   --> tests/event_sourcing_tests.rs:324:13
+    |
+324 |         let non_matching_event = create_test_event(
+    |             ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_non_matching_event`
+
+warning: unused import: `workflow::Workflow`
+ --> examples/knowledge_base_example.rs:6:31
+  |
+6 |     core::{task::TaskContext, workflow::Workflow},
+  |                               ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `backend::core::error::WorkflowError`
+ --> tests/streaming_tests.rs:7:5
+  |
+7 | use backend::core::error::WorkflowError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `ValidationRule`
+ --> tests/template_tests.rs:8:24
+  |
+8 |     TemplateValidator, ValidationRule, TemplateRegistry,
+  |                        ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `StorageBackend`
+ --> tests/template_tests.rs:7:50
+  |
+7 |     OutputFormat, VariableType, TemplateStorage, StorageBackend,
+  |                                                  ^^^^^^^^^^^^^^
+
+warning: `backend` (test "streaming_integration_test") generated 3 warnings (run `cargo fix --test "streaming_integration_test"` to apply 1 suggestion)
+warning: `backend` (test "event_sourcing_tests") generated 7 warnings (run `cargo fix --test "event_sourcing_tests"` to apply 5 suggestions)
+warning: `backend` (example "knowledge_base_example") generated 1 warning (run `cargo fix --example "knowledge_base_example"` to apply 1 suggestion)
+warning: `backend` (test "streaming_tests") generated 1 warning (run `cargo fix --test "streaming_tests"` to apply 1 suggestion)
+warning: `backend` (test "template_tests") generated 2 warnings (run `cargo fix --test "template_tests"` to apply 1 suggestion)
+warning: unused import: `backend::db::events::error_integration::*`
+ --> tests/event_sourcing_resilience_tests.rs:6:5
+  |
+6 | use backend::db::events::error_integration::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `Duration` and `Instant`
+  --> tests/event_sourcing_resilience_tests.rs:15:17
+   |
+15 | use std::time::{Duration, Instant};
+   |                 ^^^^^^^^  ^^^^^^^
+
+warning: unused variable: `error_details`
+   --> tests/event_sourcing_resilience_tests.rs:145:13
+    |
+145 |             error_details: serde_json::Value,
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_details`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:252:13
+    |
+252 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:302:13
+    |
+302 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:355:13
+    |
+355 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: unused variable: `mock_metrics`
+   --> tests/event_sourcing_resilience_tests.rs:611:13
+    |
+611 |         let mock_metrics = Arc::new(MockEventSourcingMetrics::new());
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mock_metrics`
+
+warning: field `circuit_breaker_opens` is never read
+   --> tests/event_sourcing_resilience_tests.rs:193:9
+    |
+191 |     pub struct MockEventSourcingMetrics {
+    |                ------------------------ field in this struct
+192 |         operation_failures: Arc<tokio::sync::RwLock<Vec<String>>>,
+193 |         circuit_breaker_opens: Arc<tokio::sync::RwLock<Vec<String>>>,
+    |         ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: methods `record_operation_success`, `record_operation_failure`, `record_circuit_breaker_open`, `record_dlq_success`, and `record_dlq_failure` are never used
+   --> tests/event_sourcing_resilience_tests.rs:204:12
+    |
+196 |     impl MockEventSourcingMetrics {
+    |     ----------------------------- methods in this implementation
+...
+204 |         fn record_operation_success(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+208 |         fn record_operation_failure(&self, operation: &str, _error: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+212 |         fn record_circuit_breaker_open(&self, operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+216 |         fn record_dlq_success(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+220 |         fn record_dlq_failure(&self, _operation: &str) {
+    |            ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `CostBreakdown`
+ --> examples/token_usage_demo.rs:4:34
+  |
+4 |     Model, Provider, TokenUsage, CostBreakdown, UsageRecord,
+  |                                  ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `backend::db::events::types::*`
+ --> tests/postgresql_event_store_tests.rs:7:5
+  |
+7 | use backend::db::events::types::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::Arc`
+  --> tests/postgresql_event_store_tests.rs:14:5
+   |
+14 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: `backend` (test "event_sourcing_resilience_tests") generated 9 warnings (run `cargo fix --test "event_sourcing_resilience_tests"` to apply 2 suggestions)
+warning: `backend` (example "token_usage_demo") generated 1 warning (run `cargo fix --example "token_usage_demo"` to apply 1 suggestion)
+warning: `backend` (test "postgresql_event_store_tests") generated 2 warnings (run `cargo fix --test "postgresql_event_store_tests"` to apply 2 suggestions)
+warning: unused import: `LoadBalancingStrategy`
+ --> tests/bootstrap_tests.rs:6:5
+  |
+6 |     LoadBalancingStrategy, ServiceLifecycleHooks,
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::Arc`
+ --> tests/mcp_agent_integration_test.rs:2:5
+  |
+2 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `pool`
+   --> tests/mcp_connection_tests.rs:198:9
+    |
+198 |     let pool = MCPConnectionPool::new(config);
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `pool_health`
+   --> tests/mcp_connection_tests.rs:209:9
+    |
+209 |     let pool_health = MCPConnectionPool::new(config_health);
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_health`
+
+warning: unused variable: `pool_random`
+   --> tests/mcp_connection_tests.rs:218:9
+    |
+218 |     let pool_random = MCPConnectionPool::new(config_random);
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_random`
+
+warning: unused variable: `pool_least`
+   --> tests/mcp_connection_tests.rs:227:9
+    |
+227 |     let pool_least = MCPConnectionPool::new(config_least);
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pool_least`
+
+warning: unused variable: `pool`
+   --> tests/mcp_connection_tests.rs:340:9
+    |
+340 |     let pool = MCPConnectionPool::new(config);
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+
+warning: struct `MockMCPClient` is never constructed
+  --> tests/mcp_connection_tests.rs:17:8
+   |
+17 | struct MockMCPClient {
+   |        ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: associated items `new` and `with_failure` are never used
+  --> tests/mcp_connection_tests.rs:24:8
+   |
+23 | impl MockMCPClient {
+   | ------------------ associated items in this implementation
+24 |     fn new() -> Self {
+   |        ^^^
+...
+32 |     fn with_failure(mut self, should_fail: bool) -> Self {
+   |        ^^^^^^^^^^^^
+
+warning: unused `std::result::Result` that must be used
+  --> tests/mcp_integration_test.rs:40:9
+   |
+40 |         task_context.set_data("processed_by", serde_json::Value::String(self.name.clone()));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+   = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+   |
+40 |         let _ = task_context.set_data("processed_by", serde_json::Value::String(self.name.clone()));
+   |         +++++++
+
+warning: unused `std::result::Result` that must be used
+  --> tests/mcp_integration_test.rs:41:9
+   |
+41 |         task_context.set_data("test_result", serde_json::Value::String("success".to_string()));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+   |
+41 |         let _ = task_context.set_data("test_result", serde_json::Value::String("success".to_string()));
+   |         +++++++
+
+       Fresh backend v0.1.0 (/Users/brandon/Documents/Projects/AIArchitecture/ai-system-rust)
+warning: unused import: `backend::core::ai::tokens::pricing::PricingSource`
+  --> tests/token_tests.rs:13:5
+   |
+13 | use backend::core::ai::tokens::pricing::PricingSource;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `AlertScope`, `AlertThreshold`, `AlertingConfig`, `GlobalLimits`, `NotificationChannel`, and `ThresholdType`
+  --> tests/token_tests.rs:15:5
+   |
+15 |     GlobalLimits, AlertingConfig, AlertThreshold, ThresholdType, AlertScope, NotificationChannel,
+   |     ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: `backend` (test "bootstrap_tests") generated 1 warning (run `cargo fix --test "bootstrap_tests"` to apply 1 suggestion)
+warning: `backend` (test "mcp_agent_integration_test") generated 1 warning (run `cargo fix --test "mcp_agent_integration_test"` to apply 1 suggestion)
+warning: `backend` (test "mcp_connection_tests") generated 7 warnings
+warning: `backend` (test "mcp_integration_test") generated 2 warnings
+warning: `backend` (test "token_tests") generated 2 warnings (run `cargo fix --test "token_tests"` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.56s
+     Running `/Users/brandon/Documents/Projects/AIArchitecture/ai-system-rust/target/debug/deps/backend-9bc5e9014b095177`
+
+running 293 tests
+test api::middleware::auth::tests::test_middleware_allows_health_check ... ok
+test api::middleware::auth::tests::test_middleware_allows_auth_endpoints ... ok
+test api::metrics::tests::test_live_endpoint ... ok
+test api::metrics::tests::test_health_check ... ok
+test api::metrics::tests::test_metrics_endpoint ... ok
+test api::routes::auth::tests::test_verify_invalid_token ... ok
+test api::routes::auth::tests::test_generate_token_endpoint ... ok
+test api::routes::health::tests::test_health_check_no_auth_required ... ok
+test api::middleware::auth::tests::test_claims_extraction ... ok
+test api::routes::health::tests::test_health_check_endpoint ... ok
+test api::routes::auth::tests::test_verify_token_endpoint ... ok
+test api::middleware::auth::tests::test_middleware_allows_with_valid_token ... ok
+test api::uptime::tests::test_format_duration ... ok
+test api::uptime::tests::test_global_uptime_tracker ... ok
+test api::uptime::tests::test_restart_tracking ... ok
+test api::uptime::tests::test_uptime_tracker_creation ... ok
+test api::metrics::tests::test_ready_endpoint ... ok
+test bootstrap::config::tests::test_configuration_manager ... ok
+test bootstrap::config::tests::test_dependency_validation ... ok
+test api::routes::registry::tests::test_list_agents_requires_auth ... ok
+test bootstrap::container::tests::test_builder_pattern ... ok
+test api::routes::registry::tests::test_heartbeat_endpoint ... ok
+test api::routes::registry::tests::test_discover_agents_endpoint ... ok
+test bootstrap::container::tests::test_circular_dependency_detection ... ok
+test api::routes::registry::tests::test_register_agent_endpoint ... ok
+test bootstrap::container::tests::test_clear_singletons ... ok
+test bootstrap::container::tests::test_dependency_resolution ... ok
+test bootstrap::container::tests::test_is_registered ... ok
+test bootstrap::container::tests::test_service_count ... ok
+test bootstrap::container::tests::test_service_not_found ... ok
+test bootstrap::container::tests::test_transient_registration ... ok
+test bootstrap::container::tests::test_singleton_registration ... ok
+test bootstrap::discovery::tests::test_registry_discovery ... ok
+test bootstrap::discovery::tests::test_discovery_client_caching ... ok
+test bootstrap::lifecycle::tests::test_lifecycle_manager ... ok
+test bootstrap::lifecycle::tests::test_dependency_ordering ... ok
+test bootstrap::registry::tests::test_load_balancing ... ok
+test bootstrap::registry::tests::test_service_registration ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_capabilities ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_endpoint ... ok
+test bootstrap::service::tests::test_bootstrap_validation_empty_name ... ok
+test bootstrap::service::tests::test_service_config_builder ... ok
+test bootstrap::service::tests::test_service_config_creation ... ok
+test core::ai::templates::engine::tests::test_basic_rendering ... ok
+test core::ai::templates::engine::tests::test_conditionals ... ok
+test core::ai::templates::engine::tests::test_helper_functions ... ok
+test core::ai::templates::engine::tests::test_loops ... ok
+test core::ai::templates::engine::tests::test_strict_mode ... ok
+test core::ai::templates::parser::tests::test_extract_variables ... ok
+test core::ai::templates::parser::tests::test_parse_conditional ... ok
+test core::ai::templates::parser::tests::test_parse_loop ... ok
+test core::ai::templates::parser::tests::test_parse_simple_text ... ok
+test core::ai::templates::parser::tests::test_parse_variable ... ok
+test core::ai::templates::registry::tests::test_circular_dependency_detection ... ok
+test core::ai::templates::registry::tests::test_context_index ... ok
+test core::ai::templates::registry::tests::test_default_registry ... ok
+test core::ai::templates::registry::tests::test_registry_basic_operations ... ok
+test core::ai::templates::registry::tests::test_stats ... ok
+test core::ai::templates::storage::tests::test_memory_storage ... ok
+test core::ai::templates::storage::tests::test_search ... ok
+test api::routes::health::tests::test_detailed_health_check_endpoint ... ok
+test core::ai::templates::tests::test_quick_render ... ok
+test core::ai::templates::tests::test_contextual_selection ... ok
+test core::ai::templates::types::tests::test_template_creation ... ok
+test core::ai::templates::types::tests::test_template_metrics ... ok
+test core::ai::templates::types::tests::test_template_variables ... ok
+test core::ai::templates::types::tests::test_variable_type_matching ... ok
+test bootstrap::health::tests::test_health_monitor_creation ... ok
+test api::workflows::tests::test_workflow_service_creation ... ok
+test api::workflows::tests::test_list_workflows ... ok
+test core::ai::templates::tests::test_template_manager_basic ... ok
+test core::ai::templates::validator::tests::test_basic_validation ... ok
+test bootstrap::manager::tests::test_bootstrap_manager_creation ... ok
+test bootstrap::manager::tests::test_builder_pattern ... ok
+test api::workflows::tests::test_trigger_workflow_api ... ok
+test core::ai::templates::validator::tests::test_security_validation ... ok
+test core::ai::templates::validator::tests::test_strict_validation ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_cost_per_token ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_basic_cost_calculation ... ok
+test core::ai::tokens::integration_example::integration_tests::test_cost_comparison_integration ... ok
+test core::ai::templates::validator::tests::test_size_limit ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_cumulative_streaming_cost ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_invalid_model_string ... ok
+test core::ai::tokens::integration_example::integration_tests::test_usage_tracking_integration ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_missing_token_count ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_model_comparison ... ok
+test core::ai::templates::validator::tests::test_syntax_validation ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_streaming_cost_calculation ... ok
+test core::ai::templates::validator::tests::test_validation_rules ... ok
+test core::ai_agents::anthropic::tests::test_anthropic_agent_creation ... ok
+test core::ai::tokens::tests::pricing_tests::tests::test_volume_discount_calculation ... ok
+test core::auth::jwt::tests::test_create_claims ... ok
+test core::ai_agents::openai::tests::test_openai_agent_creation ... ok
+test core::auth::jwt::tests::test_expired_token ... ok
+test core::auth::jwt::tests::test_extract_bearer_token ... ok
+test core::auth::jwt::tests::test_invalid_token ... ok
+test core::auth::jwt::tests::test_generate_and_validate_token ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_blocks_when_open ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_metrics ... ok
+test core::error::context::tests::test_error_categorization ... ok
+test core::error::context::tests::test_error_context_builder ... ok
+test core::error::context::tests::test_request_context_provider ... ok
+test core::error::metrics::tests::test_error_pattern_detector ... ok
+test core::error::metrics::tests::test_error_rate_calculator ... ok
+test core::error::recovery::tests::test_recovery_metrics ... ok
+test core::error::recovery::tests::test_cache_recovery ... ok
+test bootstrap::health::tests::test_http_health_check ... ok
+test core::error::recovery::tests::test_with_fallback ... ok
+test core::error::metrics::tests::test_error_metrics_creation ... ok
+test core::error::recovery::tests::test_with_fallback_fn ... ok
+test core::error::retry::tests::test_fixed_retry_policy ... ok
+test core::error::retry::tests::test_retry_builder ... ok
+test core::error::retry::tests::test_retry_permanent_failure ... ok
+test core::error::tests::test_error_metadata ... ok
+test core::mcp::clients::helpscout::tests::tests::test_create_article_arguments ... ok
+test core::mcp::clients::helpscout::tests::tests::test_execute_tool_when_not_connected ... ok
+test core::mcp::clients::helpscout::tests::tests::test_get_article_arguments ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_auth_config_generation ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_default_config ... ok
+test core::error::tests::test_default_error_handler ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_http_config ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_node_trait ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_stdio_config ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_without_auth ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_config_from_env ... ok
+test core::error::retry::tests::test_retry_policy_delay_calculation ... ok
+test core::mcp::clients::helpscout::tests::tests::test_list_tools_when_not_connected ... ok
+test core::mcp::clients::helpscout::tests::tests::test_helpscout_client_websocket_config ... ok
+test core::mcp::clients::http::tests::test_client_info_setting ... ok
+test core::mcp::clients::helpscout::tests::tests::test_search_articles_arguments ... ok
+test core::mcp::clients::http::tests::test_http_mcp_client_creation ... ok
+test core::mcp::clients::http::tests::test_ensure_initialized_fails_when_not_initialized ... ok
+test core::mcp::clients::http::tests::test_http_mcp_client_with_auth ... ok
+test core::mcp::clients::notion::tests::tests::test_error_parsing ... ok
+test core::mcp::clients::notion::tests::tests::test_notion_client_builder ... ok
+test core::mcp::clients::notion::tests::tests::test_config_serialization ... ok
+test core::mcp::clients::notion::tests::tests::test_node_implementation ... ok
+test core::mcp::clients::notion::tests::tests::test_notion_config_creation ... ok
+test core::mcp::clients::notion::tests::tests::test_search_pages_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_create_channel_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_execute_tool_when_not_connected ... ok
+test core::mcp::clients::slack::tests::tests::test_get_channel_history_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_get_user_info_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_list_channels_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_list_tools_when_not_connected ... ok
+test core::mcp::clients::slack::tests::tests::test_search_messages_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_auth_config_generation ... ok
+test core::mcp::clients::slack::tests::tests::test_send_message_arguments ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_default_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_http_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_node_trait ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_stdio_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_websocket_config ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_with_bot_token_only ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_with_user_token_only ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_client_without_tokens ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_config_from_env ... ok
+test core::mcp::clients::slack::tests::tests::test_slack_tool_method_coverage ... ok
+test core::mcp::config::tests::test_external_server_config ... ok
+test core::mcp::config::tests::test_mcp_config_default ... ok
+test core::mcp::config::tests::test_mcp_config_from_env_enabled ... ok
+test core::mcp::connection_pool::tests::test_cleanup_expired_connections ... ok
+test core::mcp::connection_pool::tests::test_connection_pool_creation ... ok
+test core::mcp::connection_pool::tests::test_pool_stats ... ok
+test core::mcp::connection_pool::tests::test_server_registration ... ok
+test core::mcp::health::tests::test_connection_health_monitor_creation ... ok
+test core::mcp::health::tests::test_health_config_default ... ok
+test core::mcp::health::tests::test_health_metrics_creation ... ok
+test core::mcp::health::tests::test_health_metrics_failure_update ... ok
+test core::mcp::health::tests::test_health_metrics_success_update ... ok
+test core::mcp::health::tests::test_health_summary ... ok
+test core::mcp::health::tests::test_start_stop_monitoring ... ok
+test core::mcp::load_balancer::tests::test_advanced_load_balancer ... ok
+test core::mcp::load_balancer::tests::test_least_connections_selection ... ok
+test core::mcp::load_balancer::tests::test_health_based_selection ... ok
+test core::mcp::load_balancer::tests::test_no_available_connections ... ok
+test core::mcp::load_balancer::tests::test_round_robin_selection ... ok
+test core::mcp::metrics::tests::test_metrics_collector_creation ... ok
+test core::mcp::metrics::tests::test_record_connection_request ... ok
+test core::mcp::metrics::tests::test_record_health_check ... ok
+test core::mcp::metrics::tests::test_transport_metrics ... ok
+test core::mcp::server::tests::test_handle_list_tools_request ... ok
+test core::mcp::server::tests::test_mcp_tool_server_creation ... ok
+test core::mcp::server::tests::test_register_node_as_tool ... ok
+test core::models::unified::tests::test_message_priority ... ok
+test core::mcp::server::tests::test_tool_metadata_generation ... ok
+test core::models::unified::tests::test_message_priority_ordering ... ok
+test core::models::unified::tests::test_message_ttl ... ok
+test core::models::unified::tests::test_message_with_correlation_id ... ok
+test core::models::unified::tests::test_service_message_creation ... ok
+test core::models::unified::tests::test_service_request_response ... ok
+test core::models::unified::tests::test_task_failure ... ok
+test core::models::unified::tests::test_task_status_display ... ok
+test core::models::unified::tests::test_task_status_transitions ... ok
+test core::models::unified::tests::test_unified_task_creation ... ok
+test core::nodes::agent::tests::test_agent_config_creation ... ok
+test core::nodes::agent::tests::test_base_agent_node_creation ... ok
+test core::nodes::external_config::tests::test_config_builder ... ok
+test core::nodes::external_config::tests::test_config_without_auth ... ok
+test core::nodes::external_config::tests::test_default_external_config ... ok
+test core::nodes::external_config::tests::test_env_config_loader ... ok
+test core::nodes::external_config::tests::test_helpscout_auth_config ... ok
+test core::nodes::external_config::tests::test_notion_auth_config ... ok
+test core::nodes::external_config::tests::test_slack_auth_config ... ok
+test core::nodes::template_agent::tests::test_template_agent_builder ... ok
+test core::registry::agent_registry::tests::test_agent_registration_creation ... ok
+test core::registry::agent_registry::tests::test_agent_registration_serialization ... ok
+test core::registry::background_tasks::tests::test_custom_config ... ok
+test core::registry::background_tasks::tests::test_background_task_creation ... ok
+test core::registry::background_tasks::tests::test_default_config ... ok
+test core::streaming::backpressure::tests::test_backpressure_handler ... ok
+test core::streaming::handlers::tests::test_get_streaming_config ... ok
+test core::mcp::config::tests::test_get_enabled_servers ... FAILED
+test core::mcp::config::tests::test_customer_support_server_config ... FAILED
+test core::mcp::config::tests::test_mcp_config_from_env_disabled ... FAILED
+test core::streaming::providers::tests::test_create_streaming_provider ... ok
+test core::streaming::handlers::tests::test_streaming_request_deserialization ... ok
+test core::streaming::recovery::tests::test_circuit_breaker ... ok
+test core::streaming::handlers::tests::test_streaming_health ... ok
+test core::streaming::recovery::tests::test_reconnection_manager ... ok
+test core::streaming::recovery::tests::test_recovery_provider_success ... ok
+test core::streaming::sse::tests::test_anthropic_sse_parsing ... ok
+test core::streaming::sse::tests::test_openai_sse_parsing ... ok
+test db::agent::tests::test_agent_with_metadata ... ok
+test db::agent::tests::test_new_agent_creation ... ok
+test db::agent::tests::test_update_agent_heartbeat ... ok
+test core::streaming::websocket::tests::test_websocket_message_serialization ... ok
+test db::agent::tests::test_update_agent_set_inactive ... ok
+test core::streaming::websocket::tests::test_stream_event_serialization ... ok
+test db::event_driven_sync::tests::test_consistency_policy ... ok
+test db::event_driven_sync::tests::test_cross_service_event_flow ... ok
+test db::event_driven_sync::tests::test_saga_creation ... ok
+test db::event_driven_sync::tests::test_saga_failure_and_compensation ... ok
+test db::event_driven_sync::tests::test_saga_step_progression ... ok
+test db::events::error_integration::tests::test_resilient_event_store_retry ... ok
+test db::migration::tests::test_parse_migration_filename ... ok
+test db::migration::tests::test_migration_checksum ... ok
+test db::service_isolation::tests::test_cross_service_event_creation ... ok
+test db::service_isolation::tests::test_service_boundary_creation ... ok
+test integrations::cross_system::tests::test_external_service_config_creation ... ok
+test integrations::cross_system::tests::test_external_service_config_builder ... ok
+test integrations::cross_system::tests::test_http_cross_system_client_creation ... ok
+test monitoring::correlation::tests::test_correlation_context_with_id ... ok
+test monitoring::correlation::tests::test_correlation_context ... ok
+test monitoring::logging::tests::test_log_entry_json_serialization ... ok
+test monitoring::logging::tests::test_log_entry_with_fields ... ok
+test monitoring::correlation::tests::test_correlation_id_middleware ... ok
+test monitoring::logging::tests::test_log_fields_helper ... ok
+test monitoring::logging::tests::test_structured_log_entry ... ok
+test monitoring::metrics::tests::test_api_metrics ... ok
+test monitoring::metrics::tests::test_metrics_export ... ok
+test monitoring::metrics::tests::test_metrics_initialization ... ok
+test monitoring::metrics::tests::test_workflow_metrics ... ok
+test monitoring::tracing::tests::test_child_span ... ok
+test monitoring::tracing::tests::test_span_creation ... ok
+test monitoring::tracing::tests::test_span_error ... ok
+test monitoring::tracing::tests::test_span_tags_and_logs ... ok
+test monitoring::tracing::tests::test_trace_with_span_macro ... ok
+test workflows::executor::tests::test_cross_system_executor ... ok
+test workflows::executor::tests::test_template_engine ... ok
+test workflows::executor::tests::test_workflow_factory ... ok
+test workflows::knowledge_base_workflow::tests::test_create_knowledge_base_workflow ... ok
+test workflows::knowledge_base_workflow::tests::test_extract_keywords ... ok
+test workflows::knowledge_base_workflow::tests::test_query_router_node ... ok
+test workflows::knowledge_base_workflow::tests::test_spam_filter_node ... ok
+test workflows::knowledge_base_workflow::tests::test_validate_query_node ... ok
+test workflows::knowledge_base_workflow::tests::test_workflow_node_registration ... ok
+test workflows::nodes::notion_client::tests::test_notion_step_structure ... ok
+test workflows::nodes::notion_client::tests::test_template_engine_integration ... ok
+test workflows::parser::tests::test_cycle_detection ... ok
+test workflows::parser::tests::test_instance_creation ... ok
+test workflows::parser::tests::test_template_loading ... ok
+test workflows::parser::tests::test_workflow_registry ... ok
+test workflows::parser::tests::test_yaml_parsing ... ok
+test workflows::registry::tests::test_categories_and_tags ... ok
+test workflows::registry::tests::test_registry_creation ... ok
+test workflows::registry::tests::test_statistics ... ok
+test workflows::registry::tests::test_template_retrieval ... ok
+test workflows::registry::tests::test_template_search ... ok
+test workflows::registry::tests::test_template_search_by_complexity ... ok
+test workflows::registry::tests::test_template_search_by_tags ... ok
+test workflows::schema::tests::test_step_type_variants ... ok
+test workflows::schema::tests::test_workflow_definition_serialization ... ok
+test workflows::schema::tests::test_workflow_instance_creation ... ok
+test monitoring::tracing::tests::test_trace_macro ... ok
+test monitoring::metrics::tests::test_cross_system_metrics ... ok
+test core::streaming::recovery::tests::test_recovery_provider_with_retries ... ok
+test core::streaming::backpressure::tests::test_rate_limited_stream ... ok
+test core::mcp::metrics::tests::test_metrics_manager ... ok
+test api::uptime::tests::test_uptime_tracking ... ok
+test core::error::circuit_breaker::tests::test_circuit_breaker_state_transitions ... ok
+test core::error::retry::tests::test_retry_success ... ok
+test core::ai::tokens::integration_example::integration_tests::test_basic_integration ... ok
+
+failures:
+
+---- core::mcp::config::tests::test_get_enabled_servers stdout ----
+
+thread 'core::mcp::config::tests::test_get_enabled_servers' panicked at src/core/mcp/config.rs:467:44:
+called `Result::unwrap()` on an `Err` value: MCPError { message: "Missing URI for external server server1" }
+
+---- core::mcp::config::tests::test_customer_support_server_config stdout ----
+
+thread 'core::mcp::config::tests::test_customer_support_server_config' panicked at src/core/mcp/config.rs:378:9:
+assertion failed: config.is_server_enabled("customer-support")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- core::mcp::config::tests::test_mcp_config_from_env_disabled stdout ----
+
+thread 'core::mcp::config::tests::test_mcp_config_from_env_disabled' panicked at src/core/mcp/config.rs:328:9:
+assertion failed: !config.enabled
+
+
+failures:
+    core::mcp::config::tests::test_customer_support_server_config
+    core::mcp::config::tests::test_get_enabled_servers
+    core::mcp::config::tests::test_mcp_config_from_env_disabled
+
+test result: FAILED. 290 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+
+error: test failed, to rerun pass `--lib`

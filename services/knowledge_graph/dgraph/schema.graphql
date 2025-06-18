@@ -1,0 +1,222 @@
+# DGraph Schema for Knowledge Graph Engine
+# This schema defines the structure for educational concepts, relationships, and learning paths
+
+# Core Concept type representing any knowledge concept
+type Concept {
+  # Unique identifier for the concept
+  id: ID!
+  
+  # Human-readable name of the concept
+  name: String! @search(by: [exact, term, fulltext])
+  
+  # Detailed description of the concept
+  description: String @search(by: [fulltext])
+  
+  # Difficulty level (beginner, intermediate, advanced, expert)
+  difficulty: String @search(by: [exact])
+  
+  # Category or domain (e.g., programming, mathematics, science)
+  category: String! @search(by: [exact, term])
+  
+  # Subcategory for more specific classification
+  subcategory: String @search(by: [exact, term])
+  
+  # Tags for flexible categorization
+  tags: [String] @search(by: [exact])
+  
+  # Prerequisites - concepts that should be learned before this one
+  prerequisites: [Concept] @hasInverse(field: enabledBy)
+  
+  # Concepts that this concept enables/unlocks
+  enabledBy: [Concept] @hasInverse(field: prerequisites)
+  
+  # Related concepts (bidirectional relationship)
+  relatedTo: [Concept]
+  
+  # Concepts that are subtopics of this concept
+  subtopics: [Concept] @hasInverse(field: parentTopic)
+  
+  # Parent topic if this is a subtopic
+  parentTopic: Concept @hasInverse(field: subtopics)
+  
+  # Learning resources associated with this concept
+  resources: [LearningResource]
+  
+  # Vector embedding for similarity search
+  embedding: [Float!] @search
+  
+  # Quality score based on content analysis
+  qualityScore: Float @search
+  
+  # Estimated time to learn in hours
+  estimatedTime: Float
+  
+  # Metadata
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+  
+  # Version for tracking schema evolution
+  version: Int!
+}
+
+# Learning Resource type for content associated with concepts
+type LearningResource {
+  id: ID!
+  
+  # URL or identifier of the resource
+  url: String! @search(by: [exact])
+  
+  # Title of the resource
+  title: String! @search(by: [term, fulltext])
+  
+  # Type of resource (video, article, course, book, etc.)
+  resourceType: String! @search(by: [exact])
+  
+  # Format (pdf, html, video, etc.)
+  format: String @search(by: [exact])
+  
+  # Source platform (youtube, coursera, medium, etc.)
+  source: String @search(by: [exact])
+  
+  # Quality rating (0-1)
+  quality: Float @search
+  
+  # Difficulty level matching concept difficulty
+  difficulty: String @search(by: [exact])
+  
+  # Duration in minutes for time-based content
+  duration: Int
+  
+  # Language of the resource
+  language: String @search(by: [exact])
+  
+  # Concepts this resource covers
+  concepts: [Concept] @hasInverse(field: resources)
+  
+  # Metadata
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+}
+
+# Learning Path type for structured learning sequences
+type LearningPath {
+  id: ID!
+  
+  # Name of the learning path
+  name: String! @search(by: [exact, term, fulltext])
+  
+  # Description of what this path covers
+  description: String @search(by: [fulltext])
+  
+  # Target audience or skill level
+  targetAudience: String @search(by: [term])
+  
+  # Ordered list of concepts in this path
+  concepts: [PathConcept!]
+  
+  # Total estimated time in hours
+  estimatedTime: Float
+  
+  # Difficulty progression (beginner, mixed, advanced)
+  difficultyProgression: String
+  
+  # Goals or outcomes of completing this path
+  learningOutcomes: [String]
+  
+  # User who created this path (for custom paths)
+  creator: String
+  
+  # Whether this is a system-generated or user-created path
+  isCustom: Boolean!
+  
+  # Metadata
+  createdAt: DateTime! @search
+  updatedAt: DateTime! @search
+}
+
+# Intermediate type for ordering concepts in a learning path
+type PathConcept {
+  concept: Concept!
+  order: Int!
+  isOptional: Boolean!
+  alternativeConcepts: [Concept]
+}
+
+# User Progress tracking
+type UserProgress {
+  id: ID!
+  
+  # User identifier
+  userId: String! @search(by: [exact])
+  
+  # Concept being tracked
+  concept: Concept!
+  
+  # Progress status (not_started, in_progress, completed, mastered)
+  status: String! @search(by: [exact])
+  
+  # Percentage complete (0-100)
+  percentComplete: Float
+  
+  # Time spent in minutes
+  timeSpent: Int
+  
+  # Number of resources consumed
+  resourcesCompleted: Int
+  
+  # User's difficulty rating
+  difficultyRating: Float
+  
+  # Notes or feedback
+  notes: String
+  
+  # Timestamps
+  startedAt: DateTime
+  completedAt: DateTime
+  lastAccessedAt: DateTime! @search
+}
+
+# Search Analytics for improving results
+type SearchQuery {
+  id: ID!
+  
+  # The search query text
+  query: String! @search(by: [term, fulltext])
+  
+  # User who performed the search
+  userId: String @search(by: [exact])
+  
+  # Number of results returned
+  resultCount: Int
+  
+  # Concepts that were clicked/selected
+  selectedConcepts: [Concept]
+  
+  # Whether the search was successful
+  wasSuccessful: Boolean
+  
+  # Search type (keyword, similarity, path)
+  searchType: String @search(by: [exact])
+  
+  # Timestamp
+  createdAt: DateTime! @search
+}
+
+# Indexes for common queries
+# DGraph automatically creates indexes based on @search directives
+
+# Example mutations will be:
+# - addConcept
+# - updateConcept
+# - addLearningResource
+# - addLearningPath
+# - updateUserProgress
+# - logSearchQuery
+
+# Example queries will be:
+# - getConcept(id)
+# - searchConcepts(query, category, difficulty)
+# - findPrerequisites(conceptId)
+# - findLearningPath(fromConcept, toConcept)
+# - getRelatedConcepts(conceptId, limit)
+# - findSimilarConcepts(embedding, limit)

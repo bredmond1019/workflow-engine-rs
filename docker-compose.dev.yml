@@ -1,0 +1,183 @@
+version: '3.8'
+
+# Development-specific overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Override for hot-reloading and development
+  ai-workflow-system:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        RUST_VERSION: 1.75
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src:ro
+      - ./Cargo.toml:/app/Cargo.toml:ro
+      - ./Cargo.lock:/app/Cargo.lock:ro
+      - ./workflows:/app/workflows:ro
+      - ./logs:/app/logs
+      # Cargo cache for faster rebuilds
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
+      - target-cache:/app/target
+    environment:
+      RUST_LOG: debug
+      RUST_BACKTRACE: 1
+      # Enable development features
+      DEVELOPMENT_MODE: "true"
+      # Disable authentication for easier testing
+      DISABLE_AUTH: "true"
+      # Use mock services in development
+      USE_MOCK_SERVICES: "true"
+    command: ["cargo", "watch", "-x", "run"]
+
+  # PostgreSQL with exposed port for direct access
+  postgres:
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Persist data between restarts
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Development seed data
+      - ./scripts/seed-dev-data.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aiworkflow123}
+      # Enable query logging in development
+      POSTGRES_INITDB_ARGS: "-c log_statement=all"
+
+  # Development mail catcher
+  mailcatcher:
+    image: schickling/mailcatcher:latest
+    container_name: ai-workflow-mailcatcher
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    networks:
+      - ai-workflow-net
+
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ai-workflow-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - ai-workflow-net
+
+  # Swagger UI standalone
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: ai-workflow-swagger
+    ports:
+      - "8081:8080"
+    environment:
+      SWAGGER_JSON_URL: "http://localhost:8080/api/v1/openapi.json"
+      VALIDATOR_URL: "null"
+    depends_on:
+      - ai-workflow-system
+    networks:
+      - ai-workflow-net
+
+  # Development Redis with RedisInsight
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123} --loglevel debug
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: ai-workflow-redisinsight
+    ports:
+      - "8001:8001"
+    volumes:
+      - redisinsight_data:/db
+    depends_on:
+      - redis
+    networks:
+      - ai-workflow-net
+
+  # Prometheus with development configuration
+  prometheus:
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/prometheus.dev.yml:/etc/prometheus/prometheus.dev.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.dev.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'  # Enable config reload via API
+
+  # Grafana with development dashboards
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: 'true'
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      # Development plugins
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/grafana/dev-dashboards:/var/lib/grafana/dev-dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+  # Jaeger with in-memory storage for development
+  jaeger:
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+      SPAN_STORAGE_TYPE: memory
+    command:
+      - "--query.max-clock-skew-adjustment=1s"
+      - "--log-level=debug"
+
+  # Documentation server
+  docs:
+    image: nginx:alpine
+    container_name: ai-workflow-docs
+    ports:
+      - "8082:80"
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+      - ./README.md:/usr/share/nginx/html/README.md:ro
+    networks:
+      - ai-workflow-net
+
+  # Development utilities container
+  dev-tools:
+    image: busybox:latest
+    container_name: ai-workflow-dev-tools
+    command: tail -f /dev/null
+    volumes:
+      - ./:/workspace
+    networks:
+      - ai-workflow-net
+    profiles:
+      - tools
+
+# Additional volumes for development
+volumes:
+  pgadmin_data:
+  redisinsight_data:
+  cargo-cache:
+  cargo-git:
+  target-cache:
+
+# Networks remain the same
+networks:
+  ai-workflow-net:
+    driver: bridge

@@ -1,0 +1,98 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alertmanager@ai-workflow-system.local'
+
+route:
+  group_by: ['alertname', 'severity', 'component']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'web.hook'
+  routes:
+    # Critical alerts go to immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 5m
+    
+    # Warning alerts are grouped and sent less frequently
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 1m
+      repeat_interval: 30m
+    
+    # Info alerts are batched
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 5m
+      repeat_interval: 2h
+
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/critical'
+        send_resolved: true
+        title: 'CRITICAL: AI Workflow System Alert'
+        text: |
+          **Alert:** {{ .GroupLabels.alertname }}
+          **Severity:** {{ .GroupLabels.severity }}
+          **Component:** {{ .GroupLabels.component }}
+          **Description:** {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+          **Started:** {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+    
+    # Email notifications for critical alerts (if SMTP is configured)
+    email_configs:
+      - to: 'devops@company.com'
+        subject: 'CRITICAL: AI Workflow System Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          Alert: {{ .GroupLabels.alertname }}
+          Severity: {{ .GroupLabels.severity }}
+          Component: {{ .GroupLabels.component }}
+          
+          Description:
+          {{ range .Alerts }}
+          - {{ .Annotations.description }}
+          {{ end }}
+          
+          Started: {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+          
+          Dashboard: http://localhost:3000/d/ai-workflow-health
+          Prometheus: http://localhost:9090
+
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/warning'
+        send_resolved: true
+        title: 'WARNING: AI Workflow System Alert'
+
+  - name: 'info-alerts'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/info'
+        send_resolved: true
+        title: 'INFO: AI Workflow System Alert'
+
+inhibit_rules:
+  # If a service is down, don't alert on high error rates for that service
+  - source_match:
+      alertname: ServiceDown
+    target_match:
+      alertname: HighErrorRate
+    equal: ['job']
+  
+  # If system CPU is high, don't alert on high response times
+  - source_match:
+      alertname: HighCPUUsage
+    target_match:
+      alertname: HighResponseTime
+    equal: ['instance']
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

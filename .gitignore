@@ -1,0 +1,7 @@
+/target
+.aider*
+.env
+
+ai-dev-tasks/
+**/target/
+*target/
