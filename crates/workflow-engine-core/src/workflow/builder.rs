@@ -48,83 +48,16 @@ impl WorkflowBuilder {
         self
     }
 
-    /// Add a Notion client node to the workflow (stub - full implementation in workflow-engine-mcp)
-    pub fn add_notion_client(
-        self,
-        _server_url: Option<String>,
-        _transport: Option<String>, // Using String instead of TransportType to avoid dependency
-    ) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
+    // MCP client methods removed - use workflow-engine-mcp crate directly for MCP integration
 
-    /// Add a HelpScout client node to the workflow (stub - full implementation in workflow-engine-mcp)
-    pub fn add_helpscout_client(
-        self,
-        _server_url: Option<String>,
-        _transport: Option<String>, // Using String instead of TransportType to avoid dependency
-    ) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
 
-    /// Add a Slack client node to the workflow (stub - full implementation in workflow-engine-mcp)
-    pub fn add_slack_client(
-        self,
-        _server_url: Option<String>,
-        _transport: Option<String>, // Using String instead of TransportType to avoid dependency
-    ) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
 
-    /// Add an external MCP client node with custom configuration (stub)
-    /// Full implementation available in workflow-engine-mcp crate
-    pub fn add_external_mcp_client(self, _service_name: String) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
 
-    /// Create a multi-service workflow with all three external MCP clients
-    pub fn add_all_mcp_clients(self) -> Self {
-        self.add_notion_client(None, None)
-            .add_helpscout_client(None, None)
-            .add_slack_client(None, None)
-    }
 
-    /// Add external MCP clients for customer support workflow
-    pub fn add_customer_support_clients(self) -> Self {
-        self.add_helpscout_client(None, None)
-            .add_slack_client(None, None)
-    }
 
-    /// Add external MCP clients for content management workflow
-    pub fn add_content_management_clients(self) -> Self {
-        self.add_notion_client(None, None)
-            .add_slack_client(None, None)
-    }
 
-    /// Add external MCP clients from configuration (stub)
-    /// Full implementation available in workflow-engine-mcp crate
-    pub fn add_mcp_clients_from_config(self, _config_json: String) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
 
-    /// Add external MCP clients from environment variables
-    pub fn add_mcp_clients_from_env(self) -> Self {
-        // use crate::nodes::external_config::EnvConfigLoader;
-        // let config = EnvConfigLoader::load();
-        // self.add_mcp_clients_from_config(config)
-        self  // Return self unchanged for now
-    }
 
-    /// Create a workflow with external MCP clients using custom configuration builder (stub)
-    /// Full implementation available in workflow-engine-mcp crate
-    pub fn add_mcp_clients_with_builder(self, _config_json: String) -> Self {
-        // Stub implementation - actual MCP client integration is in workflow-engine-mcp crate
-        self
-    }
 
     pub fn build(self) -> Result<Workflow, WorkflowError> {
         Workflow::new(self.schema)

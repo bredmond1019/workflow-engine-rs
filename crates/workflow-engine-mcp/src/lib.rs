@@ -48,6 +48,7 @@ pub mod protocol;
 pub mod transport;
 pub mod clients;
 pub mod config;
+pub mod config_builder;
 pub mod health;
 pub mod metrics;
 pub mod connection_pool;
@@ -57,7 +58,7 @@ pub mod load_balancer;
 pub mod server;
 
 // Re-export commonly used types
-pub use protocol::{MCPMessage, MCPRequest, MCPResponse, ToolDefinition as McpTool, CallToolResult as McpToolResult};
+pub use protocol::{MCPMessage, MCPRequest, MCPResponse, ToolDefinition as MCPTool, CallToolResult as MCPToolResult};
 pub use transport::{TransportType, MCPTransport};
 pub use clients::MCPClient;
 pub use config::MCPConfig;

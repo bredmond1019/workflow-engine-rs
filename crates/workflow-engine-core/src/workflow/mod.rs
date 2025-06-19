@@ -464,6 +464,7 @@ use super::{
 pub mod builder;
 pub mod schema;
 pub mod validator;
+pub mod workflow_builder;
 
 /// Represents a workflow with its schema and node registry.
 pub struct Workflow {
@@ -695,50 +696,8 @@ impl Workflow {
         &self.schema.workflow_type
     }
 
-    /// Exposes the workflow nodes as an MCP server (stub)
-    /// Full implementation available in workflow-engine-mcp crate
-    ///
-    /// # Arguments
-    ///
-    /// * `server_name` - The name of the MCP server
-    /// * `server_version` - The version of the MCP server
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` indicating success or failure
-    pub async fn expose_as_mcp_server(
-        &self,
-        server_name: &str,
-        server_version: &str,
-    ) -> Result<String, WorkflowError> {
-        // Stub implementation - actual MCP server functionality is in workflow-engine-mcp crate
-        Ok(format!("MCP server configured: {} v{}", server_name, server_version))
-    }
+    // MCP server methods removed - use workflow-engine-mcp crate directly for MCP server functionality
 
-    /// Registers an external MCP server for use by agent nodes (stub)
-    /// Full implementation available in workflow-engine-mcp crate
-    ///
-    /// # Arguments
-    ///
-    /// * `server_uri` - The URI of the external MCP server
-    /// * `transport_config` - String configuration for transport
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` indicating success or failure
-    pub async fn register_mcp_server(
-        &self,
-        server_uri: &str,
-        transport_config: &str,
-    ) -> Result<(), WorkflowError> {
-        // Stub implementation - actual MCP server registration is in workflow-engine-mcp crate
-        log::info!(
-            "Registering MCP server: {} with config: {}",
-            server_uri,
-            transport_config
-        );
-        Ok(())
-    }
 
     /// Gets the node registry for direct access
     ///

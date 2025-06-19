@@ -8,13 +8,13 @@ use workflow_engine_mcp::prelude::*;
 
 /// External MCP client node
 #[derive(Debug)]
-pub struct ExternalMcpClientNode {
+pub struct ExternalMCPClientNode {
     name: String,
     transport: TransportType,
     available_tools: Vec<String>,
 }
 
-impl ExternalMcpClientNode {
+impl ExternalMCPClientNode {
     /// Create a new external MCP client node
     pub fn new(name: String, transport: TransportType, tools: Vec<String>) -> Self {
         Self {
@@ -25,7 +25,7 @@ impl ExternalMcpClientNode {
     }
 }
 
-impl Node for ExternalMcpClientNode {
+impl Node for ExternalMCPClientNode {
     fn process(&self, context: TaskContext) -> Result<TaskContext> {
         // Implementation would connect to external MCP server
         // For now, return a placeholder
