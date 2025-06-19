@@ -1,11 +1,11 @@
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, middleware, web};
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use log::info;
 use std::{env, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 
 use workflow_engine_api::db::session::DbPool;
-use workflow_engine_api::{api, workflows};
+use workflow_engine_api::api;
 use workflow_engine_core::auth::JwtAuth;
 use workflow_engine_api::api::middleware::auth::JwtMiddleware;
 use workflow_engine_api::api::rate_limit::{RateLimitConfig, RateLimitMiddleware};
@@ -13,18 +13,20 @@ use workflow_engine_api::api::rate_limit::{RateLimitConfig, RateLimitMiddleware}
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Set backtrace and logging
-    unsafe {
-        env::set_var("RUST_BACKTRACE", "1");
-        env::set_var("RUST_LOG", "info");
-        // Set process start time for health checks
-        env::set_var("PROCESS_START_TIME", 
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                .to_string()
-        );
+    // Note: In production, set these via environment or command line
+    if env::var("RUST_BACKTRACE").is_err() {
+        std::env::set_var("RUST_BACKTRACE", "1");
     }
+    if env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
+    
+    // Set process start time for health checks
+    let start_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("System time before UNIX epoch")
+        .as_secs();
+    std::env::set_var("PROCESS_START_TIME", start_time.to_string());
 
     // Load environment variables from .env file
     dotenv().ok();
@@ -70,8 +72,9 @@ async fn main() -> std::io::Result<()> {
         burst_size,
     };
 
-    info!("Starting Demo Workflows");
-    workflows::demos::run_all_demos().await;
+    // TODO: Re-enable when workflows module is fixed
+    // info!("Starting Demo Workflows");
+    // workflows::demos::run_all_demos().await;
 
     // Start HTTP server
     HttpServer::new(move || {

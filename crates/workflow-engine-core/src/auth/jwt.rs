@@ -64,14 +64,23 @@ impl Claims {
 }
 
 /// Simple JWT middleware for Actix-web
-pub struct JwtAuth;
+pub struct JwtAuth {
+    secret: String,
+}
 
 impl JwtAuth {
+    /// Create a new JwtAuth instance with the provided secret
+    pub fn new(secret: String) -> Self {
+        if secret.is_empty() {
+            panic!("JWT secret cannot be empty");
+        }
+        Self { secret }
+    }
     /// Validate a JWT token and return the claims
-    pub fn validate_token(token: &str) -> Result<Claims, JwtError> {
+    pub fn validate_token(&self, token: &str) -> Result<Claims, JwtError> {
         // Start with symmetric key (HS256)
         // Move to RS256 with Auth0 in Phase 1.5
-        let decoding_key = DecodingKey::from_secret(JWT_SECRET.as_ref());
+        let decoding_key = DecodingKey::from_secret(self.secret.as_ref());
         let validation = Validation::new(Algorithm::HS256);
         
         match decode::<Claims>(token, &decoding_key, &validation) {
@@ -88,8 +97,8 @@ impl JwtAuth {
     }
     
     /// Generate a new JWT token for the given claims
-    pub fn generate_token(claims: &Claims) -> Result<String, JwtError> {
-        let encoding_key = EncodingKey::from_secret(JWT_SECRET.as_ref());
+    pub fn generate_token(&self, claims: &Claims) -> Result<String, JwtError> {
+        let encoding_key = EncodingKey::from_secret(self.secret.as_ref());
         let header = Header::new(Algorithm::HS256);
         
         encode(&header, claims, &encoding_key).map_err(JwtError::ValidationFailed)
@@ -102,6 +111,11 @@ impl JwtAuth {
         } else {
             None
         }
+    }
+    
+    /// Create a default instance with secret from environment
+    pub fn default() -> Self {
+        Self::new(JWT_SECRET.clone())
     }
 }
 
@@ -119,20 +133,22 @@ mod tests {
     
     #[test]
     fn test_generate_and_validate_token() {
+        let auth = JwtAuth::new("test_secret".to_string());
         let claims = Claims::new("user123".to_string(), "admin".to_string());
         
         // Generate token
-        let token = JwtAuth::generate_token(&claims).expect("Failed to generate token");
+        let token = auth.generate_token(&claims).expect("Failed to generate token");
         assert!(!token.is_empty());
         
         // Validate token
-        let decoded_claims = JwtAuth::validate_token(&token).expect("Failed to validate token");
+        let decoded_claims = auth.validate_token(&token).expect("Failed to validate token");
         assert_eq!(decoded_claims.sub, "user123");
         assert_eq!(decoded_claims.role, "admin");
     }
     
     #[test]
     fn test_expired_token() {
+        let auth = JwtAuth::new("test_secret".to_string());
         let past_time = Utc::now() - Duration::hours(1);
         let claims = Claims::with_expiration(
             "user123".to_string(), 
@@ -140,15 +156,16 @@ mod tests {
             past_time
         );
         
-        let token = JwtAuth::generate_token(&claims).expect("Failed to generate token");
-        let result = JwtAuth::validate_token(&token);
+        let token = auth.generate_token(&claims).expect("Failed to generate token");
+        let result = auth.validate_token(&token);
         
         assert!(matches!(result, Err(JwtError::TokenExpired)));
     }
     
     #[test]
     fn test_invalid_token() {
-        let result = JwtAuth::validate_token("invalid.token.here");
+        let auth = JwtAuth::new("test_secret".to_string());
+        let result = auth.validate_token("invalid.token.here");
         assert!(result.is_err());
     }
     
@@ -168,5 +185,29 @@ mod tests {
             JwtAuth::extract_bearer_token("Basic dXNlcjpwYXNz"),
             None
         );
+    }
+    
+    #[test]
+    fn test_new_with_valid_secret() {
+        let auth = JwtAuth::new("valid_secret".to_string());
+        // Test that it can generate tokens
+        let claims = Claims::new("user123".to_string(), "admin".to_string());
+        let token = auth.generate_token(&claims);
+        assert!(token.is_ok());
+    }
+    
+    #[test]
+    #[should_panic(expected = "JWT secret cannot be empty")]
+    fn test_new_with_empty_secret_panics() {
+        JwtAuth::new("".to_string());
+    }
+    
+    #[test]
+    fn test_default_constructor() {
+        let auth = JwtAuth::default();
+        // Test that it can generate tokens with default secret
+        let claims = Claims::new("user123".to_string(), "admin".to_string());
+        let token = auth.generate_token(&claims);
+        assert!(token.is_ok());
     }
 }
