@@ -1,3 +1,5 @@
+[workspace]
+
 [package]
 name = "realtime_communication"
 version = "0.1.0"
@@ -13,7 +15,6 @@ actix-web = { version = "4.11.0", features = ["macros"] }
 actix-ws = "0.2"
 actix-web-actors = "4.3"
 actix = "0.13"
-actix-cors = "0.7.1"
 
 # Serialization
 serde = { version = "1.0.219", features = ["derive"] }
@@ -24,21 +25,12 @@ redis = { version = "0.23", features = ["aio", "tokio-comp", "streams", "connect
 
 # Database
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
-tokio-postgres = "0.7"
 
 # Error handling
-anyhow = "1.0"
 thiserror = "2.0.12"
 
 # Logging and tracing
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
-tracing-opentelemetry = "0.22"
-opentelemetry = { version = "0.21", features = ["trace"] }
-opentelemetry-otlp = "0.14"
-
-# Metrics
-prometheus = "0.13.4"
 
 # Authentication and JWT
 jsonwebtoken = "9.0"
