@@ -40,7 +40,7 @@ workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0" }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-dotenv = { workspace = true }
+dotenvy = { workspace = true }
 env_logger = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
