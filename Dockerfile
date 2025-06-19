@@ -11,21 +11,12 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /app
 
-# Copy Cargo files
+# Copy workspace files
 COPY Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
 
-# Build dependencies (this is cached if Cargo files don't change)
-RUN mkdir src && \
-    echo "fn main() {}" > src/main.rs && \
-    echo "fn main() {}" > src/lib.rs && \
-    cargo build --release && \
-    rm -rf src
-
-# Copy source code
-COPY src ./src
-
-# Build the application
-RUN cargo build --release
+# Build dependencies and application
+RUN cargo build --release --bin workflow-engine
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -42,7 +33,7 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -u 1000 aiworkflow
 
 # Copy the binary from builder
-COPY --from=builder /app/target/release/backend /usr/local/bin/ai-workflow
+COPY --from=builder /app/target/release/workflow-engine /usr/local/bin/ai-workflow
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/workflows && \

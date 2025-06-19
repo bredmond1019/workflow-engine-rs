@@ -298,7 +298,7 @@ case "$1" in
     "start")
         echo "Starting development servers..."
         ./scripts/start_test_servers.sh &
-        cargo watch -x "run --bin backend"
+        cargo watch -x "run --bin workflow-engine"
         ;;
     "test")
         echo "Running tests..."
@@ -339,7 +339,7 @@ echo
 echo "Next steps:"
 echo "1. Review and update your .env file with appropriate values"
 echo "2. Run tests: ${GREEN}cargo test${NC}"
-echo "3. Start the server: ${GREEN}cargo run --bin backend${NC}"
+echo "3. Start the server: ${GREEN}cargo run --bin workflow-engine${NC}"
 echo "4. Start MCP servers: ${GREEN}./scripts/start_test_servers.sh${NC}"
 echo
 echo "Helpful commands:"

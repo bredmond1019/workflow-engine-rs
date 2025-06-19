@@ -36,6 +36,8 @@ tracing-subscriber = { workspace = true }
 # Web framework
 actix-web = { workspace = true }
 actix-cors = { workspace = true }
+actix-web-actors = { workspace = true }
+actix = { workspace = true }
 
 # Optional features
 utoipa = { workspace = true, optional = true }

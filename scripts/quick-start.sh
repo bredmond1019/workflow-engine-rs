@@ -116,7 +116,7 @@ fi
 # Step 4: Build check
 print_info "Checking Rust build..."
 
-if [ -d "target" ] && [ -f "target/debug/backend" ]; then
+if [ -d "target" ] && [ -f "target/debug/workflow-engine" ]; then
     print_status "Project already built"
 else
     print_info "Building project (this may take a few minutes)..."

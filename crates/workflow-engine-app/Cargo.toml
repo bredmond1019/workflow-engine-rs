@@ -31,10 +31,10 @@ monitoring = ["workflow-engine-core/monitoring", "workflow-engine-api/monitoring
 
 [dependencies]
 # All workspace crates with full features
-workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
-workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0" }
-workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0" }
-workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0" }
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0", features = ["full"] }
+workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0", features = ["all"] }
+workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0", features = ["default"] }
+workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0", features = ["all"] }
 
 # Runtime dependencies
 dotenvy = { workspace = true }
