@@ -257,13 +257,16 @@ async fn send_heartbeat_with_retry(
 
 /// Helper function to bootstrap a service with database registry
 /// Note: In production, you would pass a properly configured connection pool
+#[cfg(feature = "database")]
 pub async fn bootstrap_service_with_db(
     config: ServiceConfig,
     // TODO: Re-enable when PostgresAgentRegistry is implemented
     // registry: PostgresAgentRegistry,
 ) -> Result<tokio::task::JoinHandle<()>, BootstrapError> {
     // TODO: Fix bootstrap service when registry is implemented
-    todo!("Bootstrap service implementation needed")
+    Err(BootstrapError::ConfigurationError(
+        "Database registry not yet implemented. Use in-memory registry instead.".to_string()
+    ))
 }
 
 #[cfg(test)]
