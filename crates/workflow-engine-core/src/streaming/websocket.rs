@@ -11,7 +11,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use crate::error::WorkflowError;
 use super::types::{StreamChunk, StreamConfig, StreamEvent, StreamMessage, StreamingProvider, StreamResponse, StreamMetadata};
 
 #[cfg(feature = "streaming")]
