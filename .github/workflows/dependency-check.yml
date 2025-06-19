@@ -1,0 +1,318 @@
+name: Dependency Security Check
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-audit-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-audit
+      run: |
+        cargo install cargo-audit --locked
+
+    - name: Run security audit
+      run: cargo audit
+
+    - name: Check for unmaintained dependencies
+      run: cargo audit --stale
+
+  outdated-check:
+    name: Check Outdated Dependencies
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-outdated-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-outdated
+      run: |
+        cargo install cargo-outdated --locked
+
+    - name: Check for outdated dependencies
+      run: |
+        echo "## Outdated Dependencies Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check workspace dependencies
+        echo "### Workspace Dependencies" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cargo outdated --workspace --color never >> $GITHUB_STEP_SUMMARY || true
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check each crate individually
+        for crate in workflow-engine-core workflow-engine-mcp workflow-engine-api workflow-engine-nodes workflow-engine-app; do
+          echo "### $crate" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cd crates/$crate
+          cargo outdated --color never >> $GITHUB_STEP_SUMMARY || true
+          cd ../..
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        done
+
+  license-check:
+    name: License Compatibility Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-deny-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-deny
+      run: |
+        cargo install cargo-deny --locked
+
+    - name: Create deny.toml if it doesn't exist
+      run: |
+        if [ ! -f deny.toml ]; then
+          cat > deny.toml << 'EOF'
+        [licenses]
+        # List of explicitly allowed licenses
+        allow = [
+            "MIT",
+            "Apache-2.0",
+            "Apache-2.0 WITH LLVM-exception",
+            "BSD-2-Clause",
+            "BSD-3-Clause",
+            "ISC",
+            "Unicode-DFS-2016",
+            "CC0-1.0",
+            "MPL-2.0",
+        ]
+        
+        # List of explicitly disallowed licenses
+        deny = [
+            "GPL-2.0",
+            "GPL-3.0",
+            "AGPL-3.0",
+        ]
+        
+        copyleft = "warn"
+        allow-osi-fsf-free = "neither"
+        confidence-threshold = 0.8
+        
+        [bans]
+        multiple-versions = "warn"
+        wildcards = "allow"
+        highlight = "all"
+        
+        # Certain crates are allowed to have multiple versions
+        skip = [
+            { name = "windows-sys" },
+            { name = "windows-targets" },
+            { name = "windows_aarch64_gnullvm" },
+            { name = "windows_aarch64_msvc" },
+            { name = "windows_i686_gnu" },
+            { name = "windows_i686_msvc" },
+            { name = "windows_x86_64_gnu" },
+            { name = "windows_x86_64_gnullvm" },
+            { name = "windows_x86_64_msvc" },
+        ]
+        
+        [sources]
+        unknown-registry = "warn"
+        unknown-git = "warn"
+        
+        [advisories]
+        db-path = "~/.cargo/advisory-db"
+        db-urls = ["https://github.com/rustsec/advisory-db"]
+        vulnerability = "deny"
+        unmaintained = "warn"
+        yanked = "warn"
+        notice = "warn"
+        ignore = []
+        EOF
+        fi
+
+    - name: Check licenses
+      run: cargo deny check licenses
+
+    - name: Check for banned dependencies
+      run: cargo deny check bans
+
+    - name: Check for security advisories
+      run: cargo deny check advisories
+
+  dependency-graph:
+    name: Submit Dependency Graph
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Submit dependency graph
+      uses: rust-lang/cargo-dependency-submission@v1
+      with:
+        # Submit a snapshot of the workspace dependencies
+        manifest-path: ./Cargo.toml
+
+  msrv-check:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install MSRV toolchain
+      uses: dtolnay/rust-toolchain@1.75.0
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-msrv-deps-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Check MSRV
+      run: |
+        cargo check --workspace --all-features
+        cargo check --workspace --no-default-features
+
+  supply-chain-security:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-vet-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-vet
+      run: |
+        cargo install cargo-vet --locked || true
+
+    - name: Initialize cargo vet if needed
+      run: |
+        if [ ! -f supply-chain/config.toml ]; then
+          cargo vet init || true
+        fi
+
+    - name: Check supply chain
+      run: |
+        cargo vet || echo "Supply chain check completed with warnings"
+
+  create-issue-on-failure:
+    name: Create Issue on Security Failure
+    runs-on: ubuntu-latest
+    needs: [security-audit, license-check]
+    if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    permissions:
+      issues: write
+    steps:
+    - name: Create security issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const date = new Date().toISOString().split('T')[0];
+          const title = `Security: Dependency vulnerabilities detected - ${date}`;
+          
+          // Check if issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'security,dependencies'
+          });
+          
+          const existingIssue = issues.data.find(issue => issue.title.startsWith('Security: Dependency vulnerabilities detected'));
+          
+          if (!existingIssue) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: `## Dependency Security Alert
+              
+              The automated security scan has detected vulnerabilities in the project dependencies.
+              
+              **Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+              
+              Please review the security audit results and update the affected dependencies.
+              
+              ### Actions Required:
+              - [ ] Review the security audit output
+              - [ ] Update vulnerable dependencies
+              - [ ] Run \`cargo audit\` locally to verify fixes
+              - [ ] Create a PR with the dependency updates
+              
+              /cc @brandon`,
+              labels: ['security', 'dependencies', 'high-priority']
+            });
+          }
