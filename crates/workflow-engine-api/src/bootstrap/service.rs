@@ -1,5 +1,4 @@
 use workflow_engine_core::registry::agent_registry::{AgentRegistry, AgentRegistration};
-use workflow_engine_core::error::WorkflowError;
 use chrono::Utc;
 use serde_json::Value;
 use std::time::Duration;

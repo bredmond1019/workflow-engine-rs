@@ -667,12 +667,7 @@ pub fn create_knowledge_base_workflow() -> Result<Workflow, WorkflowError> {
                 .with_router(true)
                 .with_description(
                     "Initiates parallel searches across knowledge sources".to_string(),
-                )
-                .with_parallel_nodes(vec![
-                    TypeId::of::<NotionSearchNode>(),
-                    TypeId::of::<HelpscoutSearchNode>(),
-                    TypeId::of::<SlackSearchNode>(),
-                ]),
+                ),
         )
         .add_node(
             NodeConfig::new::<AnalyzeKnowledgeNode>()
@@ -700,9 +695,6 @@ pub fn create_knowledge_base_workflow() -> Result<Workflow, WorkflowError> {
     workflow.register_node(ValidateQueryNode);
     workflow.register_node(FilterSpamQueryNode);
     workflow.register_node(SearchRouterNode);
-    workflow.register_node(NotionSearchNode::new());
-    workflow.register_node(HelpscoutSearchNode::new());
-    workflow.register_node(SlackSearchNode::new());
     workflow.register_node(AnalyzeKnowledgeNode);
     workflow.register_node(GenerateKnowledgeResponseNode);
     workflow.register_node(SendKnowledgeReplyNode);

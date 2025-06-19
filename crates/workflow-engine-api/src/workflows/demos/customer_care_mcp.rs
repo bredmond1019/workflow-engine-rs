@@ -443,15 +443,10 @@ async fn demo_workflow_mcp_exposure(workflow: &Workflow) {
                 .expose_as_mcp_server("demo-workflow-server", "1.0.0")
                 .await
             {
-                Ok(workflow_server) => {
+                Ok(_) => {
                     println!("   ✅ Workflow exposed as MCP server successfully!");
-                    println!(
-                        "   🔧 Workflow tools available: {}",
-                        workflow_server.get_tool_count().await
-                    );
-
-                    let workflow_tools = workflow_server.get_tool_names().await;
-                    println!("   📋 Workflow tool names: {:?}", workflow_tools);
+                    println!("   🔧 MCP server functionality is currently under development");
+                    println!("   📋 Tool count and names will be available when implementation is complete");
                 }
                 Err(e) => {
                     println!("   ❌ Failed to expose workflow as MCP server: {}", e);
@@ -558,11 +553,7 @@ async fn demo_external_mcp_server(workflow: &Workflow) {
             match workflow
                 .register_mcp_server(
                     "ws://localhost:8080/external-mcp",
-                    TransportType::WebSocket {
-                        url: "ws://localhost:8080/external-mcp".to_string(),
-                        heartbeat_interval: Some(Duration::from_secs(30)),
-                        reconnect_config: ReconnectConfig::default(),
-                    },
+                    "websocket",
                 )
                 .await
             {

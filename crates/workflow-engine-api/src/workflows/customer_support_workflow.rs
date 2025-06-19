@@ -502,13 +502,13 @@ pub fn create_customer_care_workflow() -> Result<Workflow, WorkflowError> {
         .build()?;
 
     // Register all nodes
-    workflow.register_node(AnalyzeTicketNode);
-    workflow.register_node(DetermineTicketIntentNode);
-    workflow.register_node(FilterSpamNode);
-    workflow.register_node(ValidateTicketNode);
+    workflow.register_node(AnalyzeTicketNode::new());
+    workflow.register_node(DetermineTicketIntentNode::new());
+    workflow.register_node(FilterSpamNode::new());
+    workflow.register_node(ValidateTicketNode::new());
     workflow.register_node(TicketRouterNode::new());
-    workflow.register_node(GenerateCustomerResponseNode);
-    workflow.register_node(SendReplyNode);
+    workflow.register_node(GenerateCustomerResponseNode::new());
+    workflow.register_node(SendReplyNode::new());
 
     Ok(workflow)
 }

@@ -529,13 +529,13 @@ async fn display_event_conversion(context: &TaskContext) {
     match context.to_event() {
         Ok(event) => {
             println!("   💾 Converted to Event:");
-            println!("      📄 ID: {}", event.id);
-            println!("      🔧 Workflow Type: {}", event.workflow_type);
-            println!("      🕐 Created: {}", event.created_at.format("%Y-%m-%d %H:%M:%S UTC"));
-            println!("      🕐 Updated: {}", event.updated_at.format("%Y-%m-%d %H:%M:%S UTC"));
+            println!("      📄 ID: {}", event.get("event_id").and_then(|v| v.as_str()).unwrap_or("unknown"));
+            println!("      🔧 Workflow Type: {}", event.get("workflow_type").and_then(|v| v.as_str()).unwrap_or("unknown"));
+            println!("      🕐 Created: {}", event.get("created_at").and_then(|v| v.as_str()).unwrap_or("unknown"));
+            println!("      🕐 Updated: {}", event.get("updated_at").and_then(|v| v.as_str()).unwrap_or("unknown"));
             println!(
                 "      📊 Task Context Size: {} bytes",
-                serde_json::to_string(&event.task_context).map(|s| s.len()).unwrap_or(0)
+                event.get("task_context").map(|v| serde_json::to_string(v).map(|s| s.len()).unwrap_or(0)).unwrap_or(0)
             );
         }
         Err(e) => {

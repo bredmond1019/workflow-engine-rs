@@ -652,15 +652,10 @@ pub async fn knowledge_base_mcp_demo() {
                 .expose_as_mcp_server("kb-workflow-server", "1.0.0")
                 .await
             {
-                Ok(kb_workflow_server) => {
+                Ok(_) => {
                     println!("✅ Knowledge Base Workflow exposed as MCP server successfully!");
-                    println!(
-                        "   🔧 Workflow tools available: {}",
-                        kb_workflow_server.get_tool_count().await
-                    );
-
-                    let kb_workflow_tools = kb_workflow_server.get_tool_names().await;
-                    println!("   📚 Knowledge workflow tool names: {:?}", kb_workflow_tools);
+                    println!("   🔧 MCP server functionality is currently under development");
+                    println!("   📚 Tool count and names will be available when implementation is complete");
                 }
                 Err(e) => println!("❌ Failed to expose knowledge base workflow as MCP server: {}", e),
             }
@@ -773,11 +768,7 @@ pub async fn knowledge_base_mcp_demo() {
                 match workflow
                     .register_mcp_server(
                         server_url,
-                        TransportType::WebSocket {
-                            url: server_url.to_string(),
-                            heartbeat_interval: Some(Duration::from_secs(30)),
-                            reconnect_config: ReconnectConfig::default(),
-                        },
+                        "websocket",
                     )
                     .await
                 {

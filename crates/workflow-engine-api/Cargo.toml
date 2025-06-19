@@ -26,6 +26,7 @@ workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
