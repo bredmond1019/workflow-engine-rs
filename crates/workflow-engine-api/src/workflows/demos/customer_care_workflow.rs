@@ -283,6 +283,7 @@
 //! logging with real-time status updates and progress indicators.
 
 use workflow_engine_core::{error::WorkflowError, task::TaskContext};
+use crate::workflows::event_integration::{WorkflowEventExt, TaskContextEventExt};
 use workflow_engine_mcp::server::customer_support::CustomerCareEventData;
 use crate::{
     db::event::NewEvent,

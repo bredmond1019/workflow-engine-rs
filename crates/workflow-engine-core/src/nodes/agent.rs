@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::sync::Arc;
-use tokio::sync::mpsc;
 use futures_util::stream::{Stream, StreamExt};
 use std::pin::Pin;
 
@@ -59,20 +58,21 @@ impl BaseAgentNode {
         }
     }
 
-    /*
-    pub fn with_mcp_client(mut self, mcp_client: Box<dyn MCPClient>) -> Self {
-        self.mcp_client = Some(Arc::new(tokio::sync::Mutex::new(mcp_client)));
+    // Stub implementations for MCP functionality
+    // TODO: Implement proper MCP integration when circular dependency is resolved
+    pub fn with_mcp_client(self, _mcp_client: Box<dyn std::any::Any + Send + Sync>) -> Self {
+        // Currently a no-op until MCP integration is fixed
         self
     }
 
-    pub fn set_mcp_client(&mut self, mcp_client: Box<dyn MCPClient>) {
-        self.mcp_client = Some(Arc::new(tokio::sync::Mutex::new(mcp_client)));
+    pub fn set_mcp_client(&mut self, _mcp_client: Box<dyn std::any::Any + Send + Sync>) {
+        // Currently a no-op until MCP integration is fixed
     }
 
     pub fn has_mcp_client(&self) -> bool {
-        self.mcp_client.is_some()
+        // Always return false until MCP integration is fixed
+        false
     }
-    */
 
     /*
     // MCP functionality temporarily commented out to avoid circular dependency

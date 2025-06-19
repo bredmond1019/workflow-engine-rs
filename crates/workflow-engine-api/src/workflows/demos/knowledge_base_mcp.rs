@@ -504,6 +504,7 @@
 //! - [`customer_care_workflow`](../customer_care_workflow/index.html) - Customer support automation
 
 use workflow_engine_core::{error::WorkflowError, workflow::Workflow};
+use crate::workflows::event_integration::{WorkflowEventExt, TaskContextEventExt, WorkflowMcpExt};
 use workflow_engine_mcp::{
     config::MCPConfig,
     connection_pool::{ConnectionConfig, MCPConnectionPool},

@@ -343,6 +343,9 @@ use serde_json::Value;
 use workflow_engine_core::{error::WorkflowError, workflow::Workflow};
 use crate::db::event::{Event, NewEvent};
 
+// Import extension traits
+use self::event_integration::{WorkflowEventExt, TaskContextEventExt};
+
 pub mod customer_support_workflow;
 pub mod demos;
 pub mod executor;
@@ -366,16 +369,26 @@ impl WorkflowRunner {
     pub fn process_event(
         &self,
         event: &Event,
-        conn: &mut PgConnection,
+        _conn: &mut PgConnection,
     ) -> Result<Event, WorkflowError> {
         // Run the workflow
         let task_context = self.workflow.run_from_event(event)?;
 
-        // Convert back to Event with updated task_context
-        let mut updated_event = task_context.to_event()?;
+        // Convert task context to JSON for storage
+        let task_context_json = task_context.to_event()?;
+        
+        // Create updated event with the task context
+        let updated_event = Event {
+            id: event.id,
+            workflow_type: event.workflow_type.clone(),
+            data: event.data.clone(),
+            task_context: task_context_json,
+            created_at: event.created_at,
+            updated_at: chrono::Utc::now(),
+        };
 
-        // Store the updated event in the database
-        updated_event.store(conn)?;
+        // TODO: Store the updated event in the database when Event::store is implemented
+        // updated_event.store(conn)?;
 
         Ok(updated_event)
     }
@@ -387,12 +400,16 @@ impl WorkflowRunner {
         conn: &mut PgConnection,
     ) -> Result<Event, WorkflowError> {
         // Create initial event
-        let mut event = NewEvent::new(
+        let event = NewEvent::new(
             event_data,
             self.workflow.workflow_type().to_string(),
             Value::Null,
         );
-        event.store(conn)?;
+        
+        // Store the event
+        event.store(conn).map_err(|e| WorkflowError::DatabaseError {
+            message: format!("Failed to store event: {}", e),
+        })?;
 
         // Process it
         self.process_event(&event, conn)

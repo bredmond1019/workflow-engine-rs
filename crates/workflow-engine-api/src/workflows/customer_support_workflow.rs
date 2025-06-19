@@ -148,7 +148,7 @@
 //! - Checks for required fields and proper formatting
 //! - Validates customer information
 //!
-//! ### GenerateResponseNode
+//! ### GenerateCustomerResponseNode
 //!
 //! AI-powered response generation:
 //! - Creates contextual responses based on ticket analysis
@@ -462,7 +462,7 @@
 use std::any::TypeId;
 
 use workflow_engine_mcp::server::customer_support::tools::{
-    AnalyzeTicketNode, DetermineTicketIntentNode, FilterSpamNode, GenerateResponseNode,
+    AnalyzeTicketNode, DetermineTicketIntentNode, FilterSpamNode, GenerateCustomerResponseNode,
     SendReplyNode, TicketRouterNode, ValidateTicketNode,
 };
 use workflow_engine_core::{
@@ -486,12 +486,12 @@ pub fn create_customer_care_workflow() -> Result<Workflow, WorkflowError> {
         )
         .add_node(
             NodeConfig::new::<TicketRouterNode>()
-                .with_connections(vec![TypeId::of::<GenerateResponseNode>()])
+                .with_connections(vec![TypeId::of::<GenerateCustomerResponseNode>()])
                 .with_router(true)
                 .with_description("Routes ticket based on analysis".to_string()),
         )
         .add_node(
-            NodeConfig::new::<GenerateResponseNode>()
+            NodeConfig::new::<GenerateCustomerResponseNode>()
                 .with_connections(vec![TypeId::of::<SendReplyNode>()])
                 .with_description("Generates response to customer".to_string()),
         )
@@ -507,7 +507,7 @@ pub fn create_customer_care_workflow() -> Result<Workflow, WorkflowError> {
     workflow.register_node(FilterSpamNode);
     workflow.register_node(ValidateTicketNode);
     workflow.register_node(TicketRouterNode::new());
-    workflow.register_node(GenerateResponseNode);
+    workflow.register_node(GenerateCustomerResponseNode);
     workflow.register_node(SendReplyNode);
 
     Ok(workflow)

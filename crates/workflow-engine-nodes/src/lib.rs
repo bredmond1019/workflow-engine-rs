@@ -47,10 +47,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 // AI agent nodes
-// TODO: Re-enable when AI agent implementations are fixed
-// #[cfg(feature = "ai-agents")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "ai-agents")))]
-// pub mod ai_agents;
+#[cfg(feature = "ai-agents")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ai-agents")))]
+pub mod ai_agents;
 
 // External MCP nodes  
 #[cfg(feature = "external-mcp")]
@@ -71,18 +70,16 @@ pub mod template;
 pub mod utils;
 
 // Re-export commonly used types
-// TODO: Re-enable when AI agent implementations are fixed
-// #[cfg(feature = "ai-agents")]
-// pub use ai_agents::{openai::OpenAiNode, anthropic::AnthropicNode};
+#[cfg(feature = "ai-agents")]
+pub use ai_agents::{openai::OpenAIAgentNode, anthropic::AnthropicAgentNode};
 
 /// Current version of the nodes library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Prelude module for common node imports
 pub mod prelude {
-    // TODO: Re-enable when AI agent implementations are fixed
-    // #[cfg(feature = "ai-agents")]
-    // pub use crate::ai_agents::*;
+    #[cfg(feature = "ai-agents")]
+    pub use crate::ai_agents::*;
     
     #[cfg(feature = "external-mcp")]
     pub use crate::external_mcp::*;

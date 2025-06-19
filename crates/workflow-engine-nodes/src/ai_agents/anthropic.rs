@@ -4,7 +4,6 @@ use workflow_engine_core::{
         agent::{AgentConfig, BaseAgentNode},
     },
 };
-use workflow_engine_mcp::clients::MCPClient;
 
 /// Anthropic-specific agent node implementation
 /// 
@@ -23,12 +22,12 @@ impl AnthropicAgentNode {
         }
     }
 
-    pub fn with_mcp_client(mut self, mcp_client: Box<dyn MCPClient>) -> Self {
+    pub fn with_mcp_client(mut self, mcp_client: Box<dyn std::any::Any + Send + Sync>) -> Self {
         self.base_node = self.base_node.with_mcp_client(mcp_client);
         self
     }
 
-    pub fn set_mcp_client(&mut self, mcp_client: Box<dyn MCPClient>) {
+    pub fn set_mcp_client(&mut self, mcp_client: Box<dyn std::any::Any + Send + Sync>) {
         self.base_node.set_mcp_client(mcp_client);
     }
 

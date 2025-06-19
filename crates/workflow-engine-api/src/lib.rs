@@ -49,8 +49,7 @@ pub mod bootstrap;
 
 // Application modules
 pub mod db;
-// TODO: Re-enable when workflow implementations are fixed
-// pub mod workflows;
+pub mod workflows;
 pub mod monitoring;
 pub mod integrations;
 

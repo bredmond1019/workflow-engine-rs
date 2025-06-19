@@ -396,6 +396,7 @@
 //! - [`customer_care_mcp`](../customer_care_mcp/index.html) - Customer care MCP integration
 
 use workflow_engine_core::{error::WorkflowError, workflow::Workflow};
+use crate::workflows::event_integration::{WorkflowEventExt, TaskContextEventExt};
 use workflow_engine_mcp::server::knowledge_base::KnowledgeBaseEventData;
 use crate::{
     db::event::NewEvent,

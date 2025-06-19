@@ -7,13 +7,96 @@ use chrono::Utc;
 use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
+use serde_json::Value;
 
-use workflow_engine_core::error::WorkflowError;
+use workflow_engine_core::{error::WorkflowError, task::TaskContext, workflow::Workflow};
+use crate::db::event::Event;
 use crate::db::events::{
     EventDispatcher, EventEnvelope, EventMetadata, EventStore, EventSerializable,
     types::{WorkflowEvent, SystemEvent, AIInteractionEvent, ServiceCallEvent, 
             WorkflowStartedEvent, WorkflowCompletedEvent, WorkflowFailedEvent}
 };
+
+/// Extension trait for Workflow to work with database events
+pub trait WorkflowEventExt {
+    /// Run a workflow from a database event
+    fn run_from_event(&self, event: &Event) -> Result<TaskContext, WorkflowError>;
+}
+
+impl WorkflowEventExt for Workflow {
+    fn run_from_event(&self, event: &Event) -> Result<TaskContext, WorkflowError> {
+        // Create TaskContext from Event
+        let mut context = TaskContext::new(
+            event.workflow_type.clone(),
+            event.data.clone(),
+        );
+        
+        // Set event ID if available
+        if let Ok(event_id) = Uuid::parse_str(&event.id.to_string()) {
+            context.event_id = event_id;
+        }
+        
+        // Merge task context if present
+        if !event.task_context.is_null() {
+            if let Value::Object(task_map) = &event.task_context {
+                for (key, value) in task_map {
+                    context.data[key] = value.clone();
+                }
+            }
+        }
+        
+        // Run the workflow
+        self.run(context)
+    }
+}
+
+/// Extension trait for TaskContext to work with database events
+pub trait TaskContextEventExt {
+    /// Convert TaskContext to a database Event structure
+    fn to_event(&self) -> Result<Value, WorkflowError>;
+}
+
+impl TaskContextEventExt for TaskContext {
+    fn to_event(&self) -> Result<Value, WorkflowError> {
+        // Create a JSON representation suitable for the Event model
+        let event_data = serde_json::json!({
+            "event_id": self.event_id.to_string(),
+            "workflow_type": self.workflow_type,
+            "data": self.data,
+            "node_outputs": self.node_outputs,
+            "timestamp": chrono::Utc::now(),
+        });
+        
+        Ok(event_data)
+    }
+}
+
+/// Extension trait for Workflow MCP server functionality
+#[async_trait]
+pub trait WorkflowMcpExt {
+    /// Expose workflow as an MCP server
+    async fn expose_as_mcp_server(&self, name: &str, version: &str) -> Result<(), WorkflowError>;
+    
+    /// Register an external MCP server with the workflow
+    async fn register_mcp_server(&self, url: &str, transport_type: &str) -> Result<(), WorkflowError>;
+}
+
+#[async_trait]
+impl WorkflowMcpExt for Workflow {
+    async fn expose_as_mcp_server(&self, _name: &str, _version: &str) -> Result<(), WorkflowError> {
+        // TODO: Implement MCP server exposure when MCP integration is complete
+        Err(WorkflowError::ConfigurationError(
+            "MCP server exposure not yet implemented".to_string()
+        ))
+    }
+    
+    async fn register_mcp_server(&self, _url: &str, _transport_type: &str) -> Result<(), WorkflowError> {
+        // TODO: Implement MCP server registration when MCP integration is complete
+        Err(WorkflowError::ConfigurationError(
+            "MCP server registration not yet implemented".to_string()
+        ))
+    }
+}
 
 /// Workflow event publisher for integrating with event sourcing
 pub struct WorkflowEventPublisher {
