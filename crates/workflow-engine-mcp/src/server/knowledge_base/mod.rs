@@ -1,4 +1,3 @@
-use workflow_engine_core::error::WorkflowError;
 use serde::{Deserialize, Serialize};
 
 /// Knowledge base event data structure for query processing
