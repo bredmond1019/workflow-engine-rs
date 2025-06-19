@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the template system
 //! with AI agents in a workflow.
 
-use backend::core::{
+use workflow_engine_core::{
     ai::templates::{TemplateManager, Template, OutputFormat, VariableType},
     nodes::{
         agent::{AgentConfig, ModelProvider},

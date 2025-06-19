@@ -1,6 +1,6 @@
 /// Generate Knowledge Response Node - Creates synthesized responses from search results
 /// 
-/// This node takes the analyzed search results from all knowledge sources and generates
+/// This node takes the analyzed search results from knowledge sources and generates
 /// a comprehensive, well-formatted response that includes relevant information and source links.
 
 use serde_json::Value;
@@ -14,9 +14,9 @@ use crate::core::{
 /// Generates comprehensive responses from knowledge base search results
 /// 
 /// Creates formatted responses that include:
-/// - Summary of findings from all sources
-/// - Organized sections for different source types
-/// - Direct links to relevant documentation and conversations
+/// - Summary of findings from available sources
+/// - Organized sections for different result types
+/// - Direct links to relevant documentation and resources
 /// - Fallback responses when insufficient information is found
 #[derive(Debug, Clone)]
 pub struct GenerateKnowledgeResponseNode;
@@ -46,102 +46,57 @@ impl Node for GenerateKnowledgeResponseNode {
             .get_data::<String>("user_query")?
             .unwrap_or_else(|| "your question".to_string());
 
-        // Collect all relevant information
+        // Collect search results
         let mut response_parts = Vec::new();
         let mut sources = Vec::new();
 
         response_parts.push(format!(
-            "Based on my search across our knowledge base, here's what I found regarding {}:",
+            "Based on my search across available knowledge sources, here's what I found regarding {}:",
             user_query
         ));
 
-        // Process Notion results
-        if let Some(notion) = task_context
-            .get_data::<Value>("notion_search_results")
+        // Process search results
+        if let Some(search_results) = task_context
+            .get_data::<Value>("search_results")
             .unwrap_or(None)
         {
-            if let Some(pages) = notion.get("pages").and_then(|v| v.as_array()) {
-                if !pages.is_empty() {
-                    response_parts.push("\n**From Documentation:**".to_string());
-                    for page in pages {
-                        if let (Some(title), Some(url)) = (
-                            page.get("title").and_then(|v| v.as_str()),
-                            page.get("url").and_then(|v| v.as_str()),
+            if let Some(items) = search_results.get("items").and_then(|v| v.as_array()) {
+                if !items.is_empty() {
+                    response_parts.push("\n**Search Results:**".to_string());
+                    
+                    for item in items.iter().take(5) { // Limit to top 5 results
+                        if let (Some(title), Some(content)) = (
+                            item.get("title").and_then(|v| v.as_str()),
+                            item.get("content").and_then(|v| v.as_str()),
                         ) {
-                            response_parts.push(format!("- [{}]({})", title, url));
-                            sources.push(Value::Object(
-                                [
-                                    (
-                                        "type".to_string(),
-                                        Value::String("documentation".to_string()),
-                                    ),
-                                    ("title".to_string(), Value::String(title.to_string())),
-                                    ("url".to_string(), Value::String(url.to_string())),
-                                ]
-                                .into_iter()
-                                .collect(),
-                            ));
+                            let snippet = if content.len() > 200 {
+                                format!("{}...", &content[..200])
+                            } else {
+                                content.to_string()
+                            };
+                            
+                            response_parts.push(format!("- **{}**: {}", title, snippet));
+                            
+                            let mut source_obj = serde_json::Map::new();
+                            source_obj.insert("title".to_string(), Value::String(title.to_string()));
+                            source_obj.insert("content".to_string(), Value::String(content.to_string()));
+                            
+                            if let Some(url) = item.get("url").and_then(|v| v.as_str()) {
+                                source_obj.insert("url".to_string(), Value::String(url.to_string()));
+                            }
+                            
+                            if let Some(source_type) = item.get("source").and_then(|v| v.as_str()) {
+                                source_obj.insert("type".to_string(), Value::String(source_type.to_string()));
+                            }
+                            
+                            sources.push(Value::Object(source_obj));
                         }
                     }
                 }
             }
         }
 
-        // Process HelpScout results
-        if let Some(helpscout) = task_context
-            .get_data::<Value>("helpscout_search_results")
-            .unwrap_or(None)
-        {
-            if let Some(articles) = helpscout.get("articles").and_then(|v| v.as_array()) {
-                if !articles.is_empty() {
-                    response_parts.push("\n**From Knowledge Base:**".to_string());
-                    for article in articles {
-                        if let (Some(title), Some(url)) = (
-                            article.get("title").and_then(|v| v.as_str()),
-                            article.get("url").and_then(|v| v.as_str()),
-                        ) {
-                            response_parts.push(format!("- [{}]({})", title, url));
-                            sources.push(Value::Object(
-                                [
-                                    (
-                                        "type".to_string(),
-                                        Value::String("knowledge_base".to_string()),
-                                    ),
-                                    ("title".to_string(), Value::String(title.to_string())),
-                                    ("url".to_string(), Value::String(url.to_string())),
-                                ]
-                                .into_iter()
-                                .collect(),
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-
-        // Process Slack results
-        if let Some(slack) = task_context
-            .get_data::<Value>("slack_search_results")
-            .unwrap_or(None)
-        {
-            if let Some(messages) = slack.get("messages").and_then(|v| v.as_array()) {
-                if !messages.is_empty() {
-                    response_parts.push("\n**From Team Discussions:**".to_string());
-                    for message in messages.iter().take(2) {
-                        // Limit to most relevant
-                        if let (Some(channel), Some(user), Some(text)) = (
-                            message.get("channel").and_then(|v| v.as_str()),
-                            message.get("user").and_then(|v| v.as_str()),
-                            message.get("text").and_then(|v| v.as_str()),
-                        ) {
-                            response_parts.push(format!("- **{}** in {}: {}", user, channel, text));
-                        }
-                    }
-                }
-            }
-        }
-
-        response_parts.push("\n\n**Most relevant source:** Based on relevance scores, I recommend starting with the highest-ranked result above.".to_string());
+        response_parts.push("\n\n**Recommendation:** I recommend reviewing the results above, starting with the most relevant items.".to_string());
 
         let final_response = response_parts.join("\n");
 

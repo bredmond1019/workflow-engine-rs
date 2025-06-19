@@ -1,7 +1,7 @@
 //! Example demonstrating the comprehensive error handling framework
 //! This shows how other agents (especially Agent 2 working on AI) can use the error handling
 
-use backend::core::error::{
+use workflow_engine_core::error::{
     WorkflowError, context::ErrorContextExt, 
     retry::RetryBuilder, 
     circuit_breaker::{CircuitBreaker, CircuitBreakerConfig},

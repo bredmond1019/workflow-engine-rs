@@ -118,7 +118,10 @@ impl ai_system_rust::db::events::EventStore for MockEventStore {
         event_types: Vec<String>,
         position: Option<i64>,
     ) -> ai_system_rust::db::events::EventResult<Box<dyn ai_system_rust::db::events::EventStream>> {
-        unimplemented!()
+        // Mock implementation for testing - returns error indicating subscription not supported
+        Err(ai_system_rust::db::events::EventError::ConfigurationError(
+            format!("Mock event store does not support subscriptions for {}", subscription_id)
+        ))
     }
 
     async fn acknowledge(

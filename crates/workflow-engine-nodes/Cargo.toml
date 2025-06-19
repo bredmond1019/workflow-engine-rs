@@ -1,0 +1,52 @@
+[package]
+name = "workflow-engine-nodes"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Built-in workflow nodes for AI workflow engine"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/workflow-engine-nodes"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["external-mcp"]
+ai-agents = ["dep:aws-config", "dep:aws-sdk-bedrockruntime"]
+external-mcp = []
+research = []
+template = []
+all = ["ai-agents", "external-mcp", "research", "template"]
+
+[dependencies]
+# Core dependencies
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
+workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+once_cell = { workspace = true }
+
+# AI integration (optional)
+aws-config = { workspace = true, optional = true }
+aws-sdk-bedrockruntime = { workspace = true, optional = true }
+
+# Networking for external services
+reqwest = { workspace = true }
+base64 = { workspace = true }
+regex = { workspace = true }
+handlebars = { workspace = true }
+unicode-segmentation = { workspace = true }
+tiktoken-rs = { workspace = true }
+
+[dev-dependencies]
+mockall = { workspace = true }
+tempfile = { workspace = true }
+tokio-test = { workspace = true }

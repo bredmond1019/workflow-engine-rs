@@ -722,13 +722,13 @@ mod tests {
         let workflow = create_knowledge_base_workflow();
         assert!(workflow.is_ok(), "Workflow creation should succeed");
         
-        let workflow = workflow.unwrap();
+        let workflow = workflow.expect("Workflow should be created successfully");
         assert_eq!(workflow.workflow_type(), "knowledge_base");
     }
 
     #[test]
     fn test_workflow_node_registration() {
-        let workflow = create_knowledge_base_workflow().unwrap();
+        let workflow = create_knowledge_base_workflow().expect("Failed to create knowledge base workflow for testing");
         
         // Test that workflow contains expected nodes
         // In a real implementation, you would have methods to inspect registered nodes
@@ -766,13 +766,13 @@ mod tests {
             event_data,
         );
 
-        let result = node.process(context).unwrap();
+        let result = node.process(context).expect("Query router node should process successfully");
         assert_eq!(
-            result.get_data::<Value>("query_processed").unwrap(),
+            result.get_data::<Value>("query_processed").expect("Should get query_processed data"),
             Some(Value::Bool(true))
         );
         assert_eq!(
-            result.get_data::<Value>("ready_for_search").unwrap(),
+            result.get_data::<Value>("ready_for_search").expect("Should get ready_for_search data"),
             Some(Value::Bool(true))
         );
     }
@@ -797,9 +797,9 @@ mod tests {
             event_data,
         );
 
-        let result = node.process(context).unwrap();
+        let result = node.process(context).expect("Validate query node should process successfully");
         assert_eq!(
-            result.get_data::<Value>("query_valid").unwrap(),
+            result.get_data::<Value>("query_valid").expect("Should get query_valid data"),
             Some(Value::Bool(true))
         );
     }
@@ -824,9 +824,9 @@ mod tests {
             event_data,
         );
 
-        let result = node.process(context).unwrap();
+        let result = node.process(context).expect("Spam filter node should process successfully");
         assert_eq!(
-            result.get_data::<Value>("is_spam").unwrap(),
+            result.get_data::<Value>("is_spam").expect("Should get is_spam data"),
             Some(Value::Bool(true))
         );
     }

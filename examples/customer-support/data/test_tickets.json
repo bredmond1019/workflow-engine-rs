@@ -1,0 +1,102 @@
+[
+  {
+    "ticket_id": "TEST-001",
+    "customer_email": "john.doe@example.com",
+    "subject": "Unable to access premium features",
+    "content": "I upgraded to premium yesterday but I still can't access the advanced features. My payment went through successfully.",
+    "priority": "high",
+    "category": "technical_support",
+    "customer_tier": "premium",
+    "created_at": "2024-01-15T10:30:00Z"
+  },
+  {
+    "ticket_id": "TEST-002",
+    "customer_email": "jane.smith@company.com",
+    "subject": "Bulk discount inquiry",
+    "content": "We're interested in purchasing 100+ licenses for our organization. Do you offer bulk discounts?",
+    "priority": "medium",
+    "category": "sales",
+    "potential_value": 10000,
+    "company_size": "enterprise"
+  },
+  {
+    "ticket_id": "TEST-003",
+    "customer_email": "support@startup.io",
+    "subject": "API rate limit issues",
+    "content": "We're hitting rate limits even though we're well below our quota. This is affecting our production environment.",
+    "priority": "critical",
+    "category": "technical_support",
+    "api_key": "sk_test_123456",
+    "environment": "production"
+  },
+  {
+    "ticket_id": "TEST-004",
+    "customer_email": "user123@freemail.com",
+    "subject": "How do I export my data?",
+    "content": "I need to export all my data for compliance reasons. Can you guide me through the process?",
+    "priority": "medium",
+    "category": "support",
+    "compliance_request": true
+  },
+  {
+    "ticket_id": "TEST-005",
+    "customer_email": "angry.customer@email.com",
+    "subject": "TERRIBLE SERVICE - WANT REFUND NOW",
+    "content": "This is the worst service I've ever used! Nothing works properly. I demand a full refund immediately!",
+    "priority": "high",
+    "category": "complaint",
+    "sentiment": "very_negative",
+    "churn_risk": "high"
+  },
+  {
+    "ticket_id": "TEST-006",
+    "customer_email": "developer@techco.com",
+    "subject": "Feature request: Webhook support",
+    "content": "It would be great if you could add webhook support for real-time notifications. This would really help with our integration.",
+    "priority": "low",
+    "category": "feature_request",
+    "technical_detail": "high",
+    "integration_type": "webhook"
+  },
+  {
+    "ticket_id": "TEST-007",
+    "customer_email": "billing@enterprise.com",
+    "subject": "Invoice payment failed",
+    "content": "We received a notification that our payment failed. We updated our credit card information. Please retry the payment.",
+    "priority": "critical",
+    "category": "billing",
+    "invoice_id": "INV-2024-0156",
+    "amount": 4999.99,
+    "payment_method": "credit_card"
+  },
+  {
+    "ticket_id": "TEST-008",
+    "customer_email": "newuser@gmail.com",
+    "subject": "Getting started help",
+    "content": "I just signed up and I'm a bit lost. Could someone help me understand how to get started with the platform?",
+    "priority": "low",
+    "category": "onboarding",
+    "user_type": "new",
+    "signup_date": "2024-01-14"
+  },
+  {
+    "ticket_id": "TEST-009",
+    "customer_email": "security@bank.com",
+    "subject": "Security audit questionnaire",
+    "content": "As part of our vendor assessment, we need you to complete the attached security questionnaire. This is required for compliance.",
+    "priority": "high",
+    "category": "security",
+    "compliance_type": "SOC2",
+    "due_date": "2024-01-20"
+  },
+  {
+    "ticket_id": "TEST-010",
+    "customer_email": "partner@integration.com",
+    "subject": "Partnership opportunity",
+    "content": "We'd like to discuss a potential partnership to integrate your service into our platform. We have 50k+ active users who could benefit.",
+    "priority": "medium",
+    "category": "partnership",
+    "partner_size": "large",
+    "user_base": 50000
+  }
+]

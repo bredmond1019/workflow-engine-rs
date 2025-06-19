@@ -1,6 +1,6 @@
 //! Demonstration of the AI token counting and cost estimation system
 
-use backend::core::ai::tokens::{
+use workflow_engine_core::ai::tokens::{
     Model, Provider, TokenUsage, CostBreakdown, UsageRecord,
     TokenCounterBuilder, PricingEngine, PricingConfig,
     UsageAnalytics, AnalyticsConfig, BudgetLimits, LimitConfig,

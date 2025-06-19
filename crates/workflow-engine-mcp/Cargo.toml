@@ -1,0 +1,55 @@
+[package]
+name = "workflow-engine-mcp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Model Context Protocol (MCP) integration for AI workflow engine"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/workflow-engine-mcp"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["http", "websocket"]
+http = []
+websocket = ["dep:tokio-tungstenite"]
+stdio = []
+all = ["http", "websocket", "stdio"]
+
+[dependencies]
+# Core dependencies
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+once_cell = { workspace = true }
+
+# Networking
+reqwest = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+futures-util = { workspace = true }
+bytes = { workspace = true }
+
+# WebSocket support (optional)
+tokio-tungstenite = { workspace = true, optional = true }
+
+# Utility libraries
+base64 = { workspace = true }
+regex = { workspace = true }
+rand = { workspace = true }
+log = { workspace = true }
+prometheus = { workspace = true }
+
+[dev-dependencies]
+mockall = { workspace = true }
+tempfile = { workspace = true }
+tokio-test = { workspace = true }

@@ -1,0 +1,58 @@
+[package]
+name = "workflow-engine-app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Main application binary for AI workflow engine"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/workflow-engine-app"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "workflow-engine"
+path = "src/main.rs"
+
+[features]
+default = ["full"]
+full = [
+    "workflow-engine-core/full",
+    "workflow-engine-api/default",
+    "workflow-engine-mcp/all",
+    "workflow-engine-nodes/all",
+    "database",
+    "monitoring"
+]
+database = ["workflow-engine-core/database", "workflow-engine-api/database", "dep:diesel"]
+monitoring = ["workflow-engine-core/monitoring", "workflow-engine-api/monitoring"]
+
+[dependencies]
+# All workspace crates with full features
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
+workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0" }
+workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0" }
+workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0" }
+
+# Runtime dependencies
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenv = { workspace = true }
+env_logger = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+clap = { workspace = true }
+
+# Web framework for main app
+actix-web = { workspace = true }
+actix-cors = { workspace = true }
+log = { workspace = true }
+
+# Optional database support
+diesel = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -26,7 +26,7 @@ cargo run --example workflow_system_service
 - `AUTH_TOKEN`: Optional authentication token
 */
 
-use backend::bootstrap::service::ServiceConfig;
+use workflow_engine_api::bootstrap::service::ServiceConfig;
 use actix_web::{web, App, HttpResponse, HttpServer, Result, middleware::Logger};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};

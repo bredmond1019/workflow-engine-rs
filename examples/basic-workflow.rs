@@ -1,8 +1,8 @@
 //! Basic workflow example demonstrating the core API usage
 //! This example shows how to create and execute a simple knowledge base workflow
 
-use backend::core::task::TaskContext;
-use backend::workflows::knowledge_base_workflow::create_knowledge_base_workflow;
+use workflow_engine_core::task::TaskContext;
+use workflow_engine_api::workflows::knowledge_base_workflow::create_knowledge_base_workflow;
 use serde_json::json;
 
 #[tokio::main]

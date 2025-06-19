@@ -1,0 +1,461 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.6.1)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Perform a dry run (do not actually publish)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      tag: ${{ steps.get-version.outputs.tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: get-version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Validate version format
+      run: |
+        VERSION="${{ steps.get-version.outputs.version }}"
+        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9-]+)?$'; then
+          echo "Invalid version format: $VERSION"
+          echo "Expected format: X.Y.Z or X.Y.Z-suffix"
+          exit 1
+        fi
+
+  pre-release-checks:
+    name: Pre-release Checks
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workflow_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-release-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config postgresql-client
+
+    - name: Set up database
+      env:
+        PGPASSWORD: postgres
+      run: |
+        psql -h localhost -U postgres -d workflow_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+
+    - name: Run full test suite
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+        JWT_SECRET: test-secret-key
+      run: |
+        cargo test --workspace --all-features --lib
+        cargo test --workspace --all-features --test "*" -- --test-threads=1
+
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+    - name: Run clippy
+      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+    - name: Security audit
+      run: |
+        cargo install cargo-audit --locked
+        cargo audit
+
+    - name: Build documentation
+      env:
+        RUSTDOCFLAGS: "-D warnings"
+      run: cargo doc --workspace --all-features --no-deps
+
+    - name: Verify version consistency
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        echo "Checking version consistency for $VERSION"
+        
+        # Check workspace version
+        WORKSPACE_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/.*= "\(.*\)"/\1/')
+        if [ "$WORKSPACE_VERSION" != "$VERSION" ]; then
+          echo "Workspace version mismatch: expected $VERSION, got $WORKSPACE_VERSION"
+          exit 1
+        fi
+        
+        # Check each crate version
+        for crate in workflow-engine-core workflow-engine-mcp workflow-engine-api workflow-engine-nodes workflow-engine-app; do
+          CRATE_VERSION=$(grep 'version.workspace = true' crates/$crate/Cargo.toml || echo "")
+          if [ -z "$CRATE_VERSION" ]; then
+            CRATE_VERSION=$(grep '^version = ' crates/$crate/Cargo.toml | sed 's/.*= "\(.*\)"/\1/')
+            if [ "$CRATE_VERSION" != "$VERSION" ]; then
+              echo "$crate version mismatch: expected $VERSION, got $CRATE_VERSION"
+              exit 1
+            fi
+          fi
+        done
+
+  build-and-test:
+    name: Build and Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: prepare-release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-release-build-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install openssl pkg-config
+
+    - name: Build workspace
+      run: cargo build --workspace --all-features --release
+
+    - name: Run tests
+      run: cargo test --workspace --all-features --lib --release
+
+    - name: Test packaging
+      run: |
+        cd crates/workflow-engine-core && cargo package --allow-dirty
+        cd ../workflow-engine-mcp && cargo package --allow-dirty
+        cd ../workflow-engine-api && cargo package --allow-dirty
+        cd ../workflow-engine-nodes && cargo package --allow-dirty
+        cd ../workflow-engine-app && cargo package --allow-dirty
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: [prepare-release, pre-release-checks, build-and-test]
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true')
+    environment: production
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-publish-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Login to crates.io
+      run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+
+    - name: Publish workflow-engine-core
+      run: |
+        cd crates/workflow-engine-core
+        cargo publish --dry-run
+        cargo publish
+        echo "Published workflow-engine-core"
+
+    - name: Wait for workflow-engine-core to be available
+      run: |
+        echo "Waiting for workflow-engine-core to be available on crates.io..."
+        for i in {1..60}; do
+          if cargo search workflow-engine-core | grep -q "workflow-engine-core"; then
+            echo "workflow-engine-core is now available"
+            break
+          fi
+          echo "Attempt $i/60: workflow-engine-core not yet available, waiting 30s..."
+          sleep 30
+        done
+
+    - name: Publish workflow-engine-mcp
+      run: |
+        cd crates/workflow-engine-mcp
+        cargo publish --dry-run
+        cargo publish
+        echo "Published workflow-engine-mcp"
+
+    - name: Wait for workflow-engine-mcp to be available
+      run: |
+        echo "Waiting for workflow-engine-mcp to be available on crates.io..."
+        for i in {1..60}; do
+          if cargo search workflow-engine-mcp | grep -q "workflow-engine-mcp"; then
+            echo "workflow-engine-mcp is now available"
+            break
+          fi
+          echo "Attempt $i/60: workflow-engine-mcp not yet available, waiting 30s..."
+          sleep 30
+        done
+
+    - name: Publish workflow-engine-nodes
+      run: |
+        cd crates/workflow-engine-nodes
+        cargo publish --dry-run
+        cargo publish
+        echo "Published workflow-engine-nodes"
+
+    - name: Wait for workflow-engine-nodes to be available
+      run: |
+        echo "Waiting for workflow-engine-nodes to be available on crates.io..."
+        for i in {1..60}; do
+          if cargo search workflow-engine-nodes | grep -q "workflow-engine-nodes"; then
+            echo "workflow-engine-nodes is now available"
+            break
+          fi
+          echo "Attempt $i/60: workflow-engine-nodes not yet available, waiting 30s..."
+          sleep 30
+        done
+
+    - name: Publish workflow-engine-api
+      run: |
+        cd crates/workflow-engine-api
+        cargo publish --dry-run
+        cargo publish
+        echo "Published workflow-engine-api"
+
+    - name: Wait for workflow-engine-api to be available
+      run: |
+        echo "Waiting for workflow-engine-api to be available on crates.io..."
+        for i in {1..60}; do
+          if cargo search workflow-engine-api | grep -q "workflow-engine-api"; then
+            echo "workflow-engine-api is now available"
+            break
+          fi
+          echo "Attempt $i/60: workflow-engine-api not yet available, waiting 30s..."
+          sleep 30
+        done
+
+    - name: Publish workflow-engine-app
+      run: |
+        cd crates/workflow-engine-app
+        cargo publish --dry-run
+        cargo publish
+        echo "Published workflow-engine-app"
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare-release, publish]
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true')
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for changelog generation
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        echo "## What's Changed" > changelog.md
+        echo "" >> changelog.md
+        
+        if [ -n "$PREV_TAG" ]; then
+          echo "Changes since $PREV_TAG:" >> changelog.md
+          echo "" >> changelog.md
+          
+          # Get commit messages since last tag
+          git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD >> changelog.md
+        else
+          echo "- Initial release" >> changelog.md
+        fi
+        
+        echo "" >> changelog.md
+        echo "## Crates Published" >> changelog.md
+        echo "" >> changelog.md
+        echo "- workflow-engine-core v$VERSION" >> changelog.md
+        echo "- workflow-engine-mcp v$VERSION" >> changelog.md
+        echo "- workflow-engine-nodes v$VERSION" >> changelog.md
+        echo "- workflow-engine-api v$VERSION" >> changelog.md
+        echo "- workflow-engine-app v$VERSION" >> changelog.md
+        
+        # Set output for GitHub release
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat changelog.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.prepare-release.outputs.tag }}
+        release_name: Release ${{ needs.prepare-release.outputs.version }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        draft: false
+        prerelease: ${{ contains(needs.prepare-release.outputs.version, '-') }}
+
+  dry-run-summary:
+    name: Dry Run Summary
+    runs-on: ubuntu-latest
+    needs: [prepare-release, pre-release-checks, build-and-test]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+    steps:
+    - name: Display dry run results
+      run: |
+        echo "🔍 DRY RUN COMPLETE"
+        echo "=================="
+        echo ""
+        echo "Version: ${{ needs.prepare-release.outputs.version }}"
+        echo "Tag: ${{ needs.prepare-release.outputs.tag }}"
+        echo ""
+        echo "✅ All pre-release checks passed"
+        echo "✅ Builds successful on all platforms"
+        echo "✅ Tests passed"
+        echo "✅ Packaging verified"
+        echo ""
+        echo "🚀 Ready for release!"
+        echo ""
+        echo "To perform the actual release:"
+        echo "1. Push a tag: git tag ${{ needs.prepare-release.outputs.tag }} && git push origin ${{ needs.prepare-release.outputs.tag }}"
+        echo "2. Or trigger this workflow again without dry_run"
+
+  notify-discord:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    needs: [prepare-release, create-github-release]
+    if: always() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'))
+    steps:
+    - name: Send Discord notification
+      if: needs.create-github-release.result == 'success'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ -n "$DISCORD_WEBHOOK" ]; then
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "🚀 New Release Published!",
+                   "description": "Workflow Engine v${{ needs.prepare-release.outputs.version }} has been published to crates.io",
+                   "color": 5763719,
+                   "fields": [
+                     {
+                       "name": "Version",
+                       "value": "${{ needs.prepare-release.outputs.version }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "GitHub Release",
+                       "value": "[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare-release.outputs.tag }})",
+                       "inline": true
+                     }
+                   ],
+                   "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+                 }]
+               }' \
+               "$DISCORD_WEBHOOK"
+        fi
+
+    - name: Send failure notification
+      if: needs.create-github-release.result == 'failure'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ -n "$DISCORD_WEBHOOK" ]; then
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "❌ Release Failed!",
+                   "description": "Failed to publish Workflow Engine v${{ needs.prepare-release.outputs.version }}",
+                   "color": 15158332,
+                   "fields": [
+                     {
+                       "name": "Version",
+                       "value": "${{ needs.prepare-release.outputs.version }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "Workflow Run",
+                       "value": "[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                       "inline": true
+                     }
+                   ],
+                   "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+                 }]
+               }' \
+               "$DISCORD_WEBHOOK"
+        fi

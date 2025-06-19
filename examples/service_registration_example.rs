@@ -21,8 +21,8 @@ This example shows:
 
 */
 
-use backend::bootstrap::service::{bootstrap_service, ServiceConfig};
-use backend::core::registry::agent_registry::{AgentRegistry, AgentRegistration};
+use workflow_engine_api::bootstrap::service::{bootstrap_service, ServiceConfig};
+use workflow_engine_core::registry::agent_registry::{AgentRegistry, AgentRegistration};
 use backend::db::agent::Agent;
 use async_trait::async_trait;
 use chrono::Utc;

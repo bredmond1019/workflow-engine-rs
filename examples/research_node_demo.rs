@@ -25,9 +25,9 @@ This example requires the AI Tutor service and registry to be running.
 
 use backend::integrations::{CrossSystemClient};
 use backend::integrations::cross_system::HttpCrossSystemClient;
-use backend::core::error::WorkflowError;
-use backend::core::task::TaskContext;
-use backend::core::nodes::Node;
+use workflow_engine_core::error::WorkflowError;
+use workflow_engine_core::task::TaskContext;
+use workflow_engine_core::nodes::Node;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;

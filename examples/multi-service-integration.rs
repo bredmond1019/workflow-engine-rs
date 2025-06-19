@@ -1,8 +1,8 @@
 //! Multi-service integration example
 //! This example shows how to use the customer support workflow with MCP integrations
 
-use backend::workflows::customer_support_workflow::create_customer_care_workflow;
-use backend::core::task::TaskContext;
+use workflow_engine_api::workflows::customer_support_workflow::create_customer_care_workflow;
+use workflow_engine_core::task::TaskContext;
 use serde_json::json;
 
 #[tokio::main]

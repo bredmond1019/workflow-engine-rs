@@ -1,9 +1,9 @@
 //! AI-powered research workflow example
 //! This example demonstrates how to build a custom workflow using the WorkflowBuilder API
 
-use backend::core::workflow::builder::WorkflowBuilder;
-use backend::core::nodes::{config::NodeConfig, agent::BaseAgentNode};
-use backend::core::mcp::clients::notion::NotionClientNode;
+use workflow_engine_core::workflow::builder::WorkflowBuilder;
+use workflow_engine_core::nodes::{config::NodeConfig, agent::BaseAgentNode};
+use workflow_engine_core::mcp::clients::notion::NotionClientNode;
 use serde_json::json;
 use std::any::TypeId;
 

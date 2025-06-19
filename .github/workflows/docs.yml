@@ -1,0 +1,395 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'crates/**/*.rs'
+      - 'examples/**/*.rs'
+      - '*.md'
+      - 'docs/**/*'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'crates/**/*.rs'
+      - 'examples/**/*.rs'
+      - '*.md'
+      - 'docs/**/*'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTDOCFLAGS: "-D warnings --cfg docsrs"
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: rust-docs
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-docs-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Build documentation
+      run: |
+        cargo doc \
+          --workspace \
+          --all-features \
+          --no-deps \
+          --document-private-items
+
+    - name: Check for broken intra-doc links
+      run: |
+        cargo doc \
+          --workspace \
+          --all-features \
+          --no-deps
+
+    - name: Build examples documentation
+      run: |
+        # Document examples as well
+        for example in examples/*.rs; do
+          if [ -f "$example" ]; then
+            echo "Building docs for $example"
+            rustdoc "$example" \
+              --extern workflow_engine_core=target/doc/deps/ \
+              --extern serde_json \
+              --extern tokio \
+              --extern async_trait \
+              -L dependency=target/debug/deps \
+              --output-dir target/doc/examples/ \
+              --html-in-header docs/custom.css 2>/dev/null || true
+          fi
+        done
+
+    - name: Create docs index
+      run: |
+        mkdir -p target/doc/
+        cat > target/doc/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Workflow Engine Documentation</title>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                .crate { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+                .crate h3 { margin-top: 0; color: #333; }
+                .description { color: #666; margin: 10px 0; }
+                a { color: #0969da; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+                .example-links { margin-top: 15px; }
+                .example-links a { margin-right: 15px; }
+            </style>
+        </head>
+        <body>
+            <h1>Workflow Engine Documentation</h1>
+            <p>Production-ready AI workflow orchestration platform built in Rust</p>
+            
+            <h2>Crates</h2>
+            
+            <div class="crate">
+                <h3><a href="workflow_engine_core/index.html">workflow-engine-core</a></h3>
+                <p class="description">Core workflow engine primitives and execution engine</p>
+                <p>The foundation of the workflow system with node traits, task contexts, and execution logic.</p>
+            </div>
+            
+            <div class="crate">
+                <h3><a href="workflow_engine_mcp/index.html">workflow-engine-mcp</a></h3>
+                <p class="description">Model Context Protocol (MCP) integration</p>
+                <p>Complete MCP implementation with support for HTTP, WebSocket, and stdio transports.</p>
+            </div>
+            
+            <div class="crate">
+                <h3><a href="workflow_engine_nodes/index.html">workflow-engine-nodes</a></h3>
+                <p class="description">Built-in workflow nodes</p>
+                <p>Ready-to-use nodes for AI agents, external MCP clients, and common operations.</p>
+            </div>
+            
+            <div class="crate">
+                <h3><a href="workflow_engine_api/index.html">workflow-engine-api</a></h3>
+                <p class="description">REST API server</p>
+                <p>Production-ready API server with authentication, rate limiting, and OpenAPI docs.</p>
+            </div>
+            
+            <div class="crate">
+                <h3><a href="workflow_engine_app/index.html">workflow-engine-app</a></h3>
+                <p class="description">Main application binary</p>
+                <p>Complete application that ties all components together.</p>
+            </div>
+            
+            <h2>Examples</h2>
+            <div class="example-links">
+                <a href="https://github.com/bredmond1019/workflow-engine-rs/tree/main/examples">View Examples on GitHub</a>
+            </div>
+            
+            <h2>Resources</h2>
+            <ul>
+                <li><a href="https://github.com/bredmond1019/workflow-engine-rs">GitHub Repository</a></li>
+                <li><a href="https://crates.io/crates/workflow-engine-core">Crates.io</a></li>
+                <li><a href="https://github.com/bredmond1019/workflow-engine-rs/blob/main/QUICK_START.md">Quick Start Guide</a></li>
+            </ul>
+        </body>
+        </html>
+        EOF
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: target/doc/
+        retention-days: 30
+
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: build-docs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Download documentation artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: documentation
+        path: docs/
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  check-docs-rs:
+    name: Check docs.rs Compatibility
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@nightly
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-docs-rs-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Simulate docs.rs build environment
+      run: |
+        # Simulate the docs.rs environment
+        export DOCS_RS=1
+        export RUSTFLAGS="--cfg docsrs"
+        export RUSTDOCFLAGS="--cfg docsrs -Dwarnings"
+        
+        # Build each crate individually as docs.rs does
+        for crate in workflow-engine-core workflow-engine-mcp workflow-engine-nodes workflow-engine-api workflow-engine-app; do
+          echo "Building docs for $crate"
+          cd crates/$crate
+          cargo doc --all-features --no-deps
+          cd ../..
+        done
+
+    - name: Check documentation examples compile
+      run: |
+        # Extract and test code examples from documentation
+        cargo test --workspace --doc --all-features
+
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install markdownlint
+      run: npm install -g markdownlint-cli
+
+    - name: Lint markdown files
+      run: |
+        # Create markdownlint config
+        cat > .markdownlint.yml << 'EOF'
+        default: true
+        MD013: false  # Line length
+        MD033: false  # HTML tags
+        MD041: false  # First line in file should be a top level header
+        EOF
+        
+        # Lint all markdown files
+        markdownlint \
+          README.md \
+          QUICK_START.md \
+          DEVELOPMENT_SETUP.md \
+          CONTRIBUTING.md \
+          docs/**/*.md \
+          --config .markdownlint.yml
+
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install markdown-link-check
+      run: npm install -g markdown-link-check
+
+    - name: Check links in markdown files
+      run: |
+        # Create config to ignore localhost links and other exceptions
+        cat > .markdown-link-check.json << 'EOF'
+        {
+          "ignorePatterns": [
+            {
+              "pattern": "^http://localhost"
+            },
+            {
+              "pattern": "^https://localhost"
+            },
+            {
+              "pattern": "^http://127.0.0.1"
+            },
+            {
+              "pattern": "file://"
+            }
+          ],
+          "retryOn429": true,
+          "retryCount": 3,
+          "fallbackRetryDelay": "30s",
+          "aliveStatusCodes": [200, 206, 999]
+        }
+        EOF
+        
+        # Check links in main documentation files
+        for file in README.md QUICK_START.md DEVELOPMENT_SETUP.md CONTRIBUTING.md; do
+          if [ -f "$file" ]; then
+            echo "Checking links in $file"
+            markdown-link-check "$file" --config .markdown-link-check.json
+          fi
+        done
+        
+        # Check links in docs directory
+        find docs -name "*.md" -exec markdown-link-check {} --config .markdown-link-check.json \;
+
+  docs-quality-check:
+    name: Documentation Quality Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-doc-check
+      run: |
+        # Install tools for documentation quality checks
+        cargo install cargo-deadlinks --locked || true
+
+    - name: Check for missing documentation
+      run: |
+        # Check for public items without documentation
+        cargo doc --workspace --all-features 2>&1 | grep -i "missing documentation" > missing_docs.txt || true
+        
+        if [ -s missing_docs.txt ]; then
+          echo "Found items missing documentation:"
+          cat missing_docs.txt
+          echo ""
+          echo "Please add documentation for these public items."
+          # Don't fail the build for now, just warn
+          # exit 1
+        else
+          echo "All public items have documentation!"
+        fi
+
+    - name: Check documentation coverage
+      run: |
+        # Generate a simple documentation coverage report
+        echo "Documentation Coverage Report" > doc_coverage.md
+        echo "===============================" >> doc_coverage.md
+        echo "" >> doc_coverage.md
+        
+        for crate in workflow-engine-core workflow-engine-mcp workflow-engine-nodes workflow-engine-api workflow-engine-app; do
+          echo "## $crate" >> doc_coverage.md
+          cd crates/$crate
+          
+          # Count public items vs documented items (simplified)
+          public_items=$(grep -r "pub " src/ --include="*.rs" | wc -l)
+          doc_comments=$(grep -r "///" src/ --include="*.rs" | wc -l)
+          
+          echo "- Public items: $public_items" >> ../../doc_coverage.md
+          echo "- Doc comments: $doc_comments" >> ../../doc_coverage.md
+          
+          if [ $public_items -gt 0 ]; then
+            coverage=$(echo "scale=1; $doc_comments * 100 / $public_items" | bc -l 2>/dev/null || echo "N/A")
+            echo "- Estimated coverage: ${coverage}%" >> ../../doc_coverage.md
+          fi
+          
+          echo "" >> ../../doc_coverage.md
+          cd ../..
+        done
+        
+        cat doc_coverage.md
+
+    - name: Upload documentation quality report
+      uses: actions/upload-artifact@v4
+      with:
+        name: doc-quality-report
+        path: |
+          missing_docs.txt
+          doc_coverage.md
+        retention-days: 7

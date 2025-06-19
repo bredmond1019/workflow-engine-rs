@@ -1,0 +1,61 @@
+# Test Configuration for AI Workflow Engine
+# This configuration allows tests to run without external service dependencies
+
+[test]
+# Use in-memory alternatives where possible
+use_in_memory_db = true
+use_mock_mcp_servers = true
+disable_external_services = true
+
+# Database configuration for tests
+[test.database]
+# When use_in_memory_db is false, this URL will be used
+url = "postgresql://test:test@localhost/workflow_test_db"
+# Connection pool settings
+max_connections = 5
+min_connections = 1
+
+# MCP Server test configuration  
+[test.mcp_servers]
+# Mock server endpoints when use_mock_mcp_servers is true
+helpscout_url = "http://localhost:8001"
+notion_url = "http://localhost:8002"  
+slack_url = "http://localhost:8003"
+
+# External service mocking
+[test.external_services]
+# Mock responses for external APIs
+mock_openai = true
+mock_anthropic = true
+mock_aws_bedrock = true
+
+# Test timeouts
+[test.timeouts]
+default_timeout_seconds = 30
+integration_test_timeout_seconds = 60
+mcp_server_startup_timeout_seconds = 10
+
+# Test data directories
+[test.paths]
+fixtures_dir = "tests/fixtures"
+temp_dir = "/tmp/workflow-engine-tests"
+
+# Feature flags for tests
+[test.features]
+skip_slow_tests = false
+skip_integration_tests = false
+skip_mcp_tests = false
+enable_test_logging = true
+log_level = "debug"
+
+# AI Provider test configuration
+[test.ai_providers]
+# Use deterministic responses for testing
+use_deterministic_responses = true
+seed = 42
+
+[test.ai_providers.mock_responses]
+# Define mock responses for different AI operations
+sentiment_analysis = "positive"
+response_generation = "Thank you for contacting support. We'll help you with your issue."
+token_count = 100

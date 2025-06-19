@@ -37,8 +37,8 @@ cargo run --example cross_system_integration_demo
 This demonstrates the complete Phase 2 Task 1.0 implementation!
 */
 
-use backend::core::nodes::{Node};
-use backend::core::task::TaskContext;
+use workflow_engine_core::nodes::{Node};
+use workflow_engine_core::task::TaskContext;
 use backend::integrations::{CrossSystemClient};
 use backend::integrations::cross_system::HttpCrossSystemClient;
 use serde_json::{json, Value};

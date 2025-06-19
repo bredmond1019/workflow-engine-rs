@@ -148,7 +148,7 @@ impl BaseExternalMCPClient {
                     }
 
                     // Log retry attempt
-                    eprintln!(
+                    log::warn!(
                         "[{}] Connection attempt {} failed, retrying in {}ms: {}",
                         self.config.service_name,
                         attempt + 1,

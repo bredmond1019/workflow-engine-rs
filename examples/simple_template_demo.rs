@@ -2,7 +2,7 @@
 //!
 //! This example demonstrates basic template functionality.
 
-use backend::core::ai::templates::{
+use workflow_engine_core::ai::templates::{
     Template, TemplateEngine, TemplateVariables, OutputFormat, 
     VariableType, render_template,
 };

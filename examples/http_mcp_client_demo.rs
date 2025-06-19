@@ -26,8 +26,8 @@ This example demonstrates HTTP MCP communication patterns and can work with
 any MCP server that supports HTTP transport.
 */
 
-use backend::core::mcp::clients::{HttpMCPClient, MCPClient};
-use backend::core::error::WorkflowError;
+use workflow_engine_core::mcp::clients::{HttpMCPClient, MCPClient};
+use workflow_engine_core::error::WorkflowError;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env;

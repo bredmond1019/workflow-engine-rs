@@ -1,0 +1,425 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable, beta, 1.75.0] # MSRV (Minimum Supported Rust Version)
+        exclude:
+          # Only test MSRV on Ubuntu to reduce CI time
+          - os: windows-latest
+            rust: 1.75.0
+          - os: macos-latest
+            rust: 1.75.0
+          # Only test beta on Ubuntu to reduce CI time
+          - os: windows-latest
+            rust: beta
+          - os: macos-latest
+            rust: beta
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workflow_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ matrix.rust }}-
+          ${{ runner.os }}-cargo-
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config postgresql-client
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install openssl pkg-config
+
+    - name: Set up database
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        PGPASSWORD: postgres
+      run: |
+        psql -h localhost -U postgres -d workflow_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+        
+    - name: Check formatting
+      if: matrix.rust == 'stable'
+      run: cargo fmt --all -- --check
+
+    - name: Run clippy
+      if: matrix.rust == 'stable'
+      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+    - name: Build workspace
+      run: cargo build --workspace --all-features
+
+    - name: Run unit tests
+      run: cargo test --workspace --all-features --lib
+
+    - name: Run integration tests
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+        JWT_SECRET: test-secret-key
+      run: cargo test --workspace --all-features --test "*" -- --test-threads=1
+
+    - name: Run doc tests
+      if: matrix.rust == 'stable'
+      run: cargo test --workspace --all-features --doc
+
+    - name: Build examples
+      if: matrix.rust == 'stable'
+      run: |
+        cargo build --examples --all-features
+        # Test that examples compile but don't run them (they might require external services)
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-audit-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-audit
+      run: cargo install cargo-audit --locked
+
+    - name: Run security audit
+      run: cargo audit
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workflow_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: llvm-tools-preview
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-coverage-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config postgresql-client
+
+    - name: Install cargo-llvm-cov
+      run: cargo install cargo-llvm-cov --locked
+
+    - name: Set up database
+      env:
+        PGPASSWORD: postgres
+      run: |
+        psql -h localhost -U postgres -d workflow_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+
+    - name: Generate code coverage
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+        JWT_SECRET: test-secret-key
+      run: |
+        cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: lcov.info
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-docs-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Build documentation
+      env:
+        RUSTDOCFLAGS: "-D warnings"
+      run: cargo doc --workspace --all-features --no-deps --document-private-items
+
+    - name: Check for broken intra-doc links
+      run: cargo doc --workspace --all-features --no-deps
+
+  publish-dry-run:
+    name: Publish Dry Run
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-publish-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Check crate packaging
+      run: |
+        # Check each crate can be packaged
+        cd crates/workflow-engine-core && cargo package --allow-dirty
+        cd ../workflow-engine-mcp && cargo package --allow-dirty
+        cd ../workflow-engine-api && cargo package --allow-dirty  
+        cd ../workflow-engine-nodes && cargo package --allow-dirty
+        cd ../workflow-engine-app && cargo package --allow-dirty
+
+    - name: Dry run publish
+      run: |
+        # Dry run publish in dependency order
+        cd crates/workflow-engine-core && cargo publish --dry-run
+        cd ../workflow-engine-mcp && cargo publish --dry-run
+        cd ../workflow-engine-nodes && cargo publish --dry-run
+        cd ../workflow-engine-api && cargo publish --dry-run
+        cd ../workflow-engine-app && cargo publish --dry-run
+
+  msrv-check:
+    name: MSRV Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install MSRV Rust
+      uses: dtolnay/rust-toolchain@1.75.0
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-msrv-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Check MSRV compatibility
+      run: |
+        cargo check --workspace --all-features
+        cargo check --workspace --no-default-features
+
+  feature-combinations:
+    name: Feature Combinations
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-features-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Install cargo-hack
+      run: cargo install cargo-hack --locked
+
+    - name: Check feature combinations
+      run: |
+        # Check that all feature combinations work
+        cargo hack check --workspace --feature-powerset --depth 2 --optional-deps
+
+    - name: Test with no default features
+      run: |
+        cargo test --workspace --no-default-features --lib
+
+    - name: Test with all features
+      run: |
+        cargo test --workspace --all-features --lib
+
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-perf-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Build release binaries
+      run: cargo build --workspace --release --all-features
+
+    - name: Check binary sizes
+      run: |
+        echo "Binary sizes:"
+        ls -lah target/release/ | grep -E '\.(exe|bin|so|dylib)$' || echo "No binaries found"
+        
+        # Fail if any binary is larger than 50MB (adjust as needed)
+        find target/release -name "*.exe" -o -name "*" -type f -executable | while read binary; do
+          size=$(stat -c%s "$binary" 2>/dev/null || stat -f%z "$binary" 2>/dev/null || echo 0)
+          if [ $size -gt 52428800 ]; then  # 50MB in bytes
+            echo "Warning: $binary is larger than 50MB ($size bytes)"
+          fi
+        done
+
+  check-all:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [test, security-audit, coverage, docs, publish-dry-run, msrv-check, feature-combinations]
+    if: always()
+    steps:
+    - name: Check all jobs status
+      run: |
+        if [ "${{ needs.test.result }}" != "success" ] || \
+           [ "${{ needs.security-audit.result }}" != "success" ] || \
+           [ "${{ needs.coverage.result }}" != "success" ] || \
+           [ "${{ needs.docs.result }}" != "success" ] || \
+           [ "${{ needs.publish-dry-run.result }}" != "success" ] || \
+           [ "${{ needs.msrv-check.result }}" != "success" ] || \
+           [ "${{ needs.feature-combinations.result }}" != "success" ]; then
+          echo "One or more checks failed"
+          exit 1
+        else
+          echo "All checks passed!"
+        fi

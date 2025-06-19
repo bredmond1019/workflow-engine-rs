@@ -157,7 +157,7 @@ impl BedrockTokenCounter {
                     Model::BedrockClaude3Opus => Model::Claude3Opus,
                     Model::BedrockClaude3Sonnet => Model::Claude3Sonnet,
                     Model::BedrockClaude3Haiku => Model::Claude3Haiku,
-                    _ => unreachable!(),
+                    _ => return Err(TokenError::UnsupportedModel(format!("Invalid Bedrock Claude model: {:?}", model))),
                 };
                 self.anthropic_counter.count_tokens_internal(text, &anthropic_model)
             }

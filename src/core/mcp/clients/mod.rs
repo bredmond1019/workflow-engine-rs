@@ -2,10 +2,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 pub mod connection;
-pub mod helpscout;
 pub mod http;
-pub mod notion;
-pub mod slack;
 pub mod stdio;
 pub mod websocket;
 

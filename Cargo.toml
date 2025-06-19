@@ -1,52 +1,77 @@
-[package]
-name = "backend"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+    "crates/workflow-engine-core",
+    "crates/workflow-engine-mcp",
+    "crates/workflow-engine-api",
+    "crates/workflow-engine-nodes",
+    "crates/workflow-engine-app",
+]
+exclude = [
+    "services/*",
+    "mcp-servers/*",
+    "examples/*",
+]
+resolver = "2"
 
-[lib]
-path = "src/lib.rs"
+[workspace.package]
+version = "0.6.0"
+edition = "2021"
+authors = ["Brandon Redmond <bredmond1019@gmail.com>"]
+license = "MIT"
+description = "Production-ready AI workflow orchestration platform built in Rust, featuring event sourcing, microservices architecture, Model Context Protocol (MCP) integration, and advanced AI capabilities."
+repository = "https://github.com/bredmond1019/workflow-engine-rs"
+homepage = "https://github.com/bredmond1019/workflow-engine-rs"
+documentation = "https://docs.rs/ai-workflow-engine"
+readme = "README.md"
+keywords = ["ai", "workflow", "orchestration", "mcp", "automation"]
+categories = ["web-programming", "science", "api-bindings", "development-tools", "asynchronous"]
 
-[dependencies]
-actix = "0.13.5"
-actix-cors = "0.7.1"
-actix-web = "4.11.0"
-actix-web-actors = "4.3"
-async-trait = "0.1.77"
-async-stream = "0.3.5"
-aws-config = "1.1.7"
-aws-sdk-bedrockruntime = "1.16.0"
-chrono = { version = "0.4.41", features = ["serde"] } 
-diesel = { version = "2.2.10", features = ["postgres", "r2d2", "chrono", "uuid", "serde_json"] }
-dotenv = "0.15.0"
-env_logger = "0.11.8"
-log = "0.4.27"
-reqwest = { version = "0.11.24", features = ["json", "stream"] }
+[workspace.dependencies]
+# Core Rust libraries
+tokio = { version = "1.36.0", features = ["full"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-serde_yaml = "0.9.34"
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+thiserror = "2.0.12"
+async-trait = "0.1.77"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
+
+# Database features
+diesel = { version = "2.2.10", features = ["postgres", "r2d2", "chrono", "uuid", "serde_json"] }
+
+# Web framework features
+actix-web = "4.11.0"
+actix-cors = "0.7.1"
+actix-web-actors = "4.3"
+actix = "0.13.5"
+
+# OpenAPI documentation features
+utoipa = { version = "4.2", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "6.0", features = ["actix-web"] }
+
+# Monitoring features
 prometheus = "0.13.4"
 lazy_static = "1.5.0"
-uptime_lib = "0.3.1"
-thiserror = "2.0.12"
-tokio = { version = "1.36.0", features = ["full"] }
+
+# AWS features
+aws-config = "1.1.7"
+aws-sdk-bedrockruntime = "1.16.0"
+
+# Networking and MCP features
+reqwest = { version = "0.11.24", features = ["json", "stream"] }
 tokio-tungstenite = "0.21.0"
 tokio-stream = "0.1.14"
 tokio-util = { version = "0.7", features = ["codec", "io"] }
-bytes = "1.6"
 futures-util = "0.3.28"
-uuid = { version = "1.17.0", features = ["v4", "serde"] }
-jsonwebtoken = "9.2.0"
+bytes = "1.6"
+
+# Utility libraries
 once_cell = "1.19.0"
-rand = "0.8.5"
-sysinfo = "0.35.2"
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
-utoipa = { version = "4.2", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "6.0", features = ["actix-web"] }
-handlebars = "6.0.0"
+dotenv = "0.15.0"
 regex = "1.10.0"
-sha2 = "0.10.8"
-tiktoken-rs = "0.5.9"
+handlebars = "6.0.0"
 base64 = "0.22.0"
 unicode-segmentation = "1.10.1"
 rust_decimal = { version = "1.34.3", features = ["serde-float", "std"] }
@@ -55,17 +80,30 @@ md5 = "0.7.0"
 flate2 = "1.0"
 lz4_flex = "0.11"
 bincode = "1.3"
+sha2 = "0.10.8"
+tiktoken-rs = "0.5.9"
+serde_yaml = "0.9.34"
+async-stream = "0.3.5"
+jsonwebtoken = "9.2.0"
+rand = "0.8.5"
+log = "0.4.27"
+env_logger = "0.11.8"
+uptime_lib = "0.3.1"
+sysinfo = "0.35.2"
+clap = { version = "4.0", features = ["derive"] }
 
-[package.metadata]
-docs.rs = { rustdoc-args = ["--cfg", "docsrs"] }
-
-[dev-dependencies]
+# Development dependencies
 mockall = "0.12.1"
 tempfile = "3.8.1"
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+serial_test = "3.1"
+wiremock = "0.6"
+proptest = "1.4"
+test-case = "3.3"
 
-[[example]]
-name = "di_container_example"
-path = "examples/di_container_example.rs"
 
-[build]
-rustflags = ["-Awarnings"]
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-apple-darwin"]

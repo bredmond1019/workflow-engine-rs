@@ -3,9 +3,9 @@
 //! This example demonstrates the concepts from Tutorial 1 with a working
 //! text processing workflow that validates, analyzes, and reports on text input.
 
-use backend::core::task::TaskContext;
-use backend::core::nodes::Node;
-use backend::core::error::WorkflowError;
+use workflow_engine_core::task::TaskContext;
+use workflow_engine_core::nodes::Node;
+use workflow_engine_core::error::WorkflowError;
 use serde_json::json;
 
 /// Node that validates incoming text data

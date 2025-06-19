@@ -1,0 +1,88 @@
+[package]
+name = "workflow-engine-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core workflow engine primitives and execution engine"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/workflow-engine-core"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["monitoring"]  # Enable monitoring by default for ai/tokens modules
+# Optional features to reduce default dependencies
+database = ["dep:diesel"]
+monitoring = ["dep:prometheus", "dep:lazy_static"]
+aws = ["dep:aws-config", "dep:aws-sdk-bedrockruntime"]
+streaming = ["dep:actix", "dep:actix-web", "dep:actix-web-actors"]
+full = ["database", "monitoring", "aws", "streaming"]
+
+[dependencies]
+# Core dependencies - always included
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+once_cell = { workspace = true }
+regex = { workspace = true }
+handlebars = { workspace = true }
+base64 = { workspace = true }
+unicode-segmentation = { workspace = true }
+rust_decimal = { workspace = true }
+md5 = { workspace = true }
+flate2 = { workspace = true }
+lz4_flex = { workspace = true }
+bincode = { workspace = true }
+sha2 = { workspace = true }
+tiktoken-rs = { workspace = true }
+serde_yaml = { workspace = true }
+async-stream = { workspace = true }
+jsonwebtoken = { workspace = true }
+rand = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+bytes = { workspace = true }
+futures-util = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+
+# Workspace dependencies
+# workflow-engine-mcp = { path = "../workflow-engine-mcp" }  # Removed to avoid circular dependency
+
+# Optional dependencies
+diesel = { workspace = true, optional = true }
+prometheus = { workspace = true, optional = true }
+lazy_static = { workspace = true, optional = true }
+aws-config = { workspace = true, optional = true }
+aws-sdk-bedrockruntime = { workspace = true, optional = true }
+actix = { workspace = true, optional = true }
+actix-web = { workspace = true, optional = true }
+actix-web-actors = { workspace = true, optional = true }
+
+[dev-dependencies]
+mockall = { workspace = true }
+tempfile = { workspace = true }
+tokio-test = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "node_processing"
+harness = false
+path = "../../benches/node_processing.rs"
+
+[[bench]]
+name = "workflow_execution"
+harness = false
+path = "../../benches/workflow_execution.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

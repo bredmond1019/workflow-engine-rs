@@ -1,8 +1,7 @@
-/// Search Router Node - Initiates parallel searches across knowledge sources
+/// Search Router Node - Initiates searches across knowledge sources
 /// 
 /// This node acts as a router that validates query processing status and
-/// initiates parallel searches across multiple knowledge sources including
-/// Notion documentation, HelpScout articles, and Slack conversations.
+/// initiates searches across available knowledge sources.
 
 use serde_json::Value;
 
@@ -12,11 +11,11 @@ use crate::core::{
     task::TaskContext,
 };
 
-/// Routes validated queries to parallel search operations
+/// Routes validated queries to search operations
 /// 
 /// Responsibilities:
 /// - Validates that the query passed validation and spam checks
-/// - Sets up search context for parallel execution
+/// - Sets up search context for execution
 /// - Prepares search readiness flags for downstream search nodes
 #[derive(Debug, Clone)]
 pub struct SearchRouterNode;
@@ -40,11 +39,9 @@ impl Node for SearchRouterNode {
             });
         }
 
-        // Prepare search context for parallel search execution
+        // Prepare search context for search execution
         task_context.set_data("search_initiated", Value::Bool(true))?;
-        task_context.set_data("notion_search_ready", Value::Bool(true))?;
-        task_context.set_data("helpscout_search_ready", Value::Bool(true))?;
-        task_context.set_data("slack_search_ready", Value::Bool(true))?;
+        task_context.set_data("search_ready", Value::Bool(true))?;
 
         Ok(task_context)
     }

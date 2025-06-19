@@ -13,7 +13,7 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring event
 
 ### Key Capabilities
 
-- **🧠 Advanced AI Integration**: Native support for OpenAI, Anthropic, and AWS Bedrock with intelligent token management and cost optimization
+- **🧠 AI Integration**: Native support for OpenAI, Anthropic, and AWS Bedrock with intelligent token management and cost optimization
 - **⚡ Event-Driven Architecture**: PostgreSQL-backed event sourcing with snapshots, projections, and replay capabilities
 - **🔄 Model Context Protocol (MCP)**: Complete MCP implementation with multi-transport support (HTTP, WebSocket, stdio)
 - **🏗️ Microservices Platform**: Three specialized services for content processing, knowledge graphs, and real-time communication
@@ -21,6 +21,23 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring event
 - **🔧 Service Bootstrap System**: Advanced dependency injection, service discovery, and lifecycle management
 - **🧪 Enterprise Testing**: Load testing, chaos engineering, and comprehensive integration test suites
 - **🎯 Multi-Tenancy**: Built-in tenant isolation with per-tenant event streams and data segregation
+
+### 🎯 Current AI Features
+
+**Included in v1.0:**
+- ✅ **OpenAI Integration**: Complete support for GPT models with streaming and non-streaming responses
+- ✅ **Anthropic Integration**: Claude models with advanced reasoning capabilities
+- ✅ **AWS Bedrock**: Enterprise-grade AI models (requires `aws` feature)
+- ✅ **Token Management**: Comprehensive cost tracking, budgets, and usage analytics
+- ✅ **AI Agent Nodes**: High-level workflow nodes for AI-powered processing
+- ✅ **Template System**: AI-powered template processing with Handlebars integration
+
+**Roadmap Features:**
+- 🚧 **Real-time AI Streaming**: WebSocket-based streaming responses (optional `streaming` feature)
+- 📋 **Google Gemini**: Integration with Google's Gemini models
+- 📋 **Ollama Support**: Local AI model execution via Ollama
+- 📋 **Azure OpenAI**: Dedicated Azure OpenAI service integration
+- 📋 **Fine-tuning Pipeline**: Custom model training workflows
 
 ## 🚀 Quick Start
 
@@ -75,9 +92,9 @@ cd services/realtime_communication && cargo run # Port 8081
 ### Programming with the Platform
 
 ```rust
-use backend::core::workflow::builder::WorkflowBuilder;
-use backend::core::nodes::{config::NodeConfig, agent::AgentNode};
-use backend::core::mcp::clients::notion::NotionClient;
+use workflow_engine_core::workflow::builder::WorkflowBuilder;
+use workflow_engine_core::nodes::{config::NodeConfig, agent::AgentNode};
+use workflow_engine_mcp::clients::http::HttpMCPClient;
 use serde_json::json;
 
 #[tokio::main]
@@ -132,7 +149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Multi-Transport**: HTTP, WebSocket, and stdio protocol support
 - **Connection Pooling**: Advanced connection management with health checks
 - **Load Balancing**: Multiple strategies for high availability
-- **Client Library**: Ready-to-use clients for Notion, HelpScout, Slack
+- **Client Library**: Ready-to-use HTTP, WebSocket, and stdio clients
 - **Server Tools**: Customer support and knowledge base MCP servers
 
 ### 🏗️ Microservices Platform
@@ -322,22 +339,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 💡 Usage Examples
 
-### 1. AI Research Pipeline with External Knowledge
+### 1. AI Research Pipeline
 
 ```rust
-use backend::core::workflow::builder::WorkflowBuilder;
-use backend::core::nodes::{config::NodeConfig, agent::AgentNode, external_mcp_client::ExternalMcpClientNode};
-use backend::core::mcp::clients::notion::NotionClient;
+use workflow_engine_core::workflow::builder::WorkflowBuilder;
+use workflow_engine_core::nodes::{config::NodeConfig, agent::AgentNode};
+use workflow_engine_mcp::clients::http::HttpMCPClient;
 use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Build a comprehensive research workflow
+    // Build a comprehensive AI research workflow
     let workflow = WorkflowBuilder::new::<AgentNode>("ai_research_pipeline".to_string())
-        .description("AI research with external knowledge integration".to_string())
+        .description("AI research and analysis workflow".to_string())
         .add_node(
-            NodeConfig::new::<ExternalMcpClientNode>()
-                .with_description("Search knowledge base".to_string())
+            NodeConfig::new::<AgentNode>()
+                .with_description("Research query processing".to_string())
                 .with_connections(vec![std::any::TypeId::of::<AgentNode>()])
         )
         .add_node(
@@ -351,8 +368,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "research_query": "Latest AI developments in Rust ecosystem",
         "model": "gpt-4",
         "max_tokens": 4000,
-        "enable_knowledge_search": true,
-        "search_sources": ["notion", "documentation"],
+        "enable_analysis": true,
+        "search_sources": ["documentation", "research_papers"],
         "output_format": "detailed_analysis"
     });
     
@@ -365,8 +382,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### 2. Customer Support Automation
 
 ```rust
-use backend::workflows::customer_support_workflow::CustomerSupportWorkflow;
-use backend::core::mcp::clients::helpscout::HelpScoutClient;
+use workflow_engine_api::workflows::customer_support_workflow::CustomerSupportWorkflow;
+use workflow_engine_mcp::clients::http::HttpMCPClient;
 use serde_json::json;
 
 #[tokio::main]
@@ -509,8 +526,8 @@ client.requestAIAnalysis('Analyze this text for insights');
 ### 6. Event Sourcing and CQRS
 
 ```rust
-use backend::db::events::store::EventStore;
-use backend::db::events::types::{Event, EventType};
+use workflow_engine_api::db::events::store::EventStore;
+use workflow_engine_api::db::events::types::{Event, EventType};
 use serde_json::json;
 
 #[tokio::main]
@@ -616,10 +633,9 @@ MCP_RETRY_COUNT=3
 MCP_CONNECTION_POOL_SIZE=10
 MCP_LOAD_BALANCING_STRATEGY=round_robin
 
-# External MCP Services
-NOTION_MCP_URL=stdio://notion-mcp-server
-HELPSCOUT_MCP_URL=stdio://helpscout-mcp-server
-SLACK_MCP_URL=stdio://slack-mcp-server
+# MCP Configuration (for custom integrations)
+# MCP_SERVER_URL=http://localhost:8001
+# MCP_TRANSPORT_TYPE=http
 ```
 
 ### Docker Configuration
@@ -745,8 +761,8 @@ GET /info
 
 #### Workflow Engine
 ```rust
-use backend::core::workflow::builder::WorkflowBuilder;
-use backend::core::nodes::Node;
+use workflow_engine_core::workflow::builder::WorkflowBuilder;
+use workflow_engine_core::nodes::Node;
 
 // Main workflow trait
 pub trait Workflow {
@@ -764,7 +780,7 @@ pub trait Node: Send + Sync + std::fmt::Debug {
 
 #### Event Sourcing
 ```rust
-use backend::db::events::{Event, EventStore, EventType};
+use workflow_engine_api::db::events::{Event, EventStore, EventType};
 
 // Event store interface
 #[async_trait]
@@ -777,7 +793,7 @@ pub trait EventStore {
 
 #### MCP Integration
 ```rust
-use backend::core::mcp::protocol::{McpRequest, McpResponse};
+use workflow_engine_mcp::protocol::{McpRequest, McpResponse};
 
 // MCP client interface
 #[async_trait]
@@ -860,7 +876,7 @@ cargo test --test external_mcp_client_tests
 ### Test Data & Fixtures
 
 The system includes comprehensive test fixtures:
-- Mock MCP servers (Notion, HelpScout, Slack)
+- Mock MCP servers for testing protocol implementation
 - Sample event data for event sourcing tests
 - Pre-built workflows for integration testing
 - Load testing scenarios with realistic data
@@ -970,7 +986,7 @@ CONNECTION_POOL_SIZE=50
 # Monitoring
 PROMETHEUS_ENDPOINT=http://prometheus:9090
 GRAFANA_DASHBOARD_URL=http://grafana:3000
-ALERT_WEBHOOK_URL=https://hooks.slack.com/your-webhook
+ALERT_WEBHOOK_URL=https://your-webhook-url.com/alerts
 ```
 
 ## 🤝 Contributing

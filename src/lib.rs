@@ -1,4 +1,3 @@
-#![allow(warnings)]
 
 /*!
 # AI System Rust

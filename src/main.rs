@@ -4,9 +4,9 @@ use dotenv::dotenv;
 use log::info;
 use std::{env, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 
-use backend::db::session::DbPool;
-use backend::{api, workflows};
-use backend::api::{auth::JwtAuth, auth::JwtMiddleware, rate_limit::{RateLimitConfig, RateLimitMiddleware}};
+use ai_workflow_engine::db::session::DbPool;
+use ai_workflow_engine::{api, workflows};
+use ai_workflow_engine::api::{auth::JwtAuth, auth::JwtMiddleware, rate_limit::{RateLimitConfig, RateLimitMiddleware}};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
     // Initialize structured logging with correlation ID support
-    backend::monitoring::logging::init_structured_logging();
+    ai_workflow_engine::monitoring::logging::init_structured_logging();
 
     // Get host and port from environment variables or use defaults
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -38,7 +38,8 @@ async fn main() -> std::io::Result<()> {
     info!("Starting server at http://{}", server_url);
 
     // Initialize database pool
-    let pool: DbPool = backend::db::session::init_pool();
+    let pool: DbPool = ai_workflow_engine::db::session::init_pool()
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to initialize database pool: {}", e)))?;
     let arc_pool = Arc::new(pool.clone());
 
     // Initialize JWT auth
@@ -46,15 +47,25 @@ async fn main() -> std::io::Result<()> {
     let jwt_auth = web::Data::new(JwtAuth::new(jwt_secret.clone()));
 
     // Configure rate limiting
+    let requests_per_minute = env::var("RATE_LIMIT_PER_MINUTE")
+        .unwrap_or_else(|_| "60".to_string())
+        .parse()
+        .unwrap_or_else(|e| {
+            log::warn!("Invalid RATE_LIMIT_PER_MINUTE value, using default 60: {}", e);
+            60
+        });
+    
+    let burst_size = env::var("RATE_LIMIT_BURST")
+        .unwrap_or_else(|_| "10".to_string())
+        .parse()
+        .unwrap_or_else(|e| {
+            log::warn!("Invalid RATE_LIMIT_BURST value, using default 10: {}", e);
+            10
+        });
+    
     let rate_limit_config = RateLimitConfig {
-        requests_per_minute: env::var("RATE_LIMIT_PER_MINUTE")
-            .unwrap_or_else(|_| "60".to_string())
-            .parse()
-            .unwrap_or(60),
-        burst_size: env::var("RATE_LIMIT_BURST")
-            .unwrap_or_else(|_| "10".to_string())
-            .parse()
-            .unwrap_or(10),
+        requests_per_minute,
+        burst_size,
     };
 
     info!("Starting Demo Workflows");

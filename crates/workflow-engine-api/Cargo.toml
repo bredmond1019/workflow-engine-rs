@@ -1,0 +1,88 @@
+[package]
+name = "workflow-engine-api"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "REST API server for AI workflow engine"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/workflow-engine-api"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["openapi", "auth", "monitoring", "database"]
+openapi = ["dep:utoipa", "dep:utoipa-swagger-ui"]
+auth = ["dep:jsonwebtoken"]
+monitoring = ["dep:prometheus", "dep:lazy_static"]
+database = ["workflow-engine-core/database", "dep:diesel"]
+
+[dependencies]
+# Core dependencies
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
+workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Web framework
+actix-web = { workspace = true }
+actix-cors = { workspace = true }
+actix-web-actors = { workspace = true }
+actix = { workspace = true }
+
+# Optional features
+utoipa = { workspace = true, optional = true }
+utoipa-swagger-ui = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true, optional = true }
+prometheus = { workspace = true, optional = true }
+lazy_static = { workspace = true, optional = true }
+diesel = { workspace = true, optional = true }
+
+# Utility libraries
+once_cell = { workspace = true }
+dotenv = { workspace = true }
+env_logger = { workspace = true }
+log = { workspace = true }
+uptime_lib = { workspace = true }
+sysinfo = { workspace = true }
+rand = { workspace = true }
+
+# Additional dependencies for db and workflows modules  
+redis = { workspace = true }
+flate2 = { workspace = true }
+lz4_flex = { workspace = true }
+bincode = { workspace = true }
+sha2 = { workspace = true }
+md5 = { workspace = true }
+base64 = { workspace = true }
+regex = { workspace = true }
+handlebars = { workspace = true }
+unicode-segmentation = { workspace = true }
+rust_decimal = { workspace = true }
+tiktoken-rs = { workspace = true }
+serde_yaml = { workspace = true }
+async-stream = { workspace = true }
+reqwest = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+futures-util = { workspace = true }
+bytes = { workspace = true }
+
+[dev-dependencies]
+mockall = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "api_throughput"
+harness = false
+path = "../../benches/api_throughput.rs"

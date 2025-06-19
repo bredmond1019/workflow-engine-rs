@@ -1,6 +1,160 @@
-# AI Workflow System - Quick Start Guide
+# AI Workflow Engine - Quick Start Guide
 
-**For experienced developers who want to get up and running quickly.**
+This guide helps you get started with the AI Workflow Engine crates in just a few minutes. Choose your path:
+
+- **[📦 Using the Crates](#-using-the-crates)** - Add to your Rust project (5 minutes)
+- **[🔧 Local Development](#-local-development)** - Full system setup (10 minutes)
+
+## 📦 Using the Crates
+
+The fastest way to add AI workflows to your existing Rust project.
+
+### 1. Add Dependencies
+
+```toml
+[dependencies]
+# Core workflow engine
+workflow-engine-core = "0.6.0"
+
+# Optional: MCP protocol support
+workflow-engine-mcp = { version = "0.6.0", optional = true }
+
+# Optional: Built-in nodes
+workflow-engine-nodes = { version = "0.6.0", optional = true }
+
+# Optional: API server
+workflow-engine-api = { version = "0.6.0", optional = true }
+
+# Core dependencies you'll need
+tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+async-trait = "0.1"
+```
+
+### 2. Hello World Workflow
+
+```rust
+use workflow_engine_core::prelude::*;
+use serde_json::json;
+
+#[derive(Debug)]
+struct GreetingNode;
+
+impl Node for GreetingNode {
+    fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        let input: serde_json::Value = context.get_event_data()?;
+        let name = input.get("name").and_then(|v| v.as_str()).unwrap_or("World");
+        
+        context.update_node("greeting", json!({
+            "message": format!("Hello, {}!", name)
+        }));
+        
+        Ok(context)
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), WorkflowError> {
+    // Build workflow
+    let workflow = TypedWorkflowBuilder::new("hello_workflow")
+        .start_with_node(NodeId::new("greeting"))
+        .build()?;
+    
+    // Register node
+    workflow.register_node(NodeId::new("greeting"), GreetingNode);
+    
+    // Run workflow
+    let result = workflow.run(json!({"name": "Alice"})).await?;
+    
+    if let Some(greeting) = result.get_node_data::<serde_json::Value>("greeting")? {
+        println!("{}", greeting["message"]); // "Hello, Alice!"
+    }
+    
+    Ok(())
+}
+```
+
+### 3. Async Nodes with External APIs
+
+```rust
+use workflow_engine_core::prelude::*;
+use async_trait::async_trait;
+
+#[derive(Debug)]
+struct ApiCallNode {
+    base_url: String,
+}
+
+#[async_trait]
+impl AsyncNode for ApiCallNode {
+    async fn process_async(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        let input: serde_json::Value = context.get_event_data()?;
+        
+        // Make HTTP request
+        let response = reqwest::get(&format!("{}/api/data", self.base_url))
+            .await
+            .map_err(|e| WorkflowError::ProcessingError { 
+                message: e.to_string() 
+            })?;
+            
+        let data: serde_json::Value = response.json().await
+            .map_err(|e| WorkflowError::ProcessingError { 
+                message: e.to_string() 
+            })?;
+        
+        context.update_node("api_response", data);
+        Ok(context)
+    }
+}
+
+// Use in async workflow
+let workflow = TypedWorkflowBuilder::new("api_workflow")
+    .start_with_node(NodeId::new("api_call"))
+    .build()?;
+
+workflow.register_async_node(
+    NodeId::new("api_call"), 
+    ApiCallNode { base_url: "https://api.example.com".to_string() }
+);
+
+let result = workflow.run_async(json!({})).await?;
+```
+
+### 4. Feature Flags
+
+Enable optional functionality:
+
+```toml
+[dependencies]
+workflow-engine-core = { version = "0.6.0", features = ["database", "monitoring"] }
+workflow-engine-mcp = { version = "0.6.0", features = ["websocket", "stdio"] }
+workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents", "external-mcp"] }
+workflow-engine-api = { version = "0.6.0", features = ["auth", "openapi"] }
+```
+
+**See [Feature Flags](#feature-flags) section below for complete list.**
+
+### 5. Complete Examples
+
+Check out the examples directory:
+
+```bash
+# Clone the repository for examples
+git clone https://github.com/bredmond1019/workflow-engine-rs
+cd workflow-engine-rs
+
+# Run examples
+cargo run --example 01_hello_world_workflow
+cargo run --example 02_async_external_api_workflow
+cargo run --example 03_custom_node_implementation
+cargo run --example 04_error_handling_best_practices
+```
+
+---
+
+## 🔧 Local Development
+
+**For experienced developers who want to get the full system running quickly.**
 
 This guide gets you from zero to running AI workflows in under 10 minutes. For detailed setup instructions, see [DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md).
 
@@ -268,5 +422,247 @@ cargo test -- --ignored  # Run integration tests
 1. Run `./scripts/validate-environment.sh` to diagnose issues
 2. Check service health: `curl http://localhost:8080/api/v1/health/detailed`
 3. View logs: `./dev.sh logs` or `docker-compose logs -f`
+
+---
+
+## Feature Flags
+
+### workflow-engine-core
+
+Controls core functionality of the workflow engine:
+
+```toml
+[dependencies]
+workflow-engine-core = { version = "0.6.0", features = ["database", "monitoring", "aws", "full"] }
+```
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| `database` | Database integration with Diesel ORM | `diesel` |
+| `monitoring` | Prometheus metrics collection | `prometheus`, `lazy_static` |
+| `aws` | AWS Bedrock AI integration | `aws-config`, `aws-sdk-bedrockruntime` |
+| `full` | Enables all optional features | All above |
+
+**Default:** None (minimal core functionality)
+
+### workflow-engine-mcp
+
+Controls MCP (Model Context Protocol) transport types:
+
+```toml
+[dependencies]
+workflow-engine-mcp = { version = "0.6.0", features = ["http", "websocket", "stdio", "all"] }
+```
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| `http` | HTTP transport for MCP clients | `reqwest` |
+| `websocket` | WebSocket transport for MCP clients | `tokio-tungstenite` |
+| `stdio` | Standard I/O transport for MCP clients | `tokio-util` |
+| `all` | All transport types | All above |
+
+**Default:** `http`, `websocket`
+
+### workflow-engine-nodes
+
+Controls built-in node implementations:
+
+```toml
+[dependencies]
+workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents", "external-mcp", "research", "template", "all"] }
+```
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| `ai-agents` | AI service integration nodes (OpenAI, Anthropic) | AI provider SDKs |
+| `external-mcp` | External MCP server integration nodes | `workflow-engine-mcp` |
+| `research` | Research and analysis nodes | Text processing libraries |
+| `template` | Template processing nodes | `handlebars` |
+| `all` | All node types | All above |
+
+**Default:** `ai-agents`, `external-mcp`
+
+### workflow-engine-api
+
+Controls API server features:
+
+```toml
+[dependencies]
+workflow-engine-api = { version = "0.6.0", features = ["openapi", "auth", "monitoring", "database"] }
+```
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| `openapi` | OpenAPI documentation generation | `utoipa`, `utoipa-swagger-ui` |
+| `auth` | JWT authentication support | `jsonwebtoken` |
+| `monitoring` | Prometheus metrics endpoints | `prometheus` |
+| `database` | Database integration | `diesel` |
+
+**Default:** `openapi`, `auth`, `monitoring`
+
+### Common Feature Combinations
+
+**Minimal Setup** (just core workflow engine):
+```toml
+workflow-engine-core = "0.6.0"
+```
+
+**AI-Powered Workflows** (core + AI nodes):
+```toml
+workflow-engine-core = "0.6.0"
+workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents"] }
+```
+
+**Full MCP Integration** (core + MCP + all transports):
+```toml
+workflow-engine-core = "0.6.0"
+workflow-engine-mcp = { version = "0.6.0", features = ["all"] }
+workflow-engine-nodes = { version = "0.6.0", features = ["external-mcp"] }
+```
+
+**Complete API Server** (everything for web service):
+```toml
+workflow-engine-core = { version = "0.6.0", features = ["full"] }
+workflow-engine-mcp = { version = "0.6.0", features = ["all"] }
+workflow-engine-nodes = { version = "0.6.0", features = ["all"] }
+workflow-engine-api = { version = "0.6.0", features = ["openapi", "auth", "monitoring", "database"] }
+```
+
+---
+
+## Troubleshooting
+
+### Common Build Issues
+
+**1. Missing System Dependencies**
+```bash
+# macOS
+xcode-select --install
+brew install openssl
+
+# Ubuntu/Debian
+sudo apt update
+sudo apt install build-essential pkg-config libssl-dev
+
+# Alpine Linux
+apk add build-base openssl-dev
+```
+
+**2. Diesel Database Errors**
+```bash
+# Install diesel CLI
+cargo install diesel_cli --no-default-features --features postgres
+
+# Set database URL
+export DATABASE_URL=postgresql://username:password@localhost/database_name
+
+# Run migrations
+diesel migration run
+```
+
+**3. Feature Flag Conflicts**
+```toml
+# Avoid conflicting features - use specific combinations
+workflow-engine-core = { version = "0.6.0", features = ["database"] }
+# Not: features = ["database", "full"] - full already includes database
+```
+
+**4. Async Runtime Issues**
+```rust
+// Ensure you have tokio runtime
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+
+// In main.rs
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Your code here
+    Ok(())
+}
+```
+
+### Performance Optimization
+
+**1. Minimal Feature Set**
+Only enable features you need:
+```toml
+# Instead of "all", be specific
+workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents"] }
+```
+
+**2. Compile Time Optimization**
+```toml
+# In Cargo.toml
+[profile.dev]
+opt-level = 1  # Faster debug builds
+
+[profile.release]
+lto = true     # Link-time optimization
+codegen-units = 1  # Better optimization
+```
+
+**3. Runtime Performance**
+```rust
+// Use async nodes for I/O operations
+#[async_trait]
+impl AsyncNode for MyNode {
+    async fn process_async(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        // Non-blocking operations
+        Ok(context)
+    }
+}
+```
+
+### Documentation and Examples
+
+**1. View Local Documentation**
+```bash
+# Generate and open docs
+cargo doc --open --all-features
+
+# Specific crate docs
+cargo doc -p workflow-engine-core --open
+```
+
+**2. Run Examples**
+```bash
+# List available examples
+cargo run --example
+
+# Run specific example
+cargo run --example 01_hello_world_workflow
+
+# Run with features
+cargo run --example ai_integration --features "ai-agents"
+```
+
+**3. Testing Your Integration**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_my_workflow() {
+        let workflow = TypedWorkflowBuilder::new("test")
+            .start_with_node(NodeId::new("test_node"))
+            .build()
+            .unwrap();
+            
+        workflow.register_node(NodeId::new("test_node"), MyTestNode);
+        
+        let result = workflow.run(json!({"test": "data"})).await.unwrap();
+        assert!(result.get_node_data::<serde_json::Value>("test_result").unwrap().is_some());
+    }
+}
+```
+
+### Getting Help
+
+1. **Check Documentation**: `cargo doc --open --all-features`
+2. **Run Examples**: Examples in the repository demonstrate patterns
+3. **Enable Logging**: Use `RUST_LOG=debug` for detailed output
+4. **Check Feature Flags**: Ensure you have the right features enabled
+5. **Review Tests**: Integration tests show real usage patterns
 
 **Ready to build AI workflows! 🚀**

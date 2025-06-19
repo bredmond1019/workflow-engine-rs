@@ -499,11 +499,10 @@ mod tests {
         let json = serde_json::to_string(&start_msg).unwrap();
         let parsed: WebSocketMessage = serde_json::from_str(&json).unwrap();
         
-        match parsed {
-            WebSocketMessage::StartStream { stream_id, .. } => {
-                assert_eq!(stream_id, "test-123");
-            }
-            _ => panic!("Wrong message type"),
+        if let WebSocketMessage::StartStream { stream_id, .. } = parsed {
+            assert_eq!(stream_id, "test-123");
+        } else {
+            assert!(false, "Expected StartStream message type, got: {:?}", parsed);
         }
     }
 

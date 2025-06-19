@@ -1,0 +1,72 @@
+# Files to exclude from crate packaging
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test data
+test-data/
+testdata/
+fixtures/
+
+# Build artifacts
+target/
+Cargo.lock
+
+# Documentation source (keep README.md)
+docs/
+*.draft.md
+NOTES.md
+TODO.md
+
+# Development scripts
+scripts/
+dev/
+
+# CI/CD configs (handled at workspace level)
+.github/
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# Docker files (handled at workspace level)
+Dockerfile*
+docker-compose*
+
+# Examples (examples are at workspace level)
+examples/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+!.env.example
+
+# Coverage reports
+coverage/
+*.lcov
+*.gcov
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# IDE files
+.metals/
+.bloop/
+project/metals.sbt
