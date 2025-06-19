@@ -35,9 +35,6 @@ tracing-subscriber = { workspace = true }
 
 # Web framework
 actix-web = { workspace = true }
-actix-cors = { workspace = true }
-actix-web-actors = { workspace = true }
-actix = { workspace = true }
 
 # Optional features
 utoipa = { workspace = true, optional = true }
@@ -50,11 +47,11 @@ diesel = { workspace = true, optional = true }
 # Utility libraries
 once_cell = { workspace = true }
 dotenvy = { workspace = true }
-env_logger = { workspace = true }
 log = { workspace = true }
 uptime_lib = { workspace = true }
 sysinfo = { workspace = true }
 rand = { workspace = true }
+bytes = { workspace = true }
 
 # Additional dependencies for db and workflows modules  
 redis = { workspace = true }
@@ -64,18 +61,8 @@ bincode = { workspace = true }
 sha2 = { workspace = true }
 md5 = { workspace = true }
 base64 = { workspace = true }
-regex = { workspace = true }
-handlebars = { workspace = true }
-unicode-segmentation = { workspace = true }
-rust_decimal = { workspace = true }
-tiktoken-rs = { workspace = true }
-serde_yaml = { workspace = true }
-async-stream = { workspace = true }
 reqwest = { workspace = true }
-tokio-stream = { workspace = true }
-tokio-util = { workspace = true }
 futures-util = { workspace = true }
-bytes = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }

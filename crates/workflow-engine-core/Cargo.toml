@@ -42,17 +42,10 @@ tiktoken-rs = { workspace = true }
 async-stream = { workspace = true }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }
-base64 = { workspace = true }
-flate2 = { workspace = true }
-lz4_flex = { workspace = true }
-bincode = { workspace = true }
-serde_yaml = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true }
 futures-util = { workspace = true }
 bytes = { workspace = true }
-tokio-stream = { workspace = true }
-tokio-util = { workspace = true }
 
 # Workspace dependencies
 # workflow-engine-mcp = { path = "../workflow-engine-mcp" }  # Removed to avoid circular dependency

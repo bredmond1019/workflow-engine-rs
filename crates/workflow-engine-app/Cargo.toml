@@ -21,27 +21,18 @@ default = ["full"]
 full = [
     "workflow-engine-core/full",
     "workflow-engine-api/default",
-    "workflow-engine-mcp/all",
-    "workflow-engine-nodes/all",
     "database",
     "monitoring"
 ]
-database = ["workflow-engine-core/database", "workflow-engine-api/database", "dep:diesel"]
+database = ["workflow-engine-core/database", "workflow-engine-api/database"]
 monitoring = ["workflow-engine-core/monitoring", "workflow-engine-api/monitoring"]
 
 [dependencies]
-# All workspace crates with full features
+# Core workspace crates
 workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0", features = ["full"] }
-workflow-engine-mcp = { path = "../workflow-engine-mcp", version = "0.6.0", features = ["all"] }
 workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0", features = ["default"] }
-workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0", features = ["all"] }
 
 # Runtime dependencies
 dotenvy = { workspace = true }
-
-# Optional web framework for main app (handled by api crate)
-
-# Optional database support
-diesel = { workspace = true, optional = true }
 
 # No dev-dependencies needed for app binary

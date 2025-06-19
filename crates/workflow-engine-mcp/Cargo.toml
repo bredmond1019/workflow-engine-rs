@@ -27,24 +27,16 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
-thiserror = { workspace = true }
 async-trait = { workspace = true }
-tracing = { workspace = true }
-once_cell = { workspace = true }
 
 # Networking
 reqwest = { workspace = true }
-tokio-stream = { workspace = true }
-tokio-util = { workspace = true }
 futures-util = { workspace = true }
-bytes = { workspace = true }
 
 # WebSocket support (optional)
 tokio-tungstenite = { workspace = true, optional = true }
 
 # Utility libraries
-base64 = { workspace = true }
-regex = { workspace = true }
 rand = { workspace = true }
 log = { workspace = true }
 prometheus = { workspace = true }
