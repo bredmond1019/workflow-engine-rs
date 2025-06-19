@@ -1,267 +1,161 @@
-# AI Workflow Engine - Open Source Readiness Task List
+# AI Workflow Engine - Open Source Publication Task List
 
-**Generated from:** `tasks/project-open-source.md`  
-**Date:** 2024-12-18  
-**Target:** Prepare AI Workflow Engine for open source release with focus on core workflow functionality
+**Generated from:** tasks/project-prd-v3.md  
+**Reference:** tasks/iteration-analysis-20241218_120000.md  
+**Date:** December 18, 2024  
+**Focus:** Critical blockers for crates.io publication
 
 ## Relevant Files
 
-### Core Compilation and Dependencies
-- `crates/workflow-engine-api/Cargo.toml` - API crate dependencies and feature flags
-- `crates/workflow-engine-api/src/lib.rs` - Main API library entry point requiring utoipa-swagger-ui fixes
-- `crates/workflow-engine-nodes/Cargo.toml` - Nodes crate dependency resolution
-- `Cargo.toml` - Root workspace configuration and dependency management
-- `crates/workflow-engine-core/src/lib.rs` - Core library exports and conditional compilation
+### Core Implementation Files
+- `crates/workflow-engine-app/src/main.rs` - Main application with compilation errors (missing JwtAuth::new, JwtMiddleware::new)
+- `crates/workflow-engine-api/src/lib.rs` - API crate exports (workflows module disabled, missing re-exports)
+- `crates/workflow-engine-api/src/auth.rs` - JWT authentication implementation (missing constructors)
+- `crates/workflow-engine-api/src/middleware.rs` - JWT middleware implementation (missing constructors)
+- `crates/workflow-engine-api/src/workflows.rs` - Workflows module (currently commented out)
+- `crates/workflow-engine-core/src/lib.rs` - Core crate public API surface
+- `crates/workflow-engine-core/src/errors.rs` - Error types needing proper chaining and context
 
-### External MCP Client Removal
-- `crates/workflow-engine-mcp/src/clients/slack/` - Slack MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/clients/notion/` - Notion MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/clients/helpscout/` - HelpScout MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/lib.rs` - MCP library exports to update after client removal
-- `crates/workflow-engine-mcp/Cargo.toml` - Dependencies to clean up after client removal
+### Security and Dependencies
+- `Cargo.toml` - Workspace dependencies (protobuf, dotenv, proc-macro-error updates needed)
+- `crates/*/Cargo.toml` - Individual crate dependencies and metadata
+- `Cargo.lock` - Dependency resolution (needs update for security fixes)
 
-### Infrastructure and Deployment
-- `docker-compose.yml` - Container orchestration configuration
-- `README.md` - Main documentation requiring infrastructure alignment updates
-- `scripts/` - MCP server infrastructure scripts
-- `Dockerfile` - Container build configuration
-- `.env.example` - Environment variable template
+### Code Quality Files  
+- `crates/workflow-engine-core/src/**/*.rs` - Core implementation (265+ unwrap/expect instances)
+- `crates/workflow-engine-api/src/**/*.rs` - API implementation (145 clippy warnings)
+- `crates/workflow-engine-mcp/src/**/*.rs` - MCP implementation (stub implementations)
+- `crates/workflow-engine-nodes/src/**/*.rs` - Node implementations (disabled AI agents)
 
-### Pricing Engine Implementation
-- `crates/workflow-engine-core/src/ai/tokens/pricing.rs` - Main pricing engine implementation
-- `crates/workflow-engine-core/src/ai/tokens/mod.rs` - Token management module exports
-- `crates/workflow-engine-core/src/config/` - Configuration management for API keys and pricing settings
+### Documentation and Community
+- `SECURITY.md` - Security policy for vulnerability reporting (missing)
+- `CODE_OF_CONDUCT.md` - Community code of conduct (missing)
+- `.github/ISSUE_TEMPLATE/` - GitHub issue templates (need consolidation)
+- `.github/PULL_REQUEST_TEMPLATE.md` - PR template (needs update)
+- `README.md` - Installation and usage instructions (needs crates.io focus)
 
-### Test Infrastructure
-- `tests/` - Integration test directory requiring compilation fixes
-- `crates/*/src/*/tests/` - Unit test modules throughout crates
-- `scripts/test_setup.sh` - Test environment setup scripts
-- `docker-compose.test.yml` - Test-specific container configuration
-
-### Documentation Files
-- `DEVELOPMENT_SETUP.md` - Development setup guide to create
-- `QUICK_START.md` - Quick start guide to create  
-- `monitoring/README.md` - Monitoring documentation to create
-- `CHANGELOG.md` - Version history requiring sync with Cargo.toml
-- `examples/` - Code examples directory requiring import path updates
-
-### Benchmark and Performance
-- `benches/` - Benchmark directory to create
-- `scripts/benchmark.sh` - Benchmark execution scripts
-- `docs/performance.md` - Performance documentation
+### Testing and CI/CD
+- `tests/**/*.rs` - Integration tests (need compilation fixes)
+- `.github/workflows/*.yml` - CI/CD pipelines (quality gates for publication)
+- `benches/**/*.rs` - Performance benchmarks (path configuration issues)
 
 ### Notes
 
-- Use `cargo build` to test compilation fixes incrementally
-- Run `cargo test` to verify test suite functionality after fixes
-- Use `docker-compose up` to test infrastructure alignment
-- Test documentation examples with `cargo run --example <name>`
-- Integration tests require `--ignored` flag: `cargo test -- --ignored`
+- All Rust files must compile successfully before publication
+- Security vulnerabilities must be resolved (cargo audit clean)
+- Clippy warnings must be fixed with `-- -D warnings` flag
+- All public APIs must have documentation with examples
+- Community files are required for professional open source project
+- Staged publication required due to workspace dependencies
 
 ## Tasks
 
 - [ ] 1.0 Fix Critical Compilation Errors
-  - [ ] 1.1 Resolve utoipa-swagger-ui dependency issues in API layer
-    - [ ] 1.1.1 Analyze utoipa-swagger-ui version conflicts in workflow-engine-api
-    - [ ] 1.1.2 Update Cargo.toml dependencies to compatible versions
-    - [ ] 1.1.3 Fix import statements and feature flag usage for utoipa
-    - [ ] 1.1.4 Test API compilation with `cargo build -p workflow-engine-api`
-  - [ ] 1.2 Fix type mismatches and missing imports in workflow-engine-api
-    - [ ] 1.2.1 Identify and catalog all type mismatch errors
-    - [ ] 1.2.2 Update import paths for new workspace structure
-    - [ ] 1.2.3 Fix trait implementations and generic type parameters
-    - [ ] 1.2.4 Resolve async/await compatibility issues
-  - [ ] 1.3 Resolve dependency conflicts in workflow-engine-nodes package
-    - [ ] 1.3.1 Analyze circular dependency issues between crates
-    - [ ] 1.3.2 Update dependency versions for compatibility
-    - [ ] 1.3.3 Fix module export structure in workflow-engine-nodes
-    - [ ] 1.3.4 Test nodes compilation independently
-  - [ ] 1.4 Fix workspace dependency configuration issues
-    - [ ] 1.4.1 Verify all workspace dependencies have correct version specifications
-    - [ ] 1.4.2 Fix feature flag propagation across workspace crates
-    - [ ] 1.4.3 Ensure consistent Rust edition across all crates
-    - [ ] 1.4.4 Test full workspace compilation with `cargo build --workspace`
+  - [ ] 1.1 Implement Missing JWT Authentication Methods
+    - [ ] 1.1.1 Add `JwtAuth::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/auth.rs`
+    - [ ] 1.1.2 Add `JwtMiddleware::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/middleware.rs`
+    - [ ] 1.1.3 Ensure both constructors properly initialize internal state and validate inputs
+    - [ ] 1.1.4 Add unit tests for both constructors with valid and invalid inputs
+  - [ ] 1.2 Re-enable and Fix Workflows Module
+    - [ ] 1.2.1 Uncomment `pub mod workflows;` in `crates/workflow-engine-api/src/lib.rs` line 53
+    - [ ] 1.2.2 Uncomment workflows module re-exports in `crates/workflow-engine-api/src/lib.rs` lines 52-53
+    - [ ] 1.2.3 Fix any compilation errors in the workflows module after re-enabling
+    - [ ] 1.2.4 Ensure workflows module exports are properly documented
+  - [ ] 1.3 Remove Unsafe Code Blocks
+    - [ ] 1.3.1 Replace unsafe environment variable setting in `crates/workflow-engine-app/src/main.rs` lines 16-27
+    - [ ] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()
+    - [ ] 1.3.3 Use safe environment variable setting without unsafe block
+    - [ ] 1.3.4 Add proper error propagation for startup configuration
+  - [ ] 1.4 Fix Import Resolution Errors
+    - [ ] 1.4.1 Fix missing `workflows` import in `crates/workflow-engine-app/src/main.rs` line 8
+    - [ ] 1.4.2 Ensure all module imports resolve correctly across workspace
+    - [ ] 1.4.3 Update any broken internal crate dependencies
+    - [ ] 1.4.4 Verify `cargo check --workspace` passes without errors
 
-- [ ] 2.0 Remove External MCP Client Dependencies
-  - [ ] 2.1 Remove Slack MCP client implementation and dependencies
-    - [ ] 2.1.1 Delete `crates/workflow-engine-mcp/src/clients/slack/` directory
-    - [ ] 2.1.2 Remove Slack-related dependencies from MCP Cargo.toml
-    - [ ] 2.1.3 Update MCP lib.rs exports to remove Slack client references
-    - [ ] 2.1.4 Remove Slack client tests and documentation
-  - [ ] 2.2 Remove Notion MCP client implementation and dependencies
-    - [ ] 2.2.1 Delete `crates/workflow-engine-mcp/src/clients/notion/` directory
-    - [ ] 2.2.2 Remove Notion-related dependencies from MCP Cargo.toml
-    - [ ] 2.2.3 Update MCP lib.rs exports to remove Notion client references
-    - [ ] 2.2.4 Remove Notion client tests and documentation
-  - [ ] 2.3 Remove HelpScout MCP client implementation and dependencies
-    - [ ] 2.3.1 Delete `crates/workflow-engine-mcp/src/clients/helpscout/` directory
-    - [ ] 2.3.2 Remove HelpScout-related dependencies from MCP Cargo.toml
-    - [ ] 2.3.3 Update MCP lib.rs exports to remove HelpScout client references
-    - [ ] 2.3.4 Remove HelpScout client tests and documentation
-  - [ ] 2.4 Update documentation to reflect removal of external MCP clients
-    - [ ] 2.4.1 Update README.md to remove references to external service integrations
-    - [ ] 2.4.2 Update API documentation to reflect available MCP capabilities
-    - [ ] 2.4.3 Update example workflows to use only internal MCP features
-    - [ ] 2.4.4 Update CHANGELOG.md to document breaking changes
+- [ ] 2.0 Resolve Security Vulnerabilities
+  - [ ] 2.1 Update Protobuf Dependency (RUSTSEC-2024-0437)
+    - [ ] 2.1.1 Update protobuf dependency to >=3.7.2 in workspace Cargo.toml
+    - [ ] 2.1.2 Update any transitive dependencies that pull in vulnerable protobuf versions
+    - [ ] 2.1.3 Test that updated protobuf version works with existing code
+    - [ ] 2.1.4 Run `cargo audit` to verify vulnerability is resolved
+  - [ ] 2.2 Replace Deprecated dotenv Dependency (RUSTSEC-2021-0141)
+    - [ ] 2.2.1 Replace `dotenv = "0.15.0"` with `dotenvy = "0.15"` in workspace dependencies
+    - [ ] 2.2.2 Update all `use dotenv::` imports to `use dotenvy::`
+    - [ ] 2.2.3 Update any dotenv method calls to dotenvy equivalents
+    - [ ] 2.2.4 Test environment variable loading still works correctly
+  - [ ] 2.3 Update proc-macro-error Chain (RUSTSEC-2024-0370)
+    - [ ] 2.3.1 Identify which dependencies bring in proc-macro-error (likely utoipa chain)
+    - [ ] 2.3.2 Update utoipa and related dependencies to latest versions
+    - [ ] 2.3.3 Verify OpenAPI documentation generation still works
+    - [ ] 2.3.4 Ensure no breaking changes in updated dependencies
+  - [ ] 2.4 Comprehensive Security Audit
+    - [ ] 2.4.1 Run `cargo audit` and ensure zero vulnerabilities reported
+    - [ ] 2.4.2 Review all dependencies for maintenance status and security
+    - [ ] 2.4.3 Set up automated security scanning in CI/CD pipeline
+    - [ ] 2.4.4 Document security update process for future maintenance
 
-- [ ] 3.0 Align Infrastructure and Deployment Configuration
-  - [ ] 3.1 Add microservices to docker-compose.yml or update README deployment info
-    - [ ] 3.1.1 Assess whether microservices should be included in docker-compose.yml
-    - [ ] 3.1.2 Either add service definitions for content_processing, knowledge_graph, and realtime_communication
-    - [ ] 3.1.3 Or update README to clarify microservice deployment strategy
-    - [ ] 3.1.4 Ensure port mappings match documentation (8082, 3002, 8081)
-  - [ ] 3.2 Create missing MCP server infrastructure or update documentation
-    - [ ] 3.2.1 Assess if Python MCP servers directory structure is needed
-    - [ ] 3.2.2 Either create `mcp-servers/` directory with Python implementations
-    - [ ] 3.2.3 Or update README to reflect actual MCP server architecture using scripts
-    - [ ] 3.2.4 Ensure MCP server startup scripts work as documented
-  - [ ] 3.3 Align docker-compose services with README claims
-    - [ ] 3.3.1 Verify all services mentioned in README exist in docker-compose.yml
-    - [ ] 3.3.2 Check port mappings match README documentation
-    - [ ] 3.3.3 Ensure environment variable configuration is consistent
-    - [ ] 3.3.4 Test full docker-compose stack startup and connectivity
+- [ ] 3.0 Complete Missing Implementations and API Polish
+  - [ ] 3.1 Remove Stub Implementations and TODO Comments
+    - [ ] 3.1.1 Audit all files for TODO, FIXME, and unimplemented!() macros
+    - [ ] 3.1.2 Complete or remove stub MCP client methods in workflow builders
+    - [ ] 3.1.3 Implement missing bootstrap service functionality or remove references
+    - [ ] 3.1.4 Remove placeholder implementations in AI agent nodes or disable features properly
+  - [ ] 3.2 Fix API Naming Consistency (Rust API Guidelines)
+    - [ ] 3.2.1 Standardize MCP vs Mcp naming throughout codebase (choose one pattern)
+    - [ ] 3.2.2 Review all public struct and enum names for consistency with Rust conventions
+    - [ ] 3.2.3 Ensure method names follow Rust naming guidelines (snake_case)
+    - [ ] 3.2.4 Update documentation to reflect naming changes
+  - [ ] 3.3 Implement Proper Error Types and Chaining
+    - [ ] 3.3.1 Replace string-only error variants with structured error types
+    - [ ] 3.3.2 Add `#[source]` attributes for proper error chaining using thiserror
+    - [ ] 3.3.3 Provide context-rich error messages with actionable information
+    - [ ] 3.3.4 Implement Display and Debug traits properly for all error types
+  - [ ] 3.4 Add Builder Patterns for Complex Configuration
+    - [ ] 3.4.1 Implement builder pattern for NodeConfig with proper validation
+    - [ ] 3.4.2 Create builder for McpConfig with fluent interface
+    - [ ] 3.4.3 Add builder for WorkflowBuilder with type-safe configuration
+    - [ ] 3.4.4 Ensure all builders have proper error handling and validation
 
-- [ ] 4.0 Complete Production Pricing Engine Implementation
-  - [ ] 4.1 Implement live API pricing updates for OpenAI
-    - [ ] 4.1.1 Create HTTP client for OpenAI pricing API endpoints
-    - [ ] 4.1.2 Implement pricing data parsing and validation
-    - [ ] 4.1.3 Add error handling and fallback to cached pricing
-    - [ ] 4.1.4 Create scheduled update mechanism for pricing data
-  - [ ] 4.2 Implement live API pricing updates for Anthropic
-    - [ ] 4.2.1 Create HTTP client for Anthropic pricing API endpoints
-    - [ ] 4.2.2 Implement pricing data parsing and validation for Claude models
-    - [ ] 4.2.3 Add error handling and fallback mechanisms
-    - [ ] 4.2.4 Integrate with existing token counting infrastructure
-  - [ ] 4.3 Implement live API pricing updates for AWS Bedrock
-    - [ ] 4.3.1 Create AWS SDK integration for Bedrock pricing
-    - [ ] 4.3.2 Implement multi-region pricing data collection
-    - [ ] 4.3.3 Add IAM role and credential management
-    - [ ] 4.3.4 Create pricing aggregation for different Bedrock models
-  - [ ] 4.4 Add configuration for pricing update frequency and fallback handling
-    - [ ] 4.4.1 Create configuration structure for update intervals
-    - [ ] 4.4.2 Implement background task scheduler for pricing updates
-    - [ ] 4.4.3 Add monitoring and alerting for pricing update failures
-    - [ ] 4.4.4 Create comprehensive fallback chain from API → cache → hardcoded
+- [ ] 4.0 Establish Professional Code Quality Standards
+  - [ ] 4.1 Eliminate Production Code Anti-patterns
+    - [ ] 4.1.1 Replace all unwrap() calls with proper error handling (265+ instances)
+    - [ ] 4.1.2 Replace expect() calls with context-appropriate error handling
+    - [ ] 4.1.3 Remove or properly justify any panic!() calls in production code
+    - [ ] 4.1.4 Add comprehensive input validation for all public APIs
+  - [ ] 4.2 Fix All Clippy Warnings with Strict Settings
+    - [ ] 4.2.1 Fix unused import warnings (91+ instances)
+    - [ ] 4.2.2 Replace manual string operations with strip_prefix() and similar idiomatic methods
+    - [ ] 4.2.3 Use #[derive] for Default implementations where possible
+    - [ ] 4.2.4 Fix inefficient struct initialization patterns
+  - [ ] 4.3 Comprehensive Documentation with Examples
+    - [ ] 4.3.1 Add rustdoc comments to all public APIs with practical examples
+    - [ ] 4.3.2 Ensure all code examples in documentation compile and run
+    - [ ] 4.3.3 Add module-level documentation explaining core concepts
+    - [ ] 4.3.4 Create comprehensive API usage guide with real-world scenarios
+  - [ ] 4.4 Test Coverage and Quality Assurance
+    - [ ] 4.4.1 Ensure all tests pass with `cargo test --workspace`
+    - [ ] 4.4.2 Add unit tests for all public APIs and error conditions
+    - [ ] 4.4.3 Fix integration tests that depend on external MCP servers
+    - [ ] 4.4.4 Add documentation tests to verify examples work correctly
 
-- [ ] 5.0 Fix and Optimize Test Suite
-  - [ ] 5.1 Fix test compilation issues (utoipa-swagger-ui and dependency problems)
-    - [ ] 5.1.1 Resolve test-specific dependency conflicts
-    - [ ] 5.1.2 Fix test import paths for new workspace structure
-    - [ ] 5.1.3 Update test configurations and feature flags
-    - [ ] 5.1.4 Ensure all test modules compile with `cargo test --no-run`
-  - [ ] 5.2 Create test configuration that works without external services
-    - [ ] 5.2.1 Implement in-memory database alternatives for unit tests
-    - [ ] 5.2.2 Create mock implementations for external service dependencies
-    - [ ] 5.2.3 Add test feature flags to disable external integrations
-    - [ ] 5.2.4 Configure test environments with minimal infrastructure requirements
-  - [ ] 5.3 Document which tests require external infrastructure with setup instructions
-    - [ ] 5.3.1 Catalog all integration tests and their infrastructure dependencies
-    - [ ] 5.3.2 Create test infrastructure setup documentation
-    - [ ] 5.3.3 Provide Docker-based test environment configurations
-    - [ ] 5.3.4 Document test categories and execution strategies
-  - [ ] 5.4 Add comprehensive API endpoint tests to fill coverage gaps
-    - [ ] 5.4.1 Create integration tests for health endpoints
-    - [ ] 5.4.2 Add authentication flow testing
-    - [ ] 5.4.3 Implement workflow API endpoint tests
-    - [ ] 5.4.4 Add metrics and monitoring endpoint tests
-  - [ ] 5.5 Fix the 134 ignored tests by providing proper test infrastructure setup
-    - [ ] 5.5.1 Analyze each ignored test and its infrastructure requirements
-    - [ ] 5.5.2 Create test-specific infrastructure provisioning
-    - [ ] 5.5.3 Implement test cleanup and isolation mechanisms
-    - [ ] 5.5.4 Update test execution scripts to handle infrastructure dependencies
-
-- [ ] 6.0 Fix Documentation Issues and Broken Links
-  - [ ] 6.1 Create missing documentation files (DEVELOPMENT_SETUP.md, QUICK_START.md, monitoring/README.md)
-    - [ ] 6.1.1 Create comprehensive DEVELOPMENT_SETUP.md with prerequisites and setup steps
-    - [ ] 6.1.2 Write QUICK_START.md with minimal example workflows
-    - [ ] 6.1.3 Create monitoring/README.md documenting metrics and observability
-    - [ ] 6.1.4 Add API documentation with OpenAPI/Swagger integration
-  - [ ] 6.2 Sync version numbers between Cargo.toml (0.6.0) and CHANGELOG.md (0.5.0)
-    - [ ] 6.2.1 Decide on correct version number for open source release
-    - [ ] 6.2.2 Update CHANGELOG.md with v0.6.0 release notes
-    - [ ] 6.2.3 Ensure all workspace crates use consistent versioning
-    - [ ] 6.2.4 Update release documentation and tagging procedures
-  - [ ] 6.3 Update README code examples to use correct import paths for workspace structure
-    - [ ] 6.3.1 Audit all code examples in README.md for accuracy
-    - [ ] 6.3.2 Update import statements to reflect workspace crate structure
-    - [ ] 6.3.3 Test all README examples for compilation and execution
-    - [ ] 6.3.4 Add example projects in `examples/` directory
-  - [ ] 6.4 Fix broken documentation links throughout README
-    - [ ] 6.4.1 Audit all internal and external links in README.md
-    - [ ] 6.4.2 Create missing referenced documentation files
-    - [ ] 6.4.3 Update file paths to match actual project structure
-    - [ ] 6.4.4 Add link validation to CI/CD pipeline
-
-- [ ] 7.0 Implement Performance Benchmark Validation
-  - [ ] 7.1 Create benchmarking framework to validate "15,000+ requests/second" claim
-    - [ ] 7.1.1 Set up Criterion.rs benchmarking infrastructure
-    - [ ] 7.1.2 Create HTTP API load testing scenarios
-    - [ ] 7.1.3 Implement concurrent request handling benchmarks
-    - [ ] 7.1.4 Document benchmark methodology and environment requirements
-  - [ ] 7.2 Create benchmarks for "sub-millisecond node processing" claim
-    - [ ] 7.2.1 Implement workflow node execution timing benchmarks
-    - [ ] 7.2.2 Create micro-benchmarks for individual node types
-    - [ ] 7.2.3 Add memory usage profiling for node operations
-    - [ ] 7.2.4 Benchmark parallel vs sequential node execution performance
-  - [ ] 7.3 Document benchmark setup and results in README
-    - [ ] 7.3.1 Create benchmark execution documentation
-    - [ ] 7.3.2 Add performance results to README with methodology notes
-    - [ ] 7.3.3 Include hardware specifications for benchmark results
-    - [ ] 7.3.4 Set up automated benchmark regression testing
-
-- [ ] 8.0 Assess and Clean Up AI Features for Release
-  - [ ] 8.1 Assess if WebSocket AI streaming is needed for initial release
-    - [ ] 8.1.1 Evaluate WebSocket streaming feature completeness
-    - [ ] 8.1.2 Determine if streaming adds significant value for v1.0
-    - [ ] 8.1.3 Document streaming feature as experimental or stable
-    - [ ] 8.1.4 Either complete implementation or mark as roadmap item
-  - [ ] 8.2 Evaluate Gemini and Ollama provider implementations for v1.0
-    - [ ] 8.2.1 Assess current implementation status of Gemini provider
-    - [ ] 8.2.2 Assess current implementation status of Ollama provider
-    - [ ] 8.2.3 Determine effort required to complete implementations
-    - [ ] 8.2.4 Either complete or remove incomplete provider implementations
-  - [ ] 8.3 Document which AI features are included vs roadmap items
-    - [ ] 8.3.1 Create clear feature matrix of included AI capabilities
-    - [ ] 8.3.2 Document roadmap items for future AI feature development
-    - [ ] 8.3.3 Update README to clearly distinguish current vs planned features
-    - [ ] 8.3.4 Add contribution guidelines for AI feature development
-
-- [ ] 9.0 Finalize Demo Workflow Documentation
-  - [ ] 9.1 Document customer support workflow as intentional demo/example
-    - [ ] 9.1.1 Create clear documentation explaining demo nature of customer support workflow
-    - [ ] 9.1.2 Add examples of how to extend the demo for production use
-    - [ ] 9.1.3 Document the rule-based implementations as educational examples
-    - [ ] 9.1.4 Provide guidance on implementing AI-powered alternatives
-  - [ ] 9.2 Ensure customer support demo works reliably with rule-based implementations
-    - [ ] 9.2.1 Test all customer support workflow paths end-to-end
-    - [ ] 9.2.2 Verify rule-based sentiment analysis produces reasonable results
-    - [ ] 9.2.3 Ensure template-based response generation works correctly
-    - [ ] 9.2.4 Add comprehensive test coverage for demo workflow
-  - [ ] 9.3 Add clear examples and documentation for customer support workflow
-    - [ ] 9.3.1 Create step-by-step tutorial for running customer support demo
-    - [ ] 9.3.2 Add example input data and expected outputs
-    - [ ] 9.3.3 Document how to customize and extend the demo workflow
-    - [ ] 9.3.4 Create additional demo workflows showcasing different capabilities
-
-## Implementation Notes
-
-### Critical Path Dependencies
-1. **Task 1** must be completed before any other development work can proceed
-2. **Tasks 2 and 3** can be executed in parallel with Task 1
-3. **Task 5** depends on completion of Task 1 for test compilation
-4. **Tasks 6-9** can be executed in parallel once foundation tasks are complete
-
-### Success Metrics
-- All workspace crates compile without errors (`cargo build --workspace`)
-- 90%+ of tests pass (`cargo test`)
-- Docker stack starts successfully (`docker-compose up`)
-- Documentation links work and examples compile
-- Performance benchmarks validate README claims
-
-### Testing Strategy
-- Run `cargo build` after each compilation fix
-- Use `cargo test --no-run` to verify test compilation
-- Execute `cargo test -- --ignored` for integration tests
-- Test docker setup with `docker-compose up --build`
-
-This task list provides a comprehensive roadmap for preparing the AI Workflow Engine for open source release, focusing on core functionality while maintaining architectural integrity.
+- [ ] 5.0 Prepare Publication Infrastructure and Community Standards
+  - [ ] 5.1 Create Missing Community Files
+    - [ ] 5.1.1 Create SECURITY.md with vulnerability reporting process and contact information
+    - [ ] 5.1.2 Add CODE_OF_CONDUCT.md using Contributor Covenant template
+    - [ ] 5.1.3 Consolidate GitHub issue templates to root .github/ISSUE_TEMPLATE/ directory
+    - [ ] 5.1.4 Update CONTRIBUTING.md with open source development workflow
+  - [ ] 5.2 Verify Crates.io Publication Readiness
+    - [ ] 5.2.1 Test `cargo publish --dry-run` for workflow-engine-core (should succeed first)
+    - [ ] 5.2.2 Verify all crate metadata is complete (description, keywords, categories, repository)
+    - [ ] 5.2.3 Ensure README files focus on crates.io installation rather than local development
+    - [ ] 5.2.4 Plan staged publication order: core → mcp → nodes → api → app
+  - [ ] 5.3 Set Up Quality Gates and CI/CD
+    - [ ] 5.3.1 Configure CI pipeline to run `cargo clippy -- -D warnings` as quality gate
+    - [ ] 5.3.2 Add automated security scanning with `cargo audit` in CI
+    - [ ] 5.3.3 Ensure documentation builds without errors in CI pipeline
+    - [ ] 5.3.4 Set up automated dependency updates with security monitoring
+  - [ ] 5.4 Final Publication Preparation
+    - [ ] 5.4.1 Update all README files with crates.io installation instructions
+    - [ ] 5.4.2 Prepare release notes and changelog for initial open source publication
+    - [ ] 5.4.3 Create GitHub release with proper versioning and release notes
+    - [ ] 5.4.4 Execute staged publication to crates.io following dependency order

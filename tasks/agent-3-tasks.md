@@ -1,147 +1,146 @@
-# Agent Tasks: Core Features Agent
+# Agent Tasks: Architecture Agent
 
 ## Agent Role
 
-**Primary Focus:** Complete critical core functionality by implementing the production pricing engine and validating performance benchmarks.
+**Primary Focus:** Complete missing implementations, ensure API consistency with Rust guidelines, and implement professional error handling and builder patterns for optimal developer experience.
 
 ## Key Responsibilities
 
-- Transform pricing engine from hardcoded values to live API integration
-- Implement robust pricing data collection for OpenAI, Anthropic, and AWS Bedrock
-- Create comprehensive benchmarking framework to validate performance claims
-- Ensure pricing and performance features are production-ready for open source release
-- Provide monitoring and fallback mechanisms for pricing data reliability
+- Remove all stub implementations and TODO comments from public APIs
+- Standardize naming conventions and ensure Rust API Guidelines compliance
+- Implement proper error types with chaining and context
+- Add builder patterns for complex configuration objects
 
 ## Assigned Tasks
 
 ### From Original Task List
 
-- [ ] **4.0 Complete Production Pricing Engine Implementation** - [Originally task 4.0 from main list]
-  - [ ] **4.1 Implement live API pricing updates for OpenAI** - [Originally task 4.1 from main list]
-    - [ ] 4.1.1 Create HTTP client for OpenAI pricing API endpoints
-    - [ ] 4.1.2 Implement pricing data parsing and validation
-    - [ ] 4.1.3 Add error handling and fallback to cached pricing
-    - [ ] 4.1.4 Create scheduled update mechanism for pricing data
-  - [ ] **4.2 Implement live API pricing updates for Anthropic** - [Originally task 4.2 from main list]
-    - [ ] 4.2.1 Create HTTP client for Anthropic pricing API endpoints
-    - [ ] 4.2.2 Implement pricing data parsing and validation for Claude models
-    - [ ] 4.2.3 Add error handling and fallback mechanisms
-    - [ ] 4.2.4 Integrate with existing token counting infrastructure
-  - [ ] **4.3 Implement live API pricing updates for AWS Bedrock** - [Originally task 4.3 from main list]
-    - [ ] 4.3.1 Create AWS SDK integration for Bedrock pricing
-    - [ ] 4.3.2 Implement multi-region pricing data collection
-    - [ ] 4.3.3 Add IAM role and credential management
-    - [ ] 4.3.4 Create pricing aggregation for different Bedrock models
-  - [ ] **4.4 Add configuration for pricing update frequency and fallback handling** - [Originally task 4.4 from main list]
-    - [ ] 4.4.1 Create configuration structure for update intervals
-    - [ ] 4.4.2 Implement background task scheduler for pricing updates
-    - [ ] 4.4.3 Add monitoring and alerting for pricing update failures
-    - [ ] 4.4.4 Create comprehensive fallback chain from API → cache → hardcoded
-
-- [ ] **7.0 Implement Performance Benchmark Validation** - [Originally task 7.0 from main list]
-  - [ ] **7.1 Create benchmarking framework to validate "15,000+ requests/second" claim** - [Originally task 7.1 from main list]
-    - [ ] 7.1.1 Set up Criterion.rs benchmarking infrastructure
-    - [ ] 7.1.2 Create HTTP API load testing scenarios
-    - [ ] 7.1.3 Implement concurrent request handling benchmarks
-    - [ ] 7.1.4 Document benchmark methodology and environment requirements
-  - [ ] **7.2 Create benchmarks for "sub-millisecond node processing" claim** - [Originally task 7.2 from main list]
-    - [ ] 7.2.1 Implement workflow node execution timing benchmarks
-    - [ ] 7.2.2 Create micro-benchmarks for individual node types
-    - [ ] 7.2.3 Add memory usage profiling for node operations
-    - [ ] 7.2.4 Benchmark parallel vs sequential node execution performance
-  - [ ] **7.3 Document benchmark setup and results in README** - [Originally task 7.3 from main list]
-    - [ ] 7.3.1 Create benchmark execution documentation
-    - [ ] 7.3.2 Add performance results to README with methodology notes
-    - [ ] 7.3.3 Include hardware specifications for benchmark results
-    - [ ] 7.3.4 Set up automated benchmark regression testing
+- [ ] 3.0 Complete Missing Implementations and API Polish - (Originally task 3.0 from main list)
+  - [ ] 3.1 Remove Stub Implementations and TODO Comments - (Originally task 3.1 from main list)
+    - [ ] 3.1.1 Audit all files for TODO, FIXME, and unimplemented!() macros
+    - [ ] 3.1.2 Complete or remove stub MCP client methods in workflow builders
+    - [ ] 3.1.3 Implement missing bootstrap service functionality or remove references
+    - [ ] 3.1.4 Remove placeholder implementations in AI agent nodes or disable features properly
+  - [ ] 3.2 Fix API Naming Consistency (Rust API Guidelines) - (Originally task 3.2 from main list)
+    - [ ] 3.2.1 Standardize MCP vs Mcp naming throughout codebase (choose one pattern)
+    - [ ] 3.2.2 Review all public struct and enum names for consistency with Rust conventions
+    - [ ] 3.2.3 Ensure method names follow Rust naming guidelines (snake_case)
+    - [ ] 3.2.4 Update documentation to reflect naming changes
+  - [ ] 3.3 Implement Proper Error Types and Chaining - (Originally task 3.3 from main list)
+    - [ ] 3.3.1 Replace string-only error variants with structured error types
+    - [ ] 3.3.2 Add `#[source]` attributes for proper error chaining using thiserror
+    - [ ] 3.3.3 Provide context-rich error messages with actionable information
+    - [ ] 3.3.4 Implement Display and Debug traits properly for all error types
+  - [ ] 3.4 Add Builder Patterns for Complex Configuration - (Originally task 3.4 from main list)
+    - [ ] 3.4.1 Implement builder pattern for NodeConfig with proper validation
+    - [ ] 3.4.2 Create builder for McpConfig with fluent interface
+    - [ ] 3.4.3 Add builder for WorkflowBuilder with type-safe configuration
+    - [ ] 3.4.4 Ensure all builders have proper error handling and validation
 
 ## Relevant Files
 
-### Pricing Engine Implementation
-- `crates/workflow-engine-core/src/ai/tokens/pricing.rs` - Main pricing engine implementation requiring live API integration
-- `crates/workflow-engine-core/src/ai/tokens/mod.rs` - Token management module exports
-- `crates/workflow-engine-core/src/config/` - Configuration management for API keys and pricing settings
-- `crates/workflow-engine-core/src/ai/` - AI provider integration points
-
-### Benchmark and Performance
-- `benches/` - Benchmark directory to create with Criterion.rs infrastructure
-- `scripts/benchmark.sh` - Benchmark execution scripts
-- `docs/performance.md` - Performance documentation
-- `crates/workflow-engine-core/src/core/workflow/` - Workflow engine core for node benchmarking
-- `crates/workflow-engine-api/src/` - API layer for HTTP request benchmarking
-
-### Configuration and Monitoring
-- `crates/workflow-engine-core/src/monitoring/` - Monitoring infrastructure for pricing alerts
-- `.env.example` - Environment variable template for API keys
-- `crates/workflow-engine-core/src/config/pricing.rs` - Pricing configuration structures
+- `crates/workflow-engine-core/src/lib.rs` - Core crate public API surface and exports
+- `crates/workflow-engine-core/src/errors.rs` - Error types needing proper chaining and context
+- `crates/workflow-engine-core/src/workflow.rs` - Workflow builder implementation
+- `crates/workflow-engine-core/src/node.rs` - Node configuration and builder patterns
+- `crates/workflow-engine-mcp/src/lib.rs` - MCP crate public API and naming consistency
+- `crates/workflow-engine-mcp/src/config.rs` - MCP configuration requiring builder pattern
+- `crates/workflow-engine-nodes/src/lib.rs` - Node implementations with disabled AI agents
+- `crates/workflow-engine-api/src/bootstrap.rs` - Bootstrap service implementation (may be incomplete)
+- All public API files across crates requiring naming consistency review
 
 ## Dependencies
 
 ### Prerequisites (What this agent needs before starting)
-- **From Build & Infrastructure Agent:** Working compilation environment (Task 1.0 completion)
-- **From Build & Infrastructure Agent:** Stable API layer compilation for benchmarking (Task 1.1 completion)
-- **Optional coordination with Architecture Cleanup Agent:** AI provider decisions for pricing engine scope
+
+- **From Infrastructure Agent:** Working JWT authentication methods (Task 1.1) and workflows module (Task 1.2)
+- **From Infrastructure Agent:** Successful compilation to enable API testing and validation
 
 ### Provides to Others (What this agent delivers)
-- **To Quality & Documentation Agent:** Benchmark results and methodology for documentation
-- **To Quality & Documentation Agent:** Production-ready pricing engine for integration testing
-- **To All Agents:** Performance validation data and monitoring infrastructure
+
+- **To Code Quality Agent:** Consistent error handling patterns for anti-pattern elimination
+- **To Documentation & DevOps Agent:** Complete, professional APIs ready for publication
+- **To All Agents:** Rust-idiomatic APIs that follow community best practices
 
 ## Handoff Points
 
-- **After Task 4.1-4.3:** Notify Quality & Documentation Agent that pricing APIs are ready for testing
-- **After Task 4.4:** Notify Quality & Documentation Agent that pricing configuration is documented
-- **After Task 7.1-7.2:** Notify Quality & Documentation Agent that benchmark data is ready for README
-- **Before Task 7.3:** Coordinate with Quality & Documentation Agent on benchmark documentation format
+- **Before Task 3.1:** Wait for Infrastructure Agent to complete workflows module re-enabling (Task 1.2)
+- **During Task 3.3:** Coordinate with Code Quality Agent on error handling patterns (Task 4.1)
+- **After Task 3.2:** Notify Code Quality Agent about naming changes for documentation updates
+- **After Task 3.4:** Notify Documentation & DevOps Agent that APIs are ready for publication testing
 
 ## Testing Responsibilities
 
-- Unit tests for all pricing API integration code
-- Integration tests for live API connections (with fallback testing)
-- Benchmark validation and regression testing
-- Performance profiling and memory usage analysis
-- Configuration validation for all pricing providers
-
-## Implementation Priority Order
-
-1. **Start with Task 4.4** - Create configuration infrastructure (foundation for other pricing work)
-2. **Continue with Task 4.1-4.3** - Implement live API integrations (core functionality)
-3. **Follow with Task 7.1-7.2** - Create benchmark infrastructure (requires working codebase)
-4. **Finish with Task 7.3** - Document results (requires completed benchmarks)
+- Unit tests for all builder patterns and configuration validation
+- Integration tests for complex configuration scenarios
+- API usability testing with real-world examples
+- Error handling tests for all new error types and chaining
 
 ## Critical Success Criteria
 
-- [ ] **Pricing engine uses live API data** instead of hardcoded values
-- [ ] **All pricing providers work reliably** with proper error handling and fallbacks
-- [ ] **Benchmark claims validated** with documented methodology and results
-- [ ] **Performance regression testing** automated and documented
-- [ ] **Configuration documented** for API keys and pricing update settings
+- [ ] **Zero Stub Implementations:** No TODO, FIXME, or unimplemented!() in public APIs
+- [ ] **Naming Consistency:** All APIs follow Rust naming conventions consistently
+- [ ] **Professional Error Handling:** Structured errors with proper chaining and context
+- [ ] **Builder Patterns:** Fluent, type-safe builders for all complex configuration
+- [ ] **API Guidelines Compliance:** Adherence to Rust API Guidelines throughout
 
-## Technical Requirements
+## Detailed Implementation Strategy
 
-### Pricing Engine
-- **HTTP client reliability:** Proper timeout, retry, and error handling
-- **Data validation:** Schema validation for all API responses
-- **Fallback chain:** API → cached → hardcoded pricing data
-- **Configuration:** Environment-based API key and update frequency settings
-- **Monitoring:** Alerts for pricing update failures
+### 3.1 Stub Implementation Audit:
+1. **Search strategy:** Use `rg -n "TODO|FIXME|unimplemented!"` to find all instances
+2. **Classification:** Categorize as complete, remove, or disable feature
+3. **MCP clients:** Either implement fully or use feature flags to disable
+4. **Bootstrap service:** Assess if needed for core functionality or remove
 
-### Benchmark Framework
-- **Methodology:** Consistent, repeatable benchmark conditions
-- **Coverage:** API throughput, node processing speed, memory usage
-- **Documentation:** Hardware specs, environment setup, interpretation guidelines
-- **Automation:** CI integration for performance regression detection
+### 3.2 Naming Standardization:
+1. **MCP convention:** Choose either "MCP" or "Mcp" and apply consistently
+2. **Struct/enum review:** Ensure PascalCase for types, snake_case for functions
+3. **Module naming:** Ensure consistency across all crate public interfaces
+4. **Documentation sync:** Update all docs to reflect naming decisions
 
-## Coordination Notes
+### 3.3 Error Type Architecture:
+```rust
+// Target error structure example
+#[derive(Debug, thiserror::Error)]
+pub enum WorkflowError {
+    #[error("Node processing failed: {message}")]
+    NodeProcessing {
+        node_id: String,
+        message: String,
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+    
+    #[error("Configuration validation failed for {field}: {reason}")]
+    ConfigValidation {
+        field: String,
+        reason: String,
+        provided_value: Option<String>,
+    },
+}
+```
 
-- **With Build & Infrastructure Agent:** Ensure compilation stability before starting development
-- **With Architecture Cleanup Agent:** Coordinate on AI provider scope (Gemini/Ollama decisions)
-- **With Quality & Documentation Agent:** Provide benchmark data and configuration docs
+### 3.4 Builder Pattern Design:
+```rust
+// Target builder pattern example
+pub struct NodeConfigBuilder<T: Node> {
+    name: Option<String>,
+    timeout: Option<Duration>,
+    retry_policy: Option<RetryPolicy>,
+    _phantom: PhantomData<T>,
+}
+
+impl<T: Node> NodeConfigBuilder<T> {
+    pub fn new() -> Self { /* ... */ }
+    pub fn name(mut self, name: impl Into<String>) -> Self { /* ... */ }
+    pub fn timeout(mut self, timeout: Duration) -> Self { /* ... */ }
+    pub fn build(self) -> Result<NodeConfig<T>, ConfigError> { /* ... */ }
+}
+```
 
 ## Notes
 
-- **Focus on production readiness** - this code will be used by open source users
-- **Implement robust error handling** - live API integrations must handle failures gracefully
-- **Document all configuration options** - users need clear setup instructions
-- **Validate benchmark claims** - performance numbers in README must be accurate and reproducible
-- **Consider rate limiting** - pricing API calls should be respectful of provider limits
+- **API Design Philosophy:** Prioritize type safety and compile-time correctness over runtime flexibility
+- **Error Context:** Every error should provide enough context for users to understand and fix the issue
+- **Builder Validation:** Implement comprehensive validation in builders rather than at usage time
+- **Backward Compatibility:** Consider future API evolution when designing public interfaces

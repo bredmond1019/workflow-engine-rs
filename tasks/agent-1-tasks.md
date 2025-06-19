@@ -1,122 +1,112 @@
-# Agent Tasks: Build & Infrastructure Agent
+# Agent Tasks: Infrastructure Agent
 
 ## Agent Role
 
-**Primary Focus:** Critical compilation fixes, dependency management, and infrastructure alignment to unblock all other development work.
+**Primary Focus:** Fix critical compilation blockers and resolve security vulnerabilities to establish a stable foundation for open source publication.
 
 ## Key Responsibilities
 
-- Fix all compilation errors preventing the project from building
-- Resolve workspace dependency configuration issues
-- Align infrastructure documentation with actual deployment configuration
-- Ensure Docker and deployment infrastructure works as documented
-- Provide foundational stability for other agents to build upon
+- Implement missing constructors and core functionality to achieve compilation success
+- Resolve all security vulnerabilities identified in cargo audit
+- Update dependencies to secure, maintained versions
+- Ensure the entire workspace compiles successfully with `cargo check --workspace`
 
 ## Assigned Tasks
 
 ### From Original Task List
 
-- [ ] **1.0 Fix Critical Compilation Errors** - [Originally task 1.0 from main list]
-  - [ ] **1.1 Resolve utoipa-swagger-ui dependency issues in API layer** - [Originally task 1.1 from main list]
-    - [ ] 1.1.1 Analyze utoipa-swagger-ui version conflicts in workflow-engine-api
-    - [ ] 1.1.2 Update Cargo.toml dependencies to compatible versions
-    - [ ] 1.1.3 Fix import statements and feature flag usage for utoipa
-    - [ ] 1.1.4 Test API compilation with `cargo build -p workflow-engine-api`
-  - [ ] **1.2 Fix type mismatches and missing imports in workflow-engine-api** - [Originally task 1.2 from main list]
-    - [ ] 1.2.1 Identify and catalog all type mismatch errors
-    - [ ] 1.2.2 Update import paths for new workspace structure
-    - [ ] 1.2.3 Fix trait implementations and generic type parameters
-    - [ ] 1.2.4 Resolve async/await compatibility issues
-  - [ ] **1.3 Resolve dependency conflicts in workflow-engine-nodes package** - [Originally task 1.3 from main list]
-    - [ ] 1.3.1 Analyze circular dependency issues between crates
-    - [ ] 1.3.2 Update dependency versions for compatibility
-    - [ ] 1.3.3 Fix module export structure in workflow-engine-nodes
-    - [ ] 1.3.4 Test nodes compilation independently
-  - [ ] **1.4 Fix workspace dependency configuration issues** - [Originally task 1.4 from main list]
-    - [ ] 1.4.1 Verify all workspace dependencies have correct version specifications
-    - [ ] 1.4.2 Fix feature flag propagation across workspace crates
-    - [ ] 1.4.3 Ensure consistent Rust edition across all crates
-    - [ ] 1.4.4 Test full workspace compilation with `cargo build --workspace`
+- [ ] 1.0 Fix Critical Compilation Errors - (Originally task 1.0 from main list)
+  - [ ] 1.1 Implement Missing JWT Authentication Methods - (Originally task 1.1 from main list)
+    - [ ] 1.1.1 Add `JwtAuth::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/auth.rs`
+    - [ ] 1.1.2 Add `JwtMiddleware::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/middleware.rs`
+    - [ ] 1.1.3 Ensure both constructors properly initialize internal state and validate inputs
+    - [ ] 1.1.4 Add unit tests for both constructors with valid and invalid inputs
+  - [ ] 1.2 Re-enable and Fix Workflows Module - (Originally task 1.2 from main list)
+    - [ ] 1.2.1 Uncomment `pub mod workflows;` in `crates/workflow-engine-api/src/lib.rs` line 53
+    - [ ] 1.2.2 Uncomment workflows module re-exports in `crates/workflow-engine-api/src/lib.rs` lines 52-53
+    - [ ] 1.2.3 Fix any compilation errors in the workflows module after re-enabling
+    - [ ] 1.2.4 Ensure workflows module exports are properly documented
+  - [ ] 1.3 Remove Unsafe Code Blocks - (Originally task 1.3 from main list)
+    - [ ] 1.3.1 Replace unsafe environment variable setting in `crates/workflow-engine-app/src/main.rs` lines 16-27
+    - [ ] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()
+    - [ ] 1.3.3 Use safe environment variable setting without unsafe block
+    - [ ] 1.3.4 Add proper error propagation for startup configuration
+  - [ ] 1.4 Fix Import Resolution Errors - (Originally task 1.4 from main list)
+    - [ ] 1.4.1 Fix missing `workflows` import in `crates/workflow-engine-app/src/main.rs` line 8
+    - [ ] 1.4.2 Ensure all module imports resolve correctly across workspace
+    - [ ] 1.4.3 Update any broken internal crate dependencies
+    - [ ] 1.4.4 Verify `cargo check --workspace` passes without errors
 
-- [ ] **3.0 Align Infrastructure and Deployment Configuration** - [Originally task 3.0 from main list]
-  - [ ] **3.1 Add microservices to docker-compose.yml or update README deployment info** - [Originally task 3.1 from main list]
-    - [ ] 3.1.1 Assess whether microservices should be included in docker-compose.yml
-    - [ ] 3.1.2 Either add service definitions for content_processing, knowledge_graph, and realtime_communication
-    - [ ] 3.1.3 Or update README to clarify microservice deployment strategy
-    - [ ] 3.1.4 Ensure port mappings match documentation (8082, 3002, 8081)
-  - [ ] **3.2 Create missing MCP server infrastructure or update documentation** - [Originally task 3.2 from main list]
-    - [ ] 3.2.1 Assess if Python MCP servers directory structure is needed
-    - [ ] 3.2.2 Either create `mcp-servers/` directory with Python implementations
-    - [ ] 3.2.3 Or update README to reflect actual MCP server architecture using scripts
-    - [ ] 3.2.4 Ensure MCP server startup scripts work as documented
-  - [ ] **3.3 Align docker-compose services with README claims** - [Originally task 3.3 from main list]
-    - [ ] 3.3.1 Verify all services mentioned in README exist in docker-compose.yml
-    - [ ] 3.3.2 Check port mappings match README documentation
-    - [ ] 3.3.3 Ensure environment variable configuration is consistent
-    - [ ] 3.3.4 Test full docker-compose stack startup and connectivity
+- [ ] 2.0 Resolve Security Vulnerabilities - (Originally task 2.0 from main list)
+  - [ ] 2.1 Update Protobuf Dependency (RUSTSEC-2024-0437) - (Originally task 2.1 from main list)
+    - [ ] 2.1.1 Update protobuf dependency to >=3.7.2 in workspace Cargo.toml
+    - [ ] 2.1.2 Update any transitive dependencies that pull in vulnerable protobuf versions
+    - [ ] 2.1.3 Test that updated protobuf version works with existing code
+    - [ ] 2.1.4 Run `cargo audit` to verify vulnerability is resolved
+  - [ ] 2.2 Replace Deprecated dotenv Dependency (RUSTSEC-2021-0141) - (Originally task 2.2 from main list)
+    - [ ] 2.2.1 Replace `dotenv = "0.15.0"` with `dotenvy = "0.15"` in workspace dependencies
+    - [ ] 2.2.2 Update all `use dotenv::` imports to `use dotenvy::`
+    - [ ] 2.2.3 Update any dotenv method calls to dotenvy equivalents
+    - [ ] 2.2.4 Test environment variable loading still works correctly
+  - [ ] 2.3 Update proc-macro-error Chain (RUSTSEC-2024-0370) - (Originally task 2.3 from main list)
+    - [ ] 2.3.1 Identify which dependencies bring in proc-macro-error (likely utoipa chain)
+    - [ ] 2.3.2 Update utoipa and related dependencies to latest versions
+    - [ ] 2.3.3 Verify OpenAPI documentation generation still works
+    - [ ] 2.3.4 Ensure no breaking changes in updated dependencies
+  - [ ] 2.4 Comprehensive Security Audit - (Originally task 2.4 from main list)
+    - [ ] 2.4.1 Run `cargo audit` and ensure zero vulnerabilities reported
+    - [ ] 2.4.2 Review all dependencies for maintenance status and security
+    - [ ] 2.4.3 Set up automated security scanning in CI/CD pipeline
+    - [ ] 2.4.4 Document security update process for future maintenance
 
 ## Relevant Files
 
-### Core Compilation and Dependencies
-- `crates/workflow-engine-api/Cargo.toml` - API crate dependencies requiring utoipa-swagger-ui fixes
-- `crates/workflow-engine-api/src/lib.rs` - Main API library entry point with compilation errors
-- `crates/workflow-engine-nodes/Cargo.toml` - Nodes crate dependency resolution and circular dependency fixes
-- `Cargo.toml` - Root workspace configuration and dependency management
-- `crates/workflow-engine-core/src/lib.rs` - Core library exports and conditional compilation
-- `crates/workflow-engine-mcp/Cargo.toml` - MCP crate dependencies requiring cleanup
-
-### Infrastructure and Deployment
-- `docker-compose.yml` - Container orchestration configuration requiring microservice alignment
-- `README.md` - Main documentation requiring infrastructure alignment updates
-- `scripts/` - MCP server infrastructure scripts requiring validation
-- `Dockerfile` - Container build configuration
-- `.env.example` - Environment variable template
-- `docker-compose.test.yml` - Test-specific container configuration
+- `crates/workflow-engine-app/src/main.rs` - Main application with compilation errors, unsafe blocks, and import issues
+- `crates/workflow-engine-api/src/auth.rs` - JWT authentication implementation requiring new() constructor
+- `crates/workflow-engine-api/src/middleware.rs` - JWT middleware implementation requiring new() constructor
+- `crates/workflow-engine-api/src/lib.rs` - API crate exports that need workflows module re-enabled
+- `crates/workflow-engine-api/src/workflows.rs` - Workflows module currently commented out
+- `Cargo.toml` - Workspace dependencies requiring security updates (protobuf, dotenv, utoipa)
+- `crates/*/Cargo.toml` - Individual crate dependencies that may need updates
+- `Cargo.lock` - Dependency resolution file that will be updated with security fixes
 
 ## Dependencies
 
 ### Prerequisites (What this agent needs before starting)
-- **None** - This agent has no blocking dependencies and can start immediately
+
+- **None** - This agent handles the foundation and can start immediately
 
 ### Provides to Others (What this agent delivers)
-- **To Architecture Cleanup Agent:** Working compilation environment for MCP client removal
-- **To Core Features Agent:** Compiled codebase for pricing engine development and testing
-- **To Quality & Documentation Agent:** Working test compilation and Docker infrastructure for testing
-- **To All Agents:** Stable build environment and deployment infrastructure
+
+- **To Code Quality Agent:** Compiling codebase free of critical errors
+- **To Architecture Agent:** Working JWT authentication and workflows module for API improvements
+- **To Documentation & DevOps Agent:** Security-clean dependencies for publication readiness testing
 
 ## Handoff Points
 
-- **After Task 1.1:** Notify Core Features Agent that API layer compiles for pricing engine work
-- **After Task 1.4:** Notify Quality & Documentation Agent that workspace builds and tests can compile
-- **After Task 3.0:** Notify Quality & Documentation Agent that Docker infrastructure is ready for testing
-- **After Full Completion:** Notify all agents that foundational build and infrastructure issues are resolved
+- **After Task 1.1:** Notify Architecture Agent that JWT authentication methods are implemented and ready for API improvements
+- **After Task 1.2:** Notify all agents that workflows module is re-enabled and functional
+- **After Task 1.4:** Notify all agents that workspace compilation is successful (`cargo check --workspace` passes)
+- **After Task 2.4:** Notify Documentation & DevOps Agent that security audit is clean for CI/CD setup
 
 ## Testing Responsibilities
 
-- Test compilation incrementally with `cargo build` after each fix
-- Verify workspace builds successfully with `cargo build --workspace`
-- Test Docker stack functionality with `docker-compose up --build`
-- Validate test compilation readiness with `cargo test --no-run`
+- Unit tests for JWT authentication constructors (tasks 1.1.4)
+- Verification that `cargo check --workspace` passes without errors
+- Verification that `cargo audit` reports zero vulnerabilities
+- Integration testing coordination with other agents after compilation success
 
 ## Critical Success Criteria
 
-- [ ] **All workspace crates compile without errors** (`cargo build --workspace` succeeds)
-- [ ] **API layer builds successfully** (`cargo build -p workflow-engine-api` succeeds)
-- [ ] **Docker stack starts without errors** (`docker-compose up` succeeds)
-- [ ] **Test compilation works** (`cargo test --no-run` succeeds)
-- [ ] **Infrastructure documentation matches reality** (README deployment instructions work)
-
-## Implementation Priority Order
-
-1. **Start with Task 1.1** - Fix utoipa-swagger-ui issues (highest impact, blocks API development)
-2. **Follow with Task 1.4** - Fix workspace configuration (unblocks all crate compilation)
-3. **Continue with Tasks 1.2 & 1.3** - Fix remaining compilation issues
-4. **Finish with Task 3.0** - Align infrastructure (enables proper testing and deployment)
+- [ ] **Compilation Success:** `cargo check --workspace` passes without any errors
+- [ ] **Security Clean:** `cargo audit` reports zero vulnerabilities
+- [ ] **JWT Functionality:** Both JwtAuth::new() and JwtMiddleware::new() constructors work correctly
+- [ ] **Workflows Enabled:** Workflows module is functional and properly exported
+- [ ] **Safe Code:** No unnecessary unsafe blocks remain in production code
 
 ## Notes
 
-- This agent is on the **critical path** - all other agents depend on successful completion
-- Focus on getting basic compilation working before perfecting infrastructure
-- Document any architectural decisions made during infrastructure alignment
-- Coordinate with Architecture Cleanup Agent if MCP dependency changes affect compilation
-- Use incremental testing (`cargo build -p <crate>`) to isolate and fix issues systematically
+- **Priority Order:** Complete Task 1.0 before Task 2.0 to unblock other agents quickly
+- **Testing Strategy:** Test each change incrementally to avoid introducing new compilation errors
+- **Security Focus:** Prioritize RUSTSEC-2024-0437 (protobuf) as it's a critical crash vulnerability
+- **Coordination:** Keep other agents informed of compilation status as they depend on working code

@@ -272,7 +272,7 @@ impl ConnectionConfigBuilder {
             max_connections_per_server: self.max_connections_per_server,
             connection_timeout: self.connection_timeout,
             idle_timeout: self.idle_timeout,
-            retry_attempts: self.retry_attempts,
+            retry_attempts: self.retry_attempts as usize,
             retry_delay: self.retry_delay,
             health_check_interval: self.health_check_interval,
             enable_load_balancing: self.enable_load_balancing,

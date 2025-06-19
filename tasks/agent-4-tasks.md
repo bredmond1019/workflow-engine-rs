@@ -1,188 +1,155 @@
-# Agent Tasks: Quality & Documentation Agent
+# Agent Tasks: Documentation & DevOps Agent
 
 ## Agent Role
 
-**Primary Focus:** Ensure comprehensive testing, fix documentation issues, and polish demo workflows for excellent developer experience.
+**Primary Focus:** Prepare publication infrastructure, establish community standards, set up quality gates, and execute the staged publication to crates.io.
 
 ## Key Responsibilities
 
-- Fix and optimize the test suite to achieve 90%+ pass rate
-- Create missing documentation and fix broken links
-- Ensure demo workflows work reliably and are well-documented
-- Provide comprehensive developer onboarding experience
-- Validate overall project quality and readiness for open source release
+- Create missing community files for professional open source project governance
+- Verify crates.io publication readiness and metadata completeness
+- Set up automated quality gates and CI/CD pipelines
+- Execute staged publication process following dependency order
 
 ## Assigned Tasks
 
 ### From Original Task List
 
-- [ ] **5.0 Fix and Optimize Test Suite** - [Originally task 5.0 from main list]
-  - [ ] **5.1 Fix test compilation issues (utoipa-swagger-ui and dependency problems)** - [Originally task 5.1 from main list]
-    - [ ] 5.1.1 Resolve test-specific dependency conflicts
-    - [ ] 5.1.2 Fix test import paths for new workspace structure
-    - [ ] 5.1.3 Update test configurations and feature flags
-    - [ ] 5.1.4 Ensure all test modules compile with `cargo test --no-run`
-  - [ ] **5.2 Create test configuration that works without external services** - [Originally task 5.2 from main list]
-    - [ ] 5.2.1 Implement in-memory database alternatives for unit tests
-    - [ ] 5.2.2 Create mock implementations for external service dependencies
-    - [ ] 5.2.3 Add test feature flags to disable external integrations
-    - [ ] 5.2.4 Configure test environments with minimal infrastructure requirements
-  - [ ] **5.3 Document which tests require external infrastructure with setup instructions** - [Originally task 5.3 from main list]
-    - [ ] 5.3.1 Catalog all integration tests and their infrastructure dependencies
-    - [ ] 5.3.2 Create test infrastructure setup documentation
-    - [ ] 5.3.3 Provide Docker-based test environment configurations
-    - [ ] 5.3.4 Document test categories and execution strategies
-  - [ ] **5.4 Add comprehensive API endpoint tests to fill coverage gaps** - [Originally task 5.4 from main list]
-    - [ ] 5.4.1 Create integration tests for health endpoints
-    - [ ] 5.4.2 Add authentication flow testing
-    - [ ] 5.4.3 Implement workflow API endpoint tests
-    - [ ] 5.4.4 Add metrics and monitoring endpoint tests
-  - [ ] **5.5 Fix the 134 ignored tests by providing proper test infrastructure setup** - [Originally task 5.5 from main list]
-    - [ ] 5.5.1 Analyze each ignored test and its infrastructure requirements
-    - [ ] 5.5.2 Create test-specific infrastructure provisioning
-    - [ ] 5.5.3 Implement test cleanup and isolation mechanisms
-    - [ ] 5.5.4 Update test execution scripts to handle infrastructure dependencies
-
-- [ ] **6.0 Fix Documentation Issues and Broken Links** - [Originally task 6.0 from main list]
-  - [ ] **6.1 Create missing documentation files (DEVELOPMENT_SETUP.md, QUICK_START.md, monitoring/README.md)** - [Originally task 6.1 from main list]
-    - [ ] 6.1.1 Create comprehensive DEVELOPMENT_SETUP.md with prerequisites and setup steps
-    - [ ] 6.1.2 Write QUICK_START.md with minimal example workflows
-    - [ ] 6.1.3 Create monitoring/README.md documenting metrics and observability
-    - [ ] 6.1.4 Add API documentation with OpenAPI/Swagger integration
-  - [ ] **6.2 Sync version numbers between Cargo.toml (0.6.0) and CHANGELOG.md (0.5.0)** - [Originally task 6.2 from main list]
-    - [ ] 6.2.1 Decide on correct version number for open source release
-    - [ ] 6.2.2 Update CHANGELOG.md with v0.6.0 release notes
-    - [ ] 6.2.3 Ensure all workspace crates use consistent versioning
-    - [ ] 6.2.4 Update release documentation and tagging procedures
-  - [ ] **6.3 Update README code examples to use correct import paths for workspace structure** - [Originally task 6.3 from main list]
-    - [ ] 6.3.1 Audit all code examples in README.md for accuracy
-    - [ ] 6.3.2 Update import statements to reflect workspace crate structure
-    - [ ] 6.3.3 Test all README examples for compilation and execution
-    - [ ] 6.3.4 Add example projects in `examples/` directory
-  - [ ] **6.4 Fix broken documentation links throughout README** - [Originally task 6.4 from main list]
-    - [ ] 6.4.1 Audit all internal and external links in README.md
-    - [ ] 6.4.2 Create missing referenced documentation files
-    - [ ] 6.4.3 Update file paths to match actual project structure
-    - [ ] 6.4.4 Add link validation to CI/CD pipeline
-
-- [ ] **9.0 Finalize Demo Workflow Documentation** - [Originally task 9.0 from main list]
-  - [ ] **9.1 Document customer support workflow as intentional demo/example** - [Originally task 9.1 from main list]
-    - [ ] 9.1.1 Create clear documentation explaining demo nature of customer support workflow
-    - [ ] 9.1.2 Add examples of how to extend the demo for production use
-    - [ ] 9.1.3 Document the rule-based implementations as educational examples
-    - [ ] 9.1.4 Provide guidance on implementing AI-powered alternatives
-  - [ ] **9.2 Ensure customer support demo works reliably with rule-based implementations** - [Originally task 9.2 from main list]
-    - [ ] 9.2.1 Test all customer support workflow paths end-to-end
-    - [ ] 9.2.2 Verify rule-based sentiment analysis produces reasonable results
-    - [ ] 9.2.3 Ensure template-based response generation works correctly
-    - [ ] 9.2.4 Add comprehensive test coverage for demo workflow
-  - [ ] **9.3 Add clear examples and documentation for customer support workflow** - [Originally task 9.3 from main list]
-    - [ ] 9.3.1 Create step-by-step tutorial for running customer support demo
-    - [ ] 9.3.2 Add example input data and expected outputs
-    - [ ] 9.3.3 Document how to customize and extend the demo workflow
-    - [ ] 9.3.4 Create additional demo workflows showcasing different capabilities
+- [ ] 5.0 Prepare Publication Infrastructure and Community Standards - (Originally task 5.0 from main list)
+  - [ ] 5.1 Create Missing Community Files - (Originally task 5.1 from main list)
+    - [ ] 5.1.1 Create SECURITY.md with vulnerability reporting process and contact information
+    - [ ] 5.1.2 Add CODE_OF_CONDUCT.md using Contributor Covenant template
+    - [ ] 5.1.3 Consolidate GitHub issue templates to root .github/ISSUE_TEMPLATE/ directory
+    - [ ] 5.1.4 Update CONTRIBUTING.md with open source development workflow
+  - [ ] 5.2 Verify Crates.io Publication Readiness - (Originally task 5.2 from main list)
+    - [ ] 5.2.1 Test `cargo publish --dry-run` for workflow-engine-core (should succeed first)
+    - [ ] 5.2.2 Verify all crate metadata is complete (description, keywords, categories, repository)
+    - [ ] 5.2.3 Ensure README files focus on crates.io installation rather than local development
+    - [ ] 5.2.4 Plan staged publication order: core → mcp → nodes → api → app
+  - [ ] 5.3 Set Up Quality Gates and CI/CD - (Originally task 5.3 from main list)
+    - [ ] 5.3.1 Configure CI pipeline to run `cargo clippy -- -D warnings` as quality gate
+    - [ ] 5.3.2 Add automated security scanning with `cargo audit` in CI
+    - [ ] 5.3.3 Ensure documentation builds without errors in CI pipeline
+    - [ ] 5.3.4 Set up automated dependency updates with security monitoring
+  - [ ] 5.4 Final Publication Preparation - (Originally task 5.4 from main list)
+    - [ ] 5.4.1 Update all README files with crates.io installation instructions
+    - [ ] 5.4.2 Prepare release notes and changelog for initial open source publication
+    - [ ] 5.4.3 Create GitHub release with proper versioning and release notes
+    - [ ] 5.4.4 Execute staged publication to crates.io following dependency order
 
 ## Relevant Files
 
-### Test Infrastructure
-- `tests/` - Integration test directory requiring compilation fixes
-- `crates/*/src/*/tests/` - Unit test modules throughout crates
-- `scripts/test_setup.sh` - Test environment setup scripts
-- `docker-compose.test.yml` - Test-specific container configuration
-- `Cargo.toml` - Workspace test configuration and feature flags
-
-### Documentation Files
-- `DEVELOPMENT_SETUP.md` - Development setup guide to create
-- `QUICK_START.md` - Quick start guide to create  
-- `monitoring/README.md` - Monitoring documentation to create
-- `CHANGELOG.md` - Version history requiring sync with Cargo.toml
-- `examples/` - Code examples directory requiring import path updates
-- `README.md` - Main documentation requiring comprehensive updates
-
-### Demo Workflow
-- `crates/workflow-engine-mcp/src/server/customer_support/` - Customer support demo implementation
-- `examples/customer_support/` - Demo examples and tutorials
-- `docs/tutorials/` - Step-by-step workflow tutorials
-
-### API Documentation
-- `crates/workflow-engine-api/src/` - API endpoints requiring documentation
-- `docs/api/` - API documentation directory
-- OpenAPI/Swagger integration files
+- `SECURITY.md` - Security policy for vulnerability reporting (missing)
+- `CODE_OF_CONDUCT.md` - Community code of conduct (missing)
+- `.github/ISSUE_TEMPLATE/` - GitHub issue templates (need consolidation)
+- `.github/PULL_REQUEST_TEMPLATE.md` - PR template (needs update)
+- `.github/workflows/*.yml` - CI/CD pipelines requiring quality gates
+- `CONTRIBUTING.md` - Development guidelines (needs open source focus)
+- `README.md` - Installation and usage instructions (needs crates.io focus)
+- `crates/*/README.md` - Individual crate documentation (needs publication focus)
+- `CHANGELOG.md` - Version history (needs initial release notes)
+- `Cargo.toml` - Workspace metadata (verify completeness)
+- `crates/*/Cargo.toml` - Individual crate metadata (verify publication readiness)
 
 ## Dependencies
 
 ### Prerequisites (What this agent needs before starting)
-- **From Build & Infrastructure Agent:** Working test compilation (Task 1.0 completion) for test fixes
-- **From Build & Infrastructure Agent:** Docker infrastructure (Task 3.0 completion) for integration testing
-- **From Architecture Cleanup Agent:** Updated architecture information (Task 2.4) for documentation
-- **From Core Features Agent:** Benchmark results (Task 7.3) for performance documentation
+
+- **From Infrastructure Agent:** Clean security audit (Task 2.4) for CI/CD setup
+- **From Code Quality Agent:** Passing tests and clippy for quality gate validation (Task 4.2, 4.4)
+- **From Architecture Agent:** Complete APIs for publication readiness testing (Task 3.4)
 
 ### Provides to Others (What this agent delivers)
-- **To All Agents:** Comprehensive testing framework and documentation
-- **To Community:** Excellent developer onboarding experience
-- **To Project:** Quality assurance and release readiness validation
+
+- **To All Agents:** Professional project infrastructure and governance
+- **To Community:** Open source project ready for contribution and adoption
+- **To Ecosystem:** Published crates available on crates.io
 
 ## Handoff Points
 
-- **After Task 5.1:** Notify all agents that test framework is ready for their testing needs
-- **After Task 6.1:** Notify Core Features Agent that performance documentation template is ready
-- **After Task 6.3:** Notify all agents that README examples are updated and can be referenced
-- **Before Task 6.4:** Wait for Architecture Cleanup Agent to complete documentation updates (Task 2.4)
+- **Before Task 5.2:** Wait for Code Quality Agent to complete clippy fixes (Task 4.2) and Architecture Agent to complete APIs (Task 3.4)
+- **Before Task 5.3:** Wait for Infrastructure Agent to complete security audit (Task 2.4)
+- **After Task 5.1:** Notify all agents that community standards are established
+- **After Task 5.4:** Announce successful publication to all agents and stakeholders
 
 ## Testing Responsibilities
 
-- **Primary responsibility:** Get 90%+ of 1,594 tests passing
-- Integration testing coordination with all other agents
-- End-to-end testing of complete workflows
-- Demo workflow validation and reliability testing
-- Documentation example validation (ensure all examples work)
-
-## Implementation Priority Order
-
-1. **Start with Task 5.1** - Fix test compilation (foundation for all testing)
-2. **Continue with Task 5.2-5.3** - Create reliable test infrastructure
-3. **Parallel with Task 6.1-6.2** - Create foundational documentation
-4. **Follow with Task 5.4-5.5** - Comprehensive test coverage
-5. **Finish with Tasks 6.3-6.4 and 9.0** - Polish documentation and demos
+- Test `cargo publish --dry-run` for all crates in dependency order
+- Verify all documentation builds correctly with `cargo doc`
+- Test CI/CD pipeline with all quality gates
+- Validate crates.io installation process
 
 ## Critical Success Criteria
 
-- [ ] **90%+ tests passing** (target: >1400 of 1594 tests)
-- [ ] **All documentation links work** (no broken references)
-- [ ] **README examples compile and run** (verified working code)
-- [ ] **Demo workflows work reliably** (customer support demo functional)
-- [ ] **Developer setup documentation complete** (new contributors can onboard easily)
+- [ ] **Community Standards:** Professional governance files following open source best practices
+- [ ] **Publication Readiness:** All crates pass `cargo publish --dry-run`
+- [ ] **Quality Gates:** CI/CD enforces all quality standards automatically
+- [ ] **Successful Publication:** All crates published to crates.io in correct order
+- [ ] **Installation Verification:** Crates can be installed and used from crates.io
 
-## Quality Gates
+## Detailed Implementation Strategy
 
-### Test Quality Gate
-- [ ] Test compilation: `cargo test --no-run` succeeds
-- [ ] Basic tests: `cargo test` achieves 90%+ pass rate
-- [ ] Integration tests: `cargo test -- --ignored` runs successfully
-- [ ] Demo tests: Customer support workflow tests pass
+### 5.1 Community Files:
+1. **SECURITY.md:** Include vulnerability reporting process, contact email, response timeline
+2. **CODE_OF_CONDUCT.md:** Use Contributor Covenant 2.1 template with appropriate contact
+3. **Issue templates:** Bug report, feature request, question templates in .github/ISSUE_TEMPLATE/
+4. **CONTRIBUTING.md:** Development setup, testing, PR process, coding standards
 
-### Documentation Quality Gate
-- [ ] All referenced files exist and are accessible
-- [ ] All code examples compile: `cargo check --examples`
-- [ ] All links resolve: automated link checking passes
-- [ ] Documentation covers all major features accurately
+### 5.2 Publication Readiness Verification:
+```bash
+# Staged dry-run testing
+cd crates/workflow-engine-core && cargo publish --dry-run
+cd crates/workflow-engine-mcp && cargo publish --dry-run
+cd crates/workflow-engine-nodes && cargo publish --dry-run
+cd crates/workflow-engine-api && cargo publish --dry-run
+cd crates/workflow-engine-app && cargo publish --dry-run
+```
 
-### Demo Quality Gate
-- [ ] Customer support workflow runs end-to-end
-- [ ] Rule-based implementations produce expected outputs
-- [ ] Tutorial steps can be followed successfully
-- [ ] Demo showcases core workflow engine capabilities
+### 5.3 CI/CD Quality Gates:
+```yaml
+# Key quality gates to implement
+- name: Check formatting
+  run: cargo fmt --all -- --check
+  
+- name: Run clippy
+  run: cargo clippy --all-targets --all-features -- -D warnings
+  
+- name: Security audit
+  run: cargo audit
+  
+- name: Test all features
+  run: cargo test --all-features
+  
+- name: Documentation
+  run: cargo doc --all-features --no-deps
+```
 
-## Coordination Notes
+### 5.4 Publication Process:
+1. **Pre-publication:** Final verification, changelog update, version tags
+2. **Stage 1:** Publish workflow-engine-core
+3. **Stage 2:** Update dependencies, publish workflow-engine-mcp
+4. **Stage 3:** Update dependencies, publish workflow-engine-nodes
+5. **Stage 4:** Update dependencies, publish workflow-engine-api
+6. **Stage 5:** Update dependencies, publish workflow-engine-app
+7. **Post-publication:** GitHub release, announcement, documentation updates
 
-- **With Build & Infrastructure Agent:** Coordinate test infrastructure requirements
-- **With Architecture Cleanup Agent:** Integrate architectural documentation updates
-- **With Core Features Agent:** Include benchmark results and configuration docs
+## Publication Order & Dependencies
+
+```
+workflow-engine-core (no dependencies)
+    ↓
+workflow-engine-mcp (depends on core)
+    ↓
+workflow-engine-nodes (depends on core, mcp)
+    ↓
+workflow-engine-api (depends on core, mcp)
+    ↓
+workflow-engine-app (depends on all others)
+```
 
 ## Notes
 
-- **Focus on developer experience** - documentation should enable easy contribution
-- **Test systematically** - work through ignored tests methodically with proper infrastructure
-- **Validate everything** - all examples and links must work before release
-- **Document decisions** - record why certain tests are ignored or why demos use specific approaches
-- **Create comprehensive tutorials** - help users understand workflow engine capabilities through working examples
+- **Documentation Focus:** README files should prioritize crates.io users over local development
+- **Version Management:** Ensure all workspace dependencies use published versions after each stage
+- **Community Building:** Set up infrastructure to welcome and support contributors from day one
+- **Monitoring:** Track publication success and early adoption metrics

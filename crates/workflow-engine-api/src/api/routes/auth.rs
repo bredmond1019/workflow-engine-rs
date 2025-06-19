@@ -49,7 +49,8 @@ pub async fn generate_token(
 ) -> Result<HttpResponse> {
     let claims = Claims::new(req.sub.clone(), req.role.clone());
     
-    match JwtAuth::generate_token(&claims) {
+    let jwt_auth = JwtAuth::default();
+    match jwt_auth.generate_token(&claims) {
         Ok(token) => {
             let response = TokenResponse {
                 access_token: token,
@@ -71,7 +72,8 @@ pub async fn generate_token(
 pub async fn verify_token(
     req: web::Json<VerifyRequest>,
 ) -> Result<HttpResponse> {
-    match JwtAuth::validate_token(&req.token) {
+    let jwt_auth = JwtAuth::default();
+    match jwt_auth.validate_token(&req.token) {
         Ok(claims) => {
             let response = VerifyResponse {
                 valid: true,

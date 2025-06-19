@@ -1,131 +1,117 @@
-# Agent Tasks: Architecture Cleanup Agent
+# Agent Tasks: Code Quality Agent
 
 ## Agent Role
 
-**Primary Focus:** Remove external service dependencies and assess AI features to simplify the codebase for open source release.
+**Primary Focus:** Eliminate code anti-patterns, fix clippy warnings, ensure comprehensive documentation, and establish professional code quality standards for open source publication.
 
 ## Key Responsibilities
 
-- Remove unnecessary external MCP client implementations (Slack, Notion, HelpScout)
-- Clean up dependencies and documentation related to external services
-- Assess AI features for inclusion in initial open source release
-- Simplify codebase architecture by removing non-essential integrations
-- Update documentation to reflect architectural changes
+- Replace all unwrap/expect/panic instances with proper error handling (265+ instances)
+- Fix all clippy warnings with strict settings (145+ warnings)
+- Add comprehensive documentation with examples to all public APIs
+- Ensure complete test coverage and quality assurance
 
 ## Assigned Tasks
 
 ### From Original Task List
 
-- [ ] **2.0 Remove External MCP Client Dependencies** - [Originally task 2.0 from main list]
-  - [ ] **2.1 Remove Slack MCP client implementation and dependencies** - [Originally task 2.1 from main list]
-    - [ ] 2.1.1 Delete `crates/workflow-engine-mcp/src/clients/slack/` directory
-    - [ ] 2.1.2 Remove Slack-related dependencies from MCP Cargo.toml
-    - [ ] 2.1.3 Update MCP lib.rs exports to remove Slack client references
-    - [ ] 2.1.4 Remove Slack client tests and documentation
-  - [ ] **2.2 Remove Notion MCP client implementation and dependencies** - [Originally task 2.2 from main list]
-    - [ ] 2.2.1 Delete `crates/workflow-engine-mcp/src/clients/notion/` directory
-    - [ ] 2.2.2 Remove Notion-related dependencies from MCP Cargo.toml
-    - [ ] 2.2.3 Update MCP lib.rs exports to remove Notion client references
-    - [ ] 2.2.4 Remove Notion client tests and documentation
-  - [ ] **2.3 Remove HelpScout MCP client implementation and dependencies** - [Originally task 2.3 from main list]
-    - [ ] 2.3.1 Delete `crates/workflow-engine-mcp/src/clients/helpscout/` directory
-    - [ ] 2.3.2 Remove HelpScout-related dependencies from MCP Cargo.toml
-    - [ ] 2.3.3 Update MCP lib.rs exports to remove HelpScout client references
-    - [ ] 2.3.4 Remove HelpScout client tests and documentation
-  - [ ] **2.4 Update documentation to reflect removal of external MCP clients** - [Originally task 2.4 from main list]
-    - [ ] 2.4.1 Update README.md to remove references to external service integrations
-    - [ ] 2.4.2 Update API documentation to reflect available MCP capabilities
-    - [ ] 2.4.3 Update example workflows to use only internal MCP features
-    - [ ] 2.4.4 Update CHANGELOG.md to document breaking changes
-
-- [ ] **8.0 Assess and Clean Up AI Features for Release** - [Originally task 8.0 from main list]
-  - [ ] **8.1 Assess if WebSocket AI streaming is needed for initial release** - [Originally task 8.1 from main list]
-    - [ ] 8.1.1 Evaluate WebSocket streaming feature completeness
-    - [ ] 8.1.2 Determine if streaming adds significant value for v1.0
-    - [ ] 8.1.3 Document streaming feature as experimental or stable
-    - [ ] 8.1.4 Either complete implementation or mark as roadmap item
-  - [ ] **8.2 Evaluate Gemini and Ollama provider implementations for v1.0** - [Originally task 8.2 from main list]
-    - [ ] 8.2.1 Assess current implementation status of Gemini provider
-    - [ ] 8.2.2 Assess current implementation status of Ollama provider
-    - [ ] 8.2.3 Determine effort required to complete implementations
-    - [ ] 8.2.4 Either complete or remove incomplete provider implementations
-  - [ ] **8.3 Document which AI features are included vs roadmap items** - [Originally task 8.3 from main list]
-    - [ ] 8.3.1 Create clear feature matrix of included AI capabilities
-    - [ ] 8.3.2 Document roadmap items for future AI feature development
-    - [ ] 8.3.3 Update README to clearly distinguish current vs planned features
-    - [ ] 8.3.4 Add contribution guidelines for AI feature development
+- [ ] 4.0 Establish Professional Code Quality Standards - (Originally task 4.0 from main list)
+  - [ ] 4.1 Eliminate Production Code Anti-patterns - (Originally task 4.1 from main list)
+    - [ ] 4.1.1 Replace all unwrap() calls with proper error handling (265+ instances)
+    - [ ] 4.1.2 Replace expect() calls with context-appropriate error handling
+    - [ ] 4.1.3 Remove or properly justify any panic!() calls in production code
+    - [ ] 4.1.4 Add comprehensive input validation for all public APIs
+  - [ ] 4.2 Fix All Clippy Warnings with Strict Settings - (Originally task 4.2 from main list)
+    - [ ] 4.2.1 Fix unused import warnings (91+ instances)
+    - [ ] 4.2.2 Replace manual string operations with strip_prefix() and similar idiomatic methods
+    - [ ] 4.2.3 Use #[derive] for Default implementations where possible
+    - [ ] 4.2.4 Fix inefficient struct initialization patterns
+  - [ ] 4.3 Comprehensive Documentation with Examples - (Originally task 4.3 from main list)
+    - [ ] 4.3.1 Add rustdoc comments to all public APIs with practical examples
+    - [ ] 4.3.2 Ensure all code examples in documentation compile and run
+    - [ ] 4.3.3 Add module-level documentation explaining core concepts
+    - [ ] 4.3.4 Create comprehensive API usage guide with real-world scenarios
+  - [ ] 4.4 Test Coverage and Quality Assurance - (Originally task 4.4 from main list)
+    - [ ] 4.4.1 Ensure all tests pass with `cargo test --workspace`
+    - [ ] 4.4.2 Add unit tests for all public APIs and error conditions
+    - [ ] 4.4.3 Fix integration tests that depend on external MCP servers
+    - [ ] 4.4.4 Add documentation tests to verify examples work correctly
 
 ## Relevant Files
 
-### External MCP Client Removal
-- `crates/workflow-engine-mcp/src/clients/slack/` - Slack MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/clients/notion/` - Notion MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/clients/helpscout/` - HelpScout MCP client implementation to remove
-- `crates/workflow-engine-mcp/src/lib.rs` - MCP library exports to update after client removal
-- `crates/workflow-engine-mcp/Cargo.toml` - Dependencies to clean up after client removal
-
-### AI Feature Assessment
-- `crates/workflow-engine-core/src/ai/` - AI provider implementations and streaming features
-- `crates/workflow-engine-core/src/streaming/` - WebSocket streaming implementation
-- `crates/workflow-engine-core/src/nodes/agent.rs` - AI agent node implementations
-- `crates/workflow-engine-core/src/ai/tokens/` - Token management and provider integrations
-
-### Documentation Updates
-- `README.md` - Main documentation requiring updates to reflect architectural changes
-- `CHANGELOG.md` - Version history requiring breaking change documentation
-- `examples/` - Code examples requiring updates to remove external service references
-- `docs/` - API and feature documentation requiring updates
+- `crates/workflow-engine-core/src/**/*.rs` - Core implementation with 265+ unwrap/expect instances
+- `crates/workflow-engine-api/src/**/*.rs` - API implementation with 145 clippy warnings
+- `crates/workflow-engine-mcp/src/**/*.rs` - MCP implementation needing documentation and error handling
+- `crates/workflow-engine-nodes/src/**/*.rs` - Node implementations requiring quality improvements
+- `crates/workflow-engine-app/src/**/*.rs` - Application code needing error handling improvements
+- `tests/**/*.rs` - Integration tests that need fixing for external dependencies
+- `benches/**/*.rs` - Performance benchmarks with path configuration issues
+- All `src/lib.rs` files - Public API surfaces requiring comprehensive documentation
 
 ## Dependencies
 
 ### Prerequisites (What this agent needs before starting)
-- **From Build & Infrastructure Agent:** Basic compilation working to safely remove dependencies
-- **Optional:** Can start external client removal immediately, but should coordinate with Agent 1 on dependency changes
+
+- **From Infrastructure Agent:** Successful compilation (`cargo check --workspace` passes) to enable clippy and testing
+- **From Architecture Agent:** Completed error type improvements for consistent error handling patterns
 
 ### Provides to Others (What this agent delivers)
-- **To Quality & Documentation Agent:** Simplified codebase with clear feature boundaries for documentation
-- **To Core Features Agent:** Clean MCP architecture for pricing engine integration
-- **To All Agents:** Reduced complexity and clearer scope for open source release
+
+- **To Architecture Agent:** Clean, well-documented code free of anti-patterns for API improvements
+- **To Documentation & DevOps Agent:** Professional-quality code ready for publication with comprehensive tests
+- **To All Agents:** Clippy-clean codebase that passes strict quality gates
 
 ## Handoff Points
 
-- **After Task 2.1-2.3:** Notify Build & Infrastructure Agent of dependency changes for compilation verification
-- **After Task 2.4:** Notify Quality & Documentation Agent that architectural documentation updates are complete
-- **After Task 8.3:** Notify Quality & Documentation Agent that AI feature matrix is ready for final documentation
-- **Before Task 8.2.4:** Coordinate with Core Features Agent if AI provider changes affect pricing engine
+- **Before starting 4.1:** Wait for Infrastructure Agent to complete Task 1.4 (compilation success)
+- **During 4.1:** Coordinate with Architecture Agent on error handling patterns (Task 3.3)
+- **After Task 4.2:** Notify all agents that `cargo clippy -- -D warnings` passes
+- **After Task 4.4:** Notify Documentation & DevOps Agent that all tests pass for CI/CD setup
 
 ## Testing Responsibilities
 
-- Verify MCP crate still compiles after client removal: `cargo build -p workflow-engine-mcp`
-- Test that remaining MCP functionality works correctly
-- Validate that removed external references don't break existing workflows
-- Ensure AI feature assessment doesn't break core AI functionality
-
-## Implementation Priority Order
-
-1. **Start with Task 2.1-2.3** - Remove external clients (immediate simplification)
-2. **Continue with Task 2.4** - Update documentation to reflect changes
-3. **Follow with Task 8.1-8.2** - Assess AI features (requires deeper analysis)
-4. **Finish with Task 8.3** - Document final AI feature decisions
+- Unit tests for all public APIs and error conditions (task 4.4.2)
+- Fix integration tests that depend on external MCP servers (task 4.4.3)
+- Add documentation tests to verify examples work correctly (task 4.4.4)
+- Ensure `cargo test --workspace` passes completely (task 4.4.1)
 
 ## Critical Success Criteria
 
-- [ ] **External MCP clients completely removed** (directories deleted, dependencies cleaned)
-- [ ] **MCP crate still compiles and functions** after external client removal
-- [ ] **Documentation accurately reflects new architecture** (no references to removed features)
-- [ ] **AI feature scope clearly defined** (included vs roadmap features documented)
-- [ ] **Breaking changes properly documented** in CHANGELOG.md
+- [ ] **Zero Clippy Warnings:** `cargo clippy -- -D warnings` passes without any warnings
+- [ ] **No Anti-patterns:** Zero unwrap/expect/panic instances in production code paths
+- [ ] **Complete Documentation:** All public APIs have rustdoc comments with working examples
+- [ ] **Test Success:** `cargo test --workspace` passes with comprehensive coverage
+- [ ] **Quality Gates:** All code meets professional open source standards
 
-## Coordination Notes
+## Detailed Implementation Strategy
 
-- **With Build & Infrastructure Agent:** Coordinate dependency changes to avoid compilation conflicts
-- **With Quality & Documentation Agent:** Provide updated architecture information for documentation
-- **With Core Features Agent:** Ensure AI provider decisions don't conflict with pricing engine needs
+### 4.1 Anti-pattern Elimination Priority Order:
+1. **Critical paths first:** Main execution flows and public API methods
+2. **Error propagation:** Replace unwrap() with proper Result propagation
+3. **Input validation:** Add validation at public API boundaries
+4. **Graceful degradation:** Implement fallbacks for non-critical failures
+
+### 4.2 Clippy Warning Categories:
+1. **Unused imports:** Remove or conditionally compile unused imports
+2. **String operations:** Use modern Rust string methods (strip_prefix, etc.)
+3. **Derive implementations:** Replace manual implementations with #[derive]
+4. **Initialization patterns:** Use struct update syntax and field init shorthand
+
+### 4.3 Documentation Standards:
+1. **Module docs:** Explain purpose, main concepts, and usage patterns
+2. **Function docs:** Include purpose, parameters, return values, examples, and error conditions
+3. **Example quality:** All examples must compile and demonstrate real-world usage
+4. **Error documentation:** Document all error conditions and recovery strategies
+
+### 4.4 Testing Approach:
+1. **Unit tests:** Cover all public functions and error conditions
+2. **Integration tests:** Test realistic workflows end-to-end
+3. **Doc tests:** Verify all documentation examples work
+4. **Error tests:** Test error handling and edge cases
 
 ## Notes
 
-- Focus on **architectural simplification** - this is about making the open source release more manageable
-- **Document all decisions** about what's included vs excluded for future reference
-- **Preserve MCP infrastructure** while removing specific external service clients
-- **Be decisive** about AI features - either complete them or move to roadmap
-- **Update examples** to use only included features for better developer experience
+- **Coordination with Architecture Agent:** Align error handling improvements with their error type redesign
+- **Incremental approach:** Fix issues incrementally to avoid introducing new problems
+- **Documentation-driven:** Write documentation first to clarify intended API behavior
+- **Quality over speed:** Focus on establishing lasting quality standards for open source community

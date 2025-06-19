@@ -389,8 +389,9 @@ impl WorkflowTimer {
     pub fn success(self) {
         let duration = self.start_time.elapsed();
         
+        let status = "success".to_string();
         WORKFLOWS_TRIGGERED_TOTAL
-            .with_label_values(&[&self.workflow_name, "success"])
+            .with_label_values(&[&self.workflow_name, &status])
             .inc();
         
         WORKFLOW_EXECUTION_DURATION
@@ -406,8 +407,9 @@ impl WorkflowTimer {
     pub fn failure(self) {
         let duration = self.start_time.elapsed();
         
+        let status = "failure".to_string();
         WORKFLOWS_TRIGGERED_TOTAL
-            .with_label_values(&[&self.workflow_name, "failure"])
+            .with_label_values(&[&self.workflow_name, &status])
             .inc();
         
         WORKFLOW_EXECUTION_DURATION
