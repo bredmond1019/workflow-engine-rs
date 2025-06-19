@@ -36,8 +36,6 @@ tracing-subscriber = { workspace = true }
 # Web framework
 actix-web = { workspace = true }
 actix-cors = { workspace = true }
-actix-web-actors = { workspace = true }
-actix = { workspace = true }
 
 # Optional features
 utoipa = { workspace = true, optional = true }
@@ -79,7 +77,6 @@ bytes = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
-tempfile = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]

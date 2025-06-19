@@ -1,6 +1,5 @@
 //! Token counting implementations for different AI providers
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use async_trait::async_trait;
 use tiktoken_rs::{cl100k_base, o200k_base, CoreBPE};

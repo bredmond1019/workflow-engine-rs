@@ -5,7 +5,6 @@ use actix_web::{web, HttpRequest, HttpResponse, Result as ActixResult};
 #[cfg(feature = "streaming")]
 use actix_web_actors::ws;
 
-use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;

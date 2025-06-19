@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use crate::ai::tokens::{Model, TokenError, TokenResult};
 use crate::ai::tokens::pricing::{ModelPricing, PricingTier};
 use crate::config::pricing::AWSConfig;
-use super::{PricingApiClient, HttpClientConfig, create_http_client, retry_request};
+use super::{PricingApiClient, HttpClientConfig, create_http_client};
 
 /// AWS Bedrock pricing API client
 pub struct AWSBedrockPricingClient {

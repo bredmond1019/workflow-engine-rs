@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc, Duration, Datelike, TimeZone, Timelike};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
-use uuid::Uuid;
 use prometheus::{Counter, Histogram, Gauge, register_counter, register_histogram, register_gauge};
 use crate::ai::tokens::{Model, Provider, UsageRecord, TokenError, TokenResult};
 

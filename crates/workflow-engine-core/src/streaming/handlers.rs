@@ -1,14 +1,13 @@
 use bytes::Bytes;
 use futures_util::{Stream, StreamExt};
 use serde::{Deserialize, Serialize};
-use std::pin::Pin;
 use std::sync::Arc;
 
 use crate::error::WorkflowError;
-use super::types::{StreamChunk, StreamConfig, StreamingProvider};
+use super::types::StreamConfig;
 use super::providers::create_streaming_provider;
-use super::sse::{create_sse_chunk_stream, SSEStreamManager};
 use super::recovery::{RecoveryStreamingProvider, StreamingRecoveryConfig};
+use crate::streaming::SSEStreamManager;
 
 /// Request payload for streaming endpoints
 #[derive(Debug, Deserialize)]

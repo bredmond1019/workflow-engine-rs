@@ -48,5 +48,3 @@ tiktoken-rs = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
-tempfile = { workspace = true }
-tokio-test = { workspace = true }

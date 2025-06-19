@@ -5,7 +5,7 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use crate::error::WorkflowError;
-use super::types::{StreamChunk, StreamMetadata, StreamingError};
+use super::types::{StreamChunk, StreamMetadata};
 
 /// SSE (Server-Sent Events) parser for streaming AI responses
 pub struct SSEParser {

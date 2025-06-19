@@ -2,11 +2,10 @@ use futures_util::{Stream, StreamExt, stream};
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::mpsc;
 use tokio::time::{sleep, timeout};
 
 use crate::error::WorkflowError;
-use super::types::{StreamChunk, StreamConfig, StreamingError, StreamingProvider, StreamResponse};
+use super::types::{StreamChunk, StreamConfig, StreamingProvider, StreamResponse};
 
 /// Configuration for streaming error recovery
 #[derive(Debug, Clone)]

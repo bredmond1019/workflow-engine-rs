@@ -37,22 +37,11 @@ workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0" }
 workflow-engine-nodes = { path = "../workflow-engine-nodes", version = "0.6.0" }
 
 # Runtime dependencies
-tokio = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
-env_logger = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-clap = { workspace = true }
 
-# Web framework for main app
-actix-web = { workspace = true }
-actix-cors = { workspace = true }
-log = { workspace = true }
+# Optional web framework for main app (handled by api crate)
 
 # Optional database support
 diesel = { workspace = true, optional = true }
 
-[dev-dependencies]
-tempfile = { workspace = true }
+# No dev-dependencies needed for app binary

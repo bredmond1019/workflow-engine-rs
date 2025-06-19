@@ -3,7 +3,6 @@ use bytes::Bytes;
 use futures_util::{Stream, StreamExt, TryStreamExt};
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::Instant;
 
 use crate::error::WorkflowError;
 use super::types::{StreamChunk, StreamConfig, StreamMetadata, StreamingProvider, StreamResponse};

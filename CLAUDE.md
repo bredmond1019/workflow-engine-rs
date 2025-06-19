@@ -16,7 +16,7 @@ cargo build
 cargo build --release
 
 # Run the main server
-cargo run
+cargo run --bin workflow-engine
 
 # Run with Docker Compose (recommended for full stack)
 docker-compose up -d
@@ -109,31 +109,31 @@ cd services/realtime_communication && cargo run
 
 ### Core Components
 
-1. **HTTP API Server** (`src/api/`)
+1. **HTTP API Server** (`crates/workflow-engine-api/src/api/`)
 
    - Actix-web REST API with JWT authentication
    - Rate limiting and OpenAPI documentation
    - Correlation ID tracking across requests
 
-2. **MCP Framework** (`src/core/mcp/`)
+2. **MCP Framework** (`crates/workflow-engine-mcp/src/`)
 
    - Complete Model Context Protocol implementation
    - Support for HTTP, WebSocket, and stdio transports
    - Client implementations for external services
 
-3. **Workflow Engine** (`src/core/workflow/`)
+3. **Workflow Engine** (`crates/workflow-engine-core/src/workflow/`)
 
    - Node-based workflow execution
    - Type-safe node registration and discovery
    - Built-in nodes for AI operations
 
-4. **Database Layer** (`src/db/`)
+4. **Database Layer** (`crates/workflow-engine-api/src/db/`)
 
    - PostgreSQL with Diesel ORM
    - Repository pattern for data access
    - Event and session storage
 
-5. **Monitoring** (`src/monitoring/`)
+5. **Monitoring** (`crates/workflow-engine-api/src/monitoring/`)
 
    - Prometheus metrics with custom collectors
    - Structured logging with correlation IDs
@@ -154,7 +154,7 @@ MCP servers are implemented in Python (`mcp-servers/`):
 
 ### Key Design Patterns
 
-1. **Service Bootstrap**: Dependency injection container in `src/bootstrap/`
+1. **Service Bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/`
 2. **Repository Pattern**: Database access through repositories
 3. **Middleware Architecture**: Auth, rate limiting, correlation tracking
 4. **Protocol Abstraction**: Multi-transport support for MCP
@@ -202,11 +202,11 @@ cd services/realtime_communication && cargo test
 
 ### Common Development Tasks
 
-1. **Adding a new API endpoint**: Update `src/api/routes/`
-2. **Creating a workflow node**: Implement in `src/core/nodes/`
-3. **Adding MCP integration**: Create client in `src/core/mcp/clients/`
-4. **Database changes**: Main app uses `src/db/models/`, services use their own schemas
-5. **Monitoring metrics**: Update `src/monitoring/metrics.rs`
+1. **Adding a new API endpoint**: Update `crates/workflow-engine-api/src/api/routes/`
+2. **Creating a workflow node**: Implement in `crates/workflow-engine-nodes/src/` or `crates/workflow-engine-core/src/nodes/`
+3. **Adding MCP integration**: Create client in `crates/workflow-engine-mcp/src/clients/`
+4. **Database changes**: Main app uses `crates/workflow-engine-api/src/db/models/`, services use their own schemas
+5. **Monitoring metrics**: Update `crates/workflow-engine-api/src/monitoring/metrics.rs`
 6. **Adding microservice**: Create new service in `services/` with own Cargo.toml
 7. **Testing external integrations**: Start test servers first, then use `--ignored` flag
 
@@ -222,8 +222,8 @@ cd services/realtime_communication && cargo test
 
 ### Key Architecture Patterns
 
-1. **Multi-transport MCP**: HTTP, WebSocket, and stdio support in `src/core/mcp/transport.rs`
-2. **Connection pooling**: MCP client connections managed in `src/core/mcp/connection_pool.rs`
-3. **Service bootstrap**: Dependency injection container in `src/bootstrap/service.rs`
-4. **External integration**: Pattern for external MCP clients in `src/core/nodes/external_mcp_client.rs`
+1. **Multi-transport MCP**: HTTP, WebSocket, and stdio support in `crates/workflow-engine-mcp/src/transport.rs`
+2. **Connection pooling**: MCP client connections managed in `crates/workflow-engine-mcp/src/connection_pool.rs`
+3. **Service bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/service.rs`
+4. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
 5. **Microservice isolation**: Each service in `services/` has independent database and configuration
