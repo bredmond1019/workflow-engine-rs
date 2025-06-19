@@ -39,6 +39,36 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring event
 - 📋 **Azure OpenAI**: Dedicated Azure OpenAI service integration
 - 📋 **Fine-tuning Pipeline**: Custom model training workflows
 
+## 📦 Installation
+
+### Using Crates.io
+
+Add the workflow engine to your Rust project:
+
+```toml
+[dependencies]
+workflow-engine-core = "0.6.0"
+workflow-engine-mcp = "0.6.0"      # For MCP protocol support
+workflow-engine-nodes = "0.6.0"    # For pre-built nodes
+workflow-engine-api = "0.6.0"      # For REST API server
+
+# Or use the complete application
+workflow-engine-app = "0.6.0"
+```
+
+### Feature Flags
+
+```toml
+[dependencies]
+workflow-engine-core = { version = "0.6.0", features = ["full"] }
+# Available features:
+# - "database" - PostgreSQL integration
+# - "monitoring" - Prometheus metrics (default)
+# - "aws" - AWS Bedrock AI support
+# - "streaming" - Real-time streaming
+# - "full" - All features
+```
+
 ## 🚀 Quick Start
 
 ### Docker Compose (Recommended)

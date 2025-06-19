@@ -8,10 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Placeholder for upcoming features
+- Automated dependency updates with Dependabot
+- Comprehensive CI/CD pipeline with quality gates
+- Publication readiness checks for crates.io
+- Community standards documentation templates
+- Dependency security checking workflow
 
 ### Changed
-- Placeholder for upcoming changes
+- Updated all READMEs to include crates.io installation instructions
+- Moved issue templates from crate subdirectory to root .github
+- Enhanced CONTRIBUTING.md with Contributor Covenant reference
+- Improved publication metadata for all crates
+
+### Fixed
+- Resolved all compilation warnings in workflow-engine-core
+- Fixed missing security vulnerability detection
+- Corrected documentation build warnings
 
 ## [0.6.0] - 2024-12-19
 
