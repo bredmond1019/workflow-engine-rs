@@ -267,7 +267,7 @@ impl BedrockStreamingProvider {
         use futures_util::TryStreamExt;
         
         // Initialize AWS SDK
-        let config = aws_config::load_from_env().await;
+        let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
         let client = Client::new(&config);
         
         // Prepare the request body based on the model
@@ -446,7 +446,7 @@ impl BedrockStreamingProvider {
         use aws_sdk_bedrockruntime::{primitives::Blob, Client};
         
         // Initialize AWS SDK
-        let config = aws_config::load_from_env().await;
+        let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
         let client = Client::new(&config);
         
         // Prepare the request body based on the model

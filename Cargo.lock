@@ -5063,8 +5063,10 @@ dependencies = [
 name = "workflow-engine-api"
 version = "0.6.0"
 dependencies = [
+ "actix",
  "actix-cors",
  "actix-web",
+ "actix-web-actors",
  "async-stream",
  "async-trait",
  "base64 0.22.1",
