@@ -194,7 +194,6 @@ pub use types::{
 };
 pub use validator::{TemplateValidator, ValidationError, ValidationRule};
 
-use crate::error::WorkflowError;
 use std::collections::HashMap;
 
 /// Main template manager that coordinates all template operations

@@ -3,7 +3,7 @@
 //! This module provides a circuit breaker implementation to prevent cascade failures
 //! in distributed systems by temporarily blocking calls to failing services.
 
-use super::{WorkflowError, ErrorCategory};
+use super::WorkflowError;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

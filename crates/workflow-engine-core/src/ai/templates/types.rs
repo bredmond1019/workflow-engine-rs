@@ -366,6 +366,9 @@ pub enum TemplateError {
     
     #[error("Security violation: {message}")]
     SecurityError { message: String },
+    
+    #[error("Lock error: {message}")]
+    LockError { message: String },
 }
 
 impl From<TemplateError> for crate::error::WorkflowError {

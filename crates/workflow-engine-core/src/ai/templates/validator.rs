@@ -3,7 +3,7 @@
 //! This module provides validation functionality for templates,
 //! ensuring security, correctness, and best practices.
 
-use super::{Template, TemplateError, VariableType};
+use super::{Template, TemplateError};
 use super::parser::TemplateParser;
 use regex::Regex;
 use std::collections::HashSet;

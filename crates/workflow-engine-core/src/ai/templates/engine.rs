@@ -7,7 +7,6 @@ use super::{
     Template, TemplateId, TemplateVariables, TemplateError, OutputFormat,
     CompiledTemplate, TemplateMetrics, TemplateRegistry,
 };
-use crate::error::{ErrorContext, ErrorContextExt};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -573,7 +572,7 @@ fn format_date_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("format_date helper requires at least one parameter")
+        handlebars::RenderError::from_error("format_date helper requires at least one parameter", std::io::Error::new(std::io::ErrorKind::InvalidInput, "Missing parameter"))
     })?;
     
     let format = h.param(1)

@@ -62,6 +62,14 @@ pub struct PricingEngine {
 }
 
 impl PricingEngine {
+    /// Helper function to create decimal prices from f64 values
+    fn decimal_price(value: f64) -> Decimal {
+        Decimal::from_f64(value).unwrap_or_else(|| {
+            // Fallback to parsing string representation if direct conversion fails
+            value.to_string().parse::<Decimal>().unwrap_or(Decimal::ZERO)
+        })
+    }
+
     /// Create a new pricing engine with configuration
     pub fn new(config: PricingEngineConfig) -> Self {
         let mut pricing_table = HashMap::new();
@@ -113,8 +121,8 @@ impl PricingEngine {
         // OpenAI Pricing (per 1M tokens as of Dec 2024)
         pricing_table.insert(Model::Gpt4, ModelPricing {
             model: Model::Gpt4,
-            input_price_per_token: Decimal::from_f64(0.00003).unwrap(), // $30 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.00006).unwrap(), // $60 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.00003), // $30 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.00006), // $60 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -122,8 +130,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::Gpt4Turbo, ModelPricing {
             model: Model::Gpt4Turbo,
-            input_price_per_token: Decimal::from_f64(0.00001).unwrap(), // $10 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.00003).unwrap(), // $30 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.00001), // $10 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.00003), // $30 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -131,8 +139,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::Gpt35Turbo, ModelPricing {
             model: Model::Gpt35Turbo,
-            input_price_per_token: Decimal::from_f64(0.0000005).unwrap(), // $0.50 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.0000015).unwrap(), // $1.50 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.0000005), // $0.50 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.0000015), // $1.50 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -140,8 +148,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::TextEmbeddingAda002, ModelPricing {
             model: Model::TextEmbeddingAda002,
-            input_price_per_token: Decimal::from_f64(0.0000001).unwrap(), // $0.10 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.0).unwrap(), // No output cost for embeddings
+            input_price_per_token: Self::decimal_price(0.0000001), // $0.10 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.0), // No output cost for embeddings
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -150,8 +158,8 @@ impl PricingEngine {
         // Anthropic Pricing (per 1M tokens as of Dec 2024)
         pricing_table.insert(Model::Claude3Opus, ModelPricing {
             model: Model::Claude3Opus,
-            input_price_per_token: Decimal::from_f64(0.000015).unwrap(), // $15 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.000075).unwrap(), // $75 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.000015), // $15 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.000075), // $75 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -159,8 +167,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::Claude3Sonnet, ModelPricing {
             model: Model::Claude3Sonnet,
-            input_price_per_token: Decimal::from_f64(0.000003).unwrap(), // $3 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.000015).unwrap(), // $15 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.000003), // $3 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.000015), // $15 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -168,8 +176,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::Claude3Haiku, ModelPricing {
             model: Model::Claude3Haiku,
-            input_price_per_token: Decimal::from_f64(0.00000025).unwrap(), // $0.25 per 1M tokens
-            output_price_per_token: Decimal::from_f64(0.00000125).unwrap(), // $1.25 per 1M tokens
+            input_price_per_token: Self::decimal_price(0.00000025), // $0.25 per 1M tokens
+            output_price_per_token: Self::decimal_price(0.00000125), // $1.25 per 1M tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -178,8 +186,8 @@ impl PricingEngine {
         // AWS Bedrock Pricing (generally similar to native providers but may vary)
         pricing_table.insert(Model::BedrockClaude3Opus, ModelPricing {
             model: Model::BedrockClaude3Opus,
-            input_price_per_token: Decimal::from_f64(0.000015).unwrap(),
-            output_price_per_token: Decimal::from_f64(0.000075).unwrap(),
+            input_price_per_token: Self::decimal_price(0.000015),
+            output_price_per_token: Self::decimal_price(0.000075),
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -187,8 +195,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::BedrockClaude3Sonnet, ModelPricing {
             model: Model::BedrockClaude3Sonnet,
-            input_price_per_token: Decimal::from_f64(0.000003).unwrap(),
-            output_price_per_token: Decimal::from_f64(0.000015).unwrap(),
+            input_price_per_token: Self::decimal_price(0.000003),
+            output_price_per_token: Self::decimal_price(0.000015),
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -196,8 +204,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::BedrockClaude3Haiku, ModelPricing {
             model: Model::BedrockClaude3Haiku,
-            input_price_per_token: Decimal::from_f64(0.00000025).unwrap(),
-            output_price_per_token: Decimal::from_f64(0.00000125).unwrap(),
+            input_price_per_token: Self::decimal_price(0.00000025),
+            output_price_per_token: Self::decimal_price(0.00000125),
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -205,8 +213,8 @@ impl PricingEngine {
 
         pricing_table.insert(Model::TitanTextExpress, ModelPricing {
             model: Model::TitanTextExpress,
-            input_price_per_token: Decimal::from_f64(0.0000008).unwrap(), // $0.80 per 1M input tokens
-            output_price_per_token: Decimal::from_f64(0.0000016).unwrap(), // $1.60 per 1M output tokens
+            input_price_per_token: Self::decimal_price(0.0000008), // $0.80 per 1M input tokens
+            output_price_per_token: Self::decimal_price(0.0000016), // $1.60 per 1M output tokens
             currency: "USD".to_string(),
             effective_date: now,
             pricing_tier: PricingTier::Standard,
@@ -297,7 +305,13 @@ impl PricingEngine {
             return false;
         }
 
-        let last_update = self.last_update.read().unwrap();
+        let last_update = match self.last_update.read() {
+            Ok(lock) => lock,
+            Err(_) => {
+                log::error!("Failed to acquire read lock on last_update");
+                return false;
+            }
+        };
         let hours_since_update = Utc::now()
             .signed_duration_since(*last_update)
             .num_hours() as u64;
@@ -396,8 +410,8 @@ impl PricingEngine {
         
         let discount_multiplier = match volume_tier {
             VolumeTier::Standard => Decimal::from(1),
-            VolumeTier::High => Decimal::from_f64(0.95).unwrap(), // 5% discount
-            VolumeTier::Enterprise => Decimal::from_f64(0.90).unwrap(), // 10% discount
+            VolumeTier::High => Self::decimal_price(0.95), // 5% discount
+            VolumeTier::Enterprise => Self::decimal_price(0.90), // 10% discount
         };
 
         base_cost.input_cost *= discount_multiplier;

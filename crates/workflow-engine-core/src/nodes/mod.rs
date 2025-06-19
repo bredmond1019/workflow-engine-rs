@@ -421,6 +421,7 @@ use super::task::TaskContext;
 
 pub mod agent;
 pub mod config;
+pub mod config_builder;
 pub mod registry;
 pub mod template_agent;
 pub mod type_safe;

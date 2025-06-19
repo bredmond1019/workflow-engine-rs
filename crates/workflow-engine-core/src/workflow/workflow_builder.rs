@@ -90,9 +90,9 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
     /// Validate workflow structure
     fn validate_structure(&self) -> Result<(), WorkflowError> {
         // Ensure start node exists
-        if !self.node_configs.contains_key(&self.schema.start_node) {
+        if !self.node_configs.contains_key(&self.schema.start) {
             return Err(WorkflowError::NodeNotFound {
-                node_type: self.schema.start_node,
+                node_type: self.schema.start,
             });
         }
 
@@ -129,7 +129,7 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
     /// Find all reachable nodes from start
     fn find_reachable_nodes(&self) -> Vec<TypeId> {
         let mut reachable = Vec::new();
-        let mut to_visit = vec![self.schema.start_node];
+        let mut to_visit = vec![self.schema.start];
 
         while let Some(current) = to_visit.pop() {
             if reachable.contains(&current) {
@@ -152,7 +152,7 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
 }
 
 /// Builder state for adding node connections
-pub struct NodeBuilder<StartNode: Node, CurrentNode: Node> {
+pub struct NodeBuilder<StartNode: Node + 'static, CurrentNode: Node + 'static> {
     workflow_builder: TypedWorkflowBuilder<StartNode>,
     current_node: PhantomData<CurrentNode>,
 }

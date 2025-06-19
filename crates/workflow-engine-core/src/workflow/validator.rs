@@ -73,15 +73,13 @@ impl<'a> WorkflowValidator<'a> {
         }
 
         for node_config in &self.schema.nodes {
-            if !visited.contains(&node_config.node_type) {
-                if dfs(
-                    node_config.node_type,
-                    self.schema,
-                    &mut visited,
-                    &mut rec_stack,
-                ) {
-                    return true;
-                }
+            if !visited.contains(&node_config.node_type) && dfs(
+                node_config.node_type,
+                self.schema,
+                &mut visited,
+                &mut rec_stack,
+            ) {
+                return true;
             }
         }
 

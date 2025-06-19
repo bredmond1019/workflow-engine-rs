@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc, Duration, Datelike, Timelike};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use uuid::Uuid;
-use crate::ai::tokens::{Model, Provider, TokenUsage, CostBreakdown, TokenError, TokenResult, UsageRecord};
+use crate::ai::tokens::{Model, Provider, TokenUsage, CostBreakdown, TokenError, TokenResult};
 #[cfg(feature = "streaming")]
 use crate::streaming::types::StreamMetadata;
 

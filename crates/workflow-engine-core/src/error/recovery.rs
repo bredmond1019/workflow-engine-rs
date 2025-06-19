@@ -3,7 +3,7 @@
 //! This module provides strategies for graceful degradation and error recovery,
 //! including fallback values, alternative operations, and recovery patterns.
 
-use super::{WorkflowError, ErrorCategory};
+use super::WorkflowError;
 // use crate::db::events::EventError;  // Commented out - db moved to API crate
 use std::future::Future;
 use serde::{Serialize, Deserialize};

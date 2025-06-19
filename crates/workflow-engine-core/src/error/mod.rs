@@ -36,7 +36,6 @@ pub use recovery::{RecoveryStrategy, FallbackValue, with_fallback, with_fallback
 #[cfg(feature = "monitoring")]
 pub use metrics::ErrorMetrics;
 
-use std::fmt;
 use serde::{Serialize, Deserialize};
 
 /// Error severity levels for monitoring and alerting

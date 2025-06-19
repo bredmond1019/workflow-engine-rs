@@ -3,7 +3,7 @@
 //! This module provides configurable retry logic for handling transient failures
 //! with exponential backoff and jitter to prevent thundering herd problems.
 
-use super::{WorkflowError, ErrorCategory, ErrorMetadata};
+use super::{WorkflowError, ErrorCategory};
 use std::future::Future;
 use std::time::Duration;
 use tokio::time::sleep;

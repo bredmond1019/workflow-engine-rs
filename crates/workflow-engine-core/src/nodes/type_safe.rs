@@ -5,12 +5,11 @@
 
 use std::marker::PhantomData;
 use std::fmt::Debug;
-use uuid::Uuid;
 use serde::{Serialize, Deserialize};
+use uuid::Uuid;
 
-use super::{Node, AsyncNode};
+use super::Node;
 use crate::error::WorkflowError;
-use crate::task::TaskContext;
 
 /// Type-safe node identifier using phantom types
 /// 

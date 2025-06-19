@@ -39,6 +39,20 @@ impl From<RegistryError> for TemplateError {
     }
 }
 
+impl From<TemplateError> for RegistryError {
+    fn from(error: TemplateError) -> Self {
+        match error {
+            TemplateError::NotFound { id } => RegistryError::NotFound { id },
+            TemplateError::CircularDependency { template_id } => RegistryError::CircularDependency { 
+                id: template_id 
+            },
+            _ => RegistryError::InvalidReference {
+                reference: error.to_string(),
+            },
+        }
+    }
+}
+
 /// Runtime template registry
 #[derive(Debug, Clone)]
 pub struct TemplateRegistry {
@@ -58,23 +72,29 @@ impl TemplateRegistry {
     }
     
     /// Register a template
-    pub fn register(&mut self, template: Template) -> Result<(), RegistryError> {
+    pub fn register(&mut self, template: Template) -> Result<(), TemplateError> {
         let id = template.id.clone();
         
         // Check for circular dependencies
         self.validate_dependencies(&template)?;
         
         // Add to main registry
-        let mut templates = self.templates.write().unwrap();
+        let mut templates = self.templates.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on templates".to_string(),
+            })?;
         if templates.contains_key(&id) {
-            return Err(RegistryError::AlreadyExists {
-                id: id.to_string(),
+            return Err(TemplateError::ValidationError {
+                message: format!("Template already exists: {}", id),
             });
         }
         
         // Index by context if specified
         if let Some(context) = &template.context {
-            let mut index = self.context_index.write().unwrap();
+            let mut index = self.context_index.write()
+                .map_err(|_| TemplateError::LockError {
+                    message: "Failed to acquire write lock on context index".to_string(),
+                })?;
             index.entry(context.clone())
                 .or_insert_with(Vec::new)
                 .push(id.clone());
@@ -85,22 +105,28 @@ impl TemplateRegistry {
     }
     
     /// Get a template by ID
-    pub fn get(&self, id: &str) -> Result<Arc<Template>, RegistryError> {
-        let templates = self.templates.read().unwrap();
+    pub fn get(&self, id: &str) -> Result<Arc<Template>, TemplateError> {
+        let templates = self.templates.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on templates".to_string(),
+            })?;
         let template_id = TemplateId::from(id);
         
         templates.get(&template_id)
             .cloned()
-            .ok_or_else(|| RegistryError::NotFound {
+            .ok_or_else(|| TemplateError::NotFound {
                 id: id.to_string(),
             })
     }
     
     /// Get a compiled template
-    pub fn get_compiled(&self, id: &str) -> Result<CompiledTemplate, RegistryError> {
+    pub fn get_compiled(&self, id: &str) -> Result<CompiledTemplate, TemplateError> {
         // Check cache first
         {
-            let cache = self.compiled_cache.read().unwrap();
+            let cache = self.compiled_cache.read()
+                .map_err(|_| TemplateError::LockError {
+                    message: "Failed to acquire read lock on compiled cache".to_string(),
+                })?;
             if let Some(compiled) = cache.get(&TemplateId::from(id)) {
                 return Ok(compiled.clone());
             }
@@ -110,16 +136,25 @@ impl TemplateRegistry {
         let template = self.get(id)?;
         let compiled = self.compile_template(&template)?;
         
-        let mut cache = self.compiled_cache.write().unwrap();
+        let mut cache = self.compiled_cache.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on compiled cache".to_string(),
+            })?;
         cache.insert(template.id.clone(), compiled.clone());
         
         Ok(compiled)
     }
     
     /// Find templates by context
-    pub fn find_by_context(&self, context: &str) -> Result<Vec<Arc<Template>>, RegistryError> {
-        let index = self.context_index.read().unwrap();
-        let templates = self.templates.read().unwrap();
+    pub fn find_by_context(&self, context: &str) -> Result<Vec<Arc<Template>>, TemplateError> {
+        let index = self.context_index.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on context index".to_string(),
+            })?;
+        let templates = self.templates.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on templates".to_string(),
+            })?;
         
         if let Some(template_ids) = index.get(context) {
             Ok(template_ids.iter()
@@ -131,30 +166,39 @@ impl TemplateRegistry {
     }
     
     /// Update a template
-    pub fn update(&mut self, template: Template) -> Result<(), RegistryError> {
+    pub fn update(&mut self, template: Template) -> Result<(), TemplateError> {
         let id = template.id.clone();
         
         // Validate dependencies
         self.validate_dependencies(&template)?;
         
         // Update registry
-        let mut templates = self.templates.write().unwrap();
+        let mut templates = self.templates.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on templates".to_string(),
+            })?;
         if !templates.contains_key(&id) {
-            return Err(RegistryError::NotFound {
+            return Err(TemplateError::NotFound {
                 id: id.to_string(),
             });
         }
         
         // Clear compiled cache for this template
         {
-            let mut cache = self.compiled_cache.write().unwrap();
+            let mut cache = self.compiled_cache.write()
+                .map_err(|_| TemplateError::LockError {
+                    message: "Failed to acquire write lock on compiled cache".to_string(),
+                })?;
             cache.remove(&id);
         }
         
         // Update context index if needed
         if let Some(old_template) = templates.get(&id) {
             if old_template.context != template.context {
-                let mut index = self.context_index.write().unwrap();
+                let mut index = self.context_index.write()
+                    .map_err(|_| TemplateError::LockError {
+                        message: "Failed to acquire write lock on context index".to_string(),
+                    })?;
                 
                 // Remove from old context
                 if let Some(old_context) = &old_template.context {
@@ -177,18 +221,24 @@ impl TemplateRegistry {
     }
     
     /// Remove a template
-    pub fn remove(&mut self, id: &str) -> Result<(), RegistryError> {
+    pub fn remove(&mut self, id: &str) -> Result<(), TemplateError> {
         let template_id = TemplateId::from(id);
         
-        let mut templates = self.templates.write().unwrap();
+        let mut templates = self.templates.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on templates".to_string(),
+            })?;
         let template = templates.remove(&template_id)
-            .ok_or_else(|| RegistryError::NotFound {
+            .ok_or_else(|| TemplateError::NotFound {
                 id: id.to_string(),
             })?;
         
         // Remove from context index
         if let Some(context) = &template.context {
-            let mut index = self.context_index.write().unwrap();
+            let mut index = self.context_index.write()
+                .map_err(|_| TemplateError::LockError {
+                    message: "Failed to acquire write lock on context index".to_string(),
+                })?;
             if let Some(ids) = index.get_mut(context) {
                 ids.retain(|tid| tid != &template_id);
             }
@@ -196,7 +246,10 @@ impl TemplateRegistry {
         
         // Clear compiled cache
         {
-            let mut cache = self.compiled_cache.write().unwrap();
+            let mut cache = self.compiled_cache.write()
+                .map_err(|_| TemplateError::LockError {
+                    message: "Failed to acquire write lock on compiled cache".to_string(),
+                })?;
             cache.remove(&template_id);
         }
         
@@ -204,20 +257,33 @@ impl TemplateRegistry {
     }
     
     /// List all templates
-    pub fn list(&self) -> Vec<Arc<Template>> {
-        let templates = self.templates.read().unwrap();
-        templates.values().cloned().collect()
+    pub fn list(&self) -> Result<Vec<Arc<Template>>, TemplateError> {
+        let templates = self.templates.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on templates".to_string(),
+            })?;
+        Ok(templates.values().cloned().collect())
     }
     
     /// Clear the registry
-    pub fn clear(&mut self) {
-        let mut templates = self.templates.write().unwrap();
-        let mut cache = self.compiled_cache.write().unwrap();
-        let mut index = self.context_index.write().unwrap();
+    pub fn clear(&mut self) -> Result<(), TemplateError> {
+        let mut templates = self.templates.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on templates".to_string(),
+            })?;
+        let mut cache = self.compiled_cache.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on compiled cache".to_string(),
+            })?;
+        let mut index = self.context_index.write()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire write lock on context index".to_string(),
+            })?;
         
         templates.clear();
         cache.clear();
         index.clear();
+        Ok(())
     }
     
     /// Validate template dependencies
@@ -256,12 +322,12 @@ impl TemplateRegistry {
         template: &Template,
         visited: &mut std::collections::HashSet<TemplateId>,
         path: &mut Vec<TemplateId>,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<(), TemplateError> {
         let id = &template.id;
         
         if path.contains(id) {
-            return Err(RegistryError::CircularDependency {
-                id: id.to_string(),
+            return Err(TemplateError::CircularDependency {
+                template_id: id.to_string(),
             });
         }
         
@@ -292,10 +358,10 @@ impl TemplateRegistry {
         id: &TemplateId,
         visited: &mut std::collections::HashSet<TemplateId>,
         path: &mut Vec<TemplateId>,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<(), TemplateError> {
         if path.contains(id) {
-            return Err(RegistryError::CircularDependency {
-                id: id.to_string(),
+            return Err(TemplateError::CircularDependency {
+                template_id: id.to_string(),
             });
         }
         
@@ -306,7 +372,10 @@ impl TemplateRegistry {
         visited.insert(id.clone());
         path.push(id.clone());
         
-        let templates = self.templates.read().unwrap();
+        let templates = self.templates.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on templates".to_string(),
+            })?;
         if let Some(template) = templates.get(id) {
             // Check parent
             if let Some(parent_id) = &template.parent {
@@ -336,19 +405,28 @@ impl TemplateRegistry {
     }
     
     /// Get registry statistics
-    pub fn stats(&self) -> RegistryStats {
-        let templates = self.templates.read().unwrap();
-        let cache = self.compiled_cache.read().unwrap();
-        let index = self.context_index.read().unwrap();
+    pub fn stats(&self) -> Result<RegistryStats, TemplateError> {
+        let templates = self.templates.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on templates".to_string(),
+            })?;
+        let cache = self.compiled_cache.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on compiled cache".to_string(),
+            })?;
+        let index = self.context_index.read()
+            .map_err(|_| TemplateError::LockError {
+                message: "Failed to acquire read lock on context index".to_string(),
+            })?;
         
-        RegistryStats {
+        Ok(RegistryStats {
             total_templates: templates.len(),
             compiled_templates: cache.len(),
             contexts: index.len(),
             total_includes: templates.values()
                 .map(|t| t.includes.len())
                 .sum(),
-        }
+        })
     }
 }
 
@@ -375,7 +453,9 @@ pub fn create_default_registry() -> Result<TemplateRegistry, RegistryError> {
     let system_prompt = Template::new(
         "system_prompt",
         "You are {{agent_name}}, an AI assistant. {{instructions}}"
-    ).unwrap()
+    ).map_err(|e| TemplateError::ValidationError {
+        message: format!("Failed to create system_prompt template: {}", e),
+    })?
     .with_variable("agent_name", VariableType::String)
     .with_variable("instructions", VariableType::String);
     
@@ -385,7 +465,9 @@ pub fn create_default_registry() -> Result<TemplateRegistry, RegistryError> {
     let user_message = Template::new(
         "user_message",
         "{{#if context}}Context: {{context}}\n\n{{/if}}{{message}}"
-    ).unwrap()
+    ).map_err(|e| TemplateError::ValidationError {
+        message: format!("Failed to create user_message template: {}", e),
+    })?
     .with_variable("message", VariableType::String)
     .with_variable("context", VariableType::String);
     
@@ -399,7 +481,9 @@ pub fn create_default_registry() -> Result<TemplateRegistry, RegistryError> {
     "data": {{json data}},
     "timestamp": "{{now}}"
 }"#
-    ).unwrap()
+    ).map_err(|e| TemplateError::ValidationError {
+        message: format!("Failed to create json_response template: {}", e),
+    })?
     .with_output_format(OutputFormat::Json)
     .with_variable("status", VariableType::String)
     .with_variable("data", VariableType::Any);
@@ -410,7 +494,9 @@ pub fn create_default_registry() -> Result<TemplateRegistry, RegistryError> {
     let error_response = Template::new(
         "error_response",
         "Error: {{error_message}}\nCode: {{error_code}}"
-    ).unwrap()
+    ).map_err(|e| TemplateError::ValidationError {
+        message: format!("Failed to create error_response template: {}", e),
+    })?
     .with_variable("error_message", VariableType::String)
     .with_variable("error_code", VariableType::String)
     .with_context("error");
@@ -429,8 +515,8 @@ mod tests {
         let mut registry = TemplateRegistry::new();
         
         // Register template
-        let template = Template::new("test", "Hello {{name}}!").unwrap();
-        registry.register(template.clone()).unwrap();
+        let template = Template::new("test", "Hello {{name}}!").expect("Failed to create test template");
+        registry.register(template.clone()).expect("Failed to register template");
         
         // Get template
         let retrieved = registry.get("test").unwrap();

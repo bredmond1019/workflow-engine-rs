@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
-    ai::templates::{Template, TemplateManager, TemplateVariables, OutputFormat},
+    ai::templates::{Template, TemplateManager},
     error::WorkflowError,
     // mcp::clients::MCPClient,  // Commented out to avoid circular dependency
     nodes::{agent::{AgentConfig, BaseAgentNode, AgentNode}, Node},

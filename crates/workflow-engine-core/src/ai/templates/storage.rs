@@ -5,7 +5,7 @@
 
 use super::{
     Template, TemplateId, TemplateVersion, TemplateMetadata,
-    TemplateError, OutputFormat, VariableType,
+    TemplateError,
 };
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
