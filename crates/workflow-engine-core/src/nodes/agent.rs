@@ -141,8 +141,12 @@ impl BaseAgentNode {
             }
             #[cfg(not(feature = "aws"))]
             ModelProvider::Bedrock => {
-                Err(WorkflowError::ConfigurationError(
-                    "Bedrock provider requires 'aws' feature to be enabled".to_string()
+                Err(WorkflowError::configuration_error(
+                    "Bedrock provider requires 'aws' feature to be enabled",
+                    "model_provider",
+                    "environment",
+                    "bedrock feature flag",
+                    Some("bedrock".to_string())
                 ))
             }
         }

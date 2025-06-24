@@ -148,9 +148,9 @@ impl RetryableError for WorkflowError {
             WorkflowError::InvalidRouter { .. } |
             WorkflowError::NodeNotFound { .. } |
             WorkflowError::ValidationError { .. } |
-            WorkflowError::InvalidStepType(_) |
-            WorkflowError::InvalidInput(_) |
-            WorkflowError::ConfigurationError(_) => ErrorCategory::Permanent,
+            WorkflowError::InvalidStepType { .. } |
+            WorkflowError::InvalidInput { .. } |
+            WorkflowError::ConfigurationError { .. } => ErrorCategory::Permanent,
             
             // System errors - may be retryable
             WorkflowError::ProcessingError { .. } |

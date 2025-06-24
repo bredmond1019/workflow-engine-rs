@@ -144,7 +144,7 @@ pub fn categorize_error(error: &WorkflowError) -> (ErrorCategory, ErrorSeverity,
             ErrorSeverity::Warning,
             "VAL_001".to_string()
         ),
-        WorkflowError::InvalidInput(_) => (
+        WorkflowError::InvalidInput { .. } => (
             ErrorCategory::User,
             ErrorSeverity::Warning,
             "INPUT_001".to_string()

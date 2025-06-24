@@ -79,20 +79,30 @@ impl ApiConfig {
             rate_limit_burst: env::var("RATE_LIMIT_BURST")
                 .unwrap_or_else(|_| "10".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("RATE_LIMIT_BURST: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("RATE_LIMIT_BURST: {}", e),
+                    "environment",
+                    "RATE_LIMIT_BURST"
+                ))?,
         })
     }
     
     fn validate(&self) -> ConfigResult<()> {
         if self.jwt_secret.len() < 32 {
-            return Err(ConfigError::ValidationFailed(
-                "JWT_SECRET must be at least 32 characters long".to_string()
+            return Err(ConfigError::validation_failed(
+                "JWT_SECRET must be at least 32 characters long",
+                "security",
+                "Use a longer secret key",
+                vec![("jwt_secret".to_string(), format!("length: {}", self.jwt_secret.len()))]
             ));
         }
         
         if self.port == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "PORT must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "PORT must be greater than 0",
+                "server",
+                "Use a valid port number",
+                vec![("port".to_string(), self.port.to_string())]
             ));
         }
         
@@ -110,7 +120,11 @@ impl MonitoringConfig {
             prometheus_port: env::var("PROMETHEUS_PORT")
                 .unwrap_or_else(|_| "9090".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PROMETHEUS_PORT: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PROMETHEUS_PORT: {}", e),
+                    "environment",
+                    "PROMETHEUS_PORT"
+                ))?,
             log_level: env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()),
             jaeger_endpoint: env::var("JAEGER_ENDPOINT").ok(),
         })
@@ -119,10 +133,13 @@ impl MonitoringConfig {
     fn validate(&self) -> ConfigResult<()> {
         let valid_log_levels = ["trace", "debug", "info", "warn", "error"];
         if !valid_log_levels.contains(&self.log_level.as_str()) {
-            return Err(ConfigError::ValidationFailed(
+            return Err(ConfigError::validation_failed(
                 format!("Invalid log level: {}. Must be one of: {}", 
                        self.log_level, 
-                       valid_log_levels.join(", "))
+                       valid_log_levels.join(", ")),
+                "logging",
+                "Use one of the supported log levels",
+                vec![("log_level".to_string(), self.log_level.clone())]
             ));
         }
         

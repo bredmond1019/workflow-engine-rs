@@ -158,10 +158,10 @@ pub fn record_error(error: &WorkflowError, category: ErrorCategory, severity: Er
         WorkflowError::MCPTransportError { .. } => "MCPTransportError",
         WorkflowError::ValidationError { .. } => "ValidationError",
         WorkflowError::RegistryError { .. } => "RegistryError",
-        WorkflowError::InvalidStepType(_) => "InvalidStepType",
-        WorkflowError::InvalidInput(_) => "InvalidInput",
-        WorkflowError::CrossSystemError(_) => "CrossSystemError",
-        WorkflowError::ConfigurationError(_) => "ConfigurationError",
+        WorkflowError::InvalidStepType { .. } => "InvalidStepType",
+        WorkflowError::InvalidInput { .. } => "InvalidInput",
+        WorkflowError::CrossSystemError { .. } => "CrossSystemError",
+        WorkflowError::ConfigurationError { .. } => "ConfigurationError",
     };
     
     let error_code = get_error_code(error);

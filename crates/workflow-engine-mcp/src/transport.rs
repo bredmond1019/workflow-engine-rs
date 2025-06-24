@@ -139,77 +139,341 @@ pub struct TransportMetrics {
     pub uptime: Duration,
 }
 
-#[derive(Debug)]
+/// Transport layer errors with rich context and proper error chaining
+#[derive(thiserror::Error, Debug)]
 pub enum TransportError {
-    IoError(io::Error),
-    SerializationError(serde_json::Error),
-    WebSocketError(tokio_tungstenite::tungstenite::Error),
-    HttpError(reqwest::Error),
-    ConnectionError(String),
-    ProtocolError(String),
+    /// I/O operation failed
+    #[error("I/O error during {operation}: {message}")]
+    IoError {
+        /// Description of the operation that failed
+        message: String,
+        /// Transport operation being performed
+        operation: String,
+        /// Underlying I/O error
+        #[source]
+        source: io::Error,
+    },
+    
+    /// JSON serialization/deserialization failed
+    #[error("Serialization error for {data_type} during {operation}: {message}")]
+    SerializationError {
+        /// Description of the serialization failure
+        message: String,
+        /// Type of data being serialized
+        data_type: String,
+        /// Transport operation being performed
+        operation: String,
+        /// Underlying serde error
+        #[source]
+        source: serde_json::Error,
+    },
+    
+    /// WebSocket connection or communication error
+    #[error("WebSocket error during {operation} to {endpoint}: {message}")]
+    WebSocketError {
+        /// Description of the WebSocket error
+        message: String,
+        /// WebSocket endpoint
+        endpoint: String,
+        /// Transport operation being performed
+        operation: String,
+        /// Underlying WebSocket error
+        #[source]
+        source: tokio_tungstenite::tungstenite::Error,
+    },
+    
+    /// HTTP request/response error
+    #[error("HTTP error during {operation} to {endpoint}{}: {message}", status_code.map(|c| format!(" (status {})", c)).unwrap_or_default())]
+    HttpError {
+        /// Description of the HTTP error
+        message: String,
+        /// HTTP endpoint
+        endpoint: String,
+        /// HTTP status code if available
+        status_code: Option<u16>,
+        /// Transport operation being performed
+        operation: String,
+        /// Underlying HTTP client error
+        #[source]
+        source: reqwest::Error,
+    },
+    
+    /// Connection establishment or maintenance failed
+    #[error("Connection error to {endpoint} via {transport_type}: {message}")]
+    ConnectionError {
+        /// Description of the connection failure
+        message: String,
+        /// Connection endpoint
+        endpoint: String,
+        /// Transport type (WebSocket, stdio, HTTP)
+        transport_type: String,
+        /// Number of retry attempts made
+        retry_count: u32,
+    },
+    
+    /// Protocol-level communication error
+    #[error("Protocol error during {operation}: {message}. Expected: {expected}, Received: {received}")]
+    ProtocolError {
+        /// Description of the protocol violation
+        message: String,
+        /// Protocol operation being performed
+        operation: String,
+        /// What was expected according to protocol
+        expected: String,
+        /// What was actually received
+        received: String,
+    },
 }
 
 impl From<io::Error> for TransportError {
     fn from(err: io::Error) -> Self {
-        TransportError::IoError(err)
+        TransportError::IoError {
+            message: err.to_string(),
+            operation: "unknown".to_string(),
+            source: err,
+        }
     }
 }
 
 impl From<serde_json::Error> for TransportError {
     fn from(err: serde_json::Error) -> Self {
-        TransportError::SerializationError(err)
+        TransportError::SerializationError {
+            message: err.to_string(),
+            data_type: "unknown".to_string(),
+            operation: "unknown".to_string(),
+            source: err,
+        }
     }
 }
 
 impl From<tokio_tungstenite::tungstenite::Error> for TransportError {
     fn from(err: tokio_tungstenite::tungstenite::Error) -> Self {
-        TransportError::WebSocketError(err)
+        TransportError::WebSocketError {
+            message: err.to_string(),
+            endpoint: "unknown".to_string(),
+            operation: "unknown".to_string(),
+            source: err,
+        }
     }
 }
 
 impl From<reqwest::Error> for TransportError {
     fn from(err: reqwest::Error) -> Self {
-        TransportError::HttpError(err)
-    }
-}
-
-impl std::fmt::Display for TransportError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TransportError::IoError(e) => write!(f, "IO error: {}", e),
-            TransportError::SerializationError(e) => write!(f, "Serialization error: {}", e),
-            TransportError::WebSocketError(e) => write!(f, "WebSocket error: {}", e),
-            TransportError::HttpError(e) => write!(f, "HTTP error: {}", e),
-            TransportError::ConnectionError(e) => write!(f, "Connection error: {}", e),
-            TransportError::ProtocolError(e) => write!(f, "Protocol error: {}", e),
+        let status_code = err.status().map(|s| s.as_u16());
+        let endpoint = err.url().map(|u| u.to_string()).unwrap_or_else(|| "unknown".to_string());
+        
+        TransportError::HttpError {
+            message: err.to_string(),
+            endpoint,
+            status_code,
+            operation: "unknown".to_string(),
+            source: err,
         }
     }
 }
 
-impl std::error::Error for TransportError {}
+// Display and Error traits are now automatically implemented by thiserror
+
+impl TransportError {
+    /// Create an I/O error with context
+    pub fn io_error(
+        message: impl Into<String>,
+        operation: impl Into<String>,
+        source: io::Error,
+    ) -> Self {
+        Self::IoError {
+            message: message.into(),
+            operation: operation.into(),
+            source,
+        }
+    }
+
+    /// Create a serialization error with context
+    pub fn serialization_error(
+        message: impl Into<String>,
+        data_type: impl Into<String>,
+        operation: impl Into<String>,
+        source: serde_json::Error,
+    ) -> Self {
+        Self::SerializationError {
+            message: message.into(),
+            data_type: data_type.into(),
+            operation: operation.into(),
+            source,
+        }
+    }
+
+    /// Create a WebSocket error with context
+    pub fn websocket_error(
+        message: impl Into<String>,
+        endpoint: impl Into<String>,
+        operation: impl Into<String>,
+        source: tokio_tungstenite::tungstenite::Error,
+    ) -> Self {
+        Self::WebSocketError {
+            message: message.into(),
+            endpoint: endpoint.into(),
+            operation: operation.into(),
+            source,
+        }
+    }
+
+    /// Create an HTTP error with context
+    pub fn http_error(
+        message: impl Into<String>,
+        endpoint: impl Into<String>,
+        operation: impl Into<String>,
+        status_code: Option<u16>,
+        source: reqwest::Error,
+    ) -> Self {
+        Self::HttpError {
+            message: message.into(),
+            endpoint: endpoint.into(),
+            status_code,
+            operation: operation.into(),
+            source,
+        }
+    }
+
+    /// Create a connection error
+    pub fn connection_error(
+        message: impl Into<String>,
+        endpoint: impl Into<String>,
+        transport_type: impl Into<String>,
+        retry_count: u32,
+    ) -> Self {
+        Self::ConnectionError {
+            message: message.into(),
+            endpoint: endpoint.into(),
+            transport_type: transport_type.into(),
+            retry_count,
+        }
+    }
+
+    /// Create a protocol error
+    pub fn protocol_error(
+        message: impl Into<String>,
+        operation: impl Into<String>,
+        expected: impl Into<String>,
+        received: impl Into<String>,
+    ) -> Self {
+        Self::ProtocolError {
+            message: message.into(),
+            operation: operation.into(),
+            expected: expected.into(),
+            received: received.into(),
+        }
+    }
+}
+
+// Implement error categorization for TransportError
+impl workflow_engine_core::error::ErrorExt for TransportError {
+    fn category(&self) -> workflow_engine_core::error::ErrorCategory {
+        use workflow_engine_core::error::ErrorCategory;
+        match self {
+            // Transient errors that may succeed on retry
+            Self::IoError { .. } |
+            Self::WebSocketError { .. } |
+            Self::HttpError { .. } |
+            Self::ConnectionError { .. } => ErrorCategory::Transient,
+            
+            // System errors (infrastructure, dependencies)
+            Self::SerializationError { .. } => ErrorCategory::System,
+            
+            // User/business errors 
+            Self::ProtocolError { .. } => ErrorCategory::Business,
+        }
+    }
+    
+    fn severity(&self) -> workflow_engine_core::error::ErrorSeverity {
+        use workflow_engine_core::error::ErrorSeverity;
+        match self {
+            // Critical - connection failures
+            Self::ConnectionError { .. } => ErrorSeverity::Critical,
+            
+            // Error - transport failures
+            Self::IoError { .. } |
+            Self::WebSocketError { .. } |
+            Self::HttpError { .. } => ErrorSeverity::Error,
+            
+            // Warning - protocol and serialization issues
+            Self::SerializationError { .. } |
+            Self::ProtocolError { .. } => ErrorSeverity::Warning,
+        }
+    }
+    
+    fn error_code(&self) -> &'static str {
+        match self {
+            Self::IoError { .. } => "MCP_TRANSPORT_IO_ERROR",
+            Self::SerializationError { .. } => "MCP_TRANSPORT_SERIALIZATION_ERROR",
+            Self::WebSocketError { .. } => "MCP_TRANSPORT_WEBSOCKET_ERROR",
+            Self::HttpError { .. } => "MCP_TRANSPORT_HTTP_ERROR",
+            Self::ConnectionError { .. } => "MCP_TRANSPORT_CONNECTION_ERROR",
+            Self::ProtocolError { .. } => "MCP_TRANSPORT_PROTOCOL_ERROR",
+        }
+    }
+}
 
 // Convert TransportError to WorkflowError
 impl From<TransportError> for workflow_engine_core::error::WorkflowError {
     fn from(err: TransportError) -> Self {
         match err {
-            TransportError::IoError(e) => workflow_engine_core::error::WorkflowError::MCPError {
-                message: format!("MCP transport IO error: {}", e),
+            TransportError::IoError { message, operation, .. } => {
+                workflow_engine_core::error::WorkflowError::MCPTransportError {
+                    message: format!("I/O error during {}: {}", operation, message),
+                    server_name: "unknown".to_string(),
+                    transport_type: "unknown".to_string(),
+                    operation,
+                    source: Some(Box::new(err)),
+                }
             },
-            TransportError::SerializationError(e) => workflow_engine_core::error::WorkflowError::SerializationError {
-                message: format!("MCP serialization error: {}", e),
+            TransportError::SerializationError { message, data_type, operation, .. } => {
+                workflow_engine_core::error::WorkflowError::SerializationError {
+                    message: format!("MCP serialization error for {}: {}", data_type, message),
+                    type_name: data_type,
+                    context: format!("during MCP {}", operation),
+                    source: None, // Can't extract serde_json::Error due to Box constraints
+                }
             },
-            TransportError::WebSocketError(e) => workflow_engine_core::error::WorkflowError::MCPConnectionError {
-                message: format!("WebSocket error: {}", e),
+            TransportError::WebSocketError { message, endpoint, operation, .. } => {
+                workflow_engine_core::error::WorkflowError::MCPConnectionError {
+                    message: format!("WebSocket error during {}: {}", operation, message),
+                    server_name: "unknown".to_string(),
+                    transport_type: "WebSocket".to_string(),
+                    endpoint,
+                    retry_count: 0,
+                    source: Some(Box::new(err)),
+                }
             },
-            TransportError::HttpError(e) => workflow_engine_core::error::WorkflowError::ApiError {
-                message: format!("HTTP transport error: {} (status: {})", e, 
-                    e.status().map(|s| s.as_u16()).unwrap_or(0)),
+            TransportError::HttpError { message, endpoint, status_code, operation, .. } => {
+                workflow_engine_core::error::WorkflowError::ApiError {
+                    message: format!("HTTP transport error during {}: {}", operation, message),
+                    service: "mcp_server".to_string(),
+                    endpoint,
+                    status_code,
+                    retry_count: 0,
+                    source: Some(Box::new(err)),
+                }
             },
-            TransportError::ConnectionError(msg) => workflow_engine_core::error::WorkflowError::MCPConnectionError {
-                message: msg,
+            TransportError::ConnectionError { message, endpoint, transport_type, retry_count } => {
+                workflow_engine_core::error::WorkflowError::MCPConnectionError {
+                    message,
+                    server_name: "unknown".to_string(),
+                    transport_type,
+                    endpoint,
+                    retry_count,
+                    source: Some(Box::new(err)),
+                }
             },
-            TransportError::ProtocolError(msg) => workflow_engine_core::error::WorkflowError::MCPProtocolError {
-                message: msg,
+            TransportError::ProtocolError { message, operation, expected, received } => {
+                workflow_engine_core::error::WorkflowError::MCPProtocolError {
+                    message,
+                    server_name: "unknown".to_string(),
+                    expected,
+                    received,
+                    message_type: operation,
+                    source: Some(Box::new(err)),
+                }
             },
         }
     }
