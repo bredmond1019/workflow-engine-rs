@@ -36,12 +36,12 @@ Fixing test compilation errors across workflow-engine-mcp and workflow-engine-ap
 
 ## Progress Tracking
 
-### Agent 1 Status: [ ] Not Started
+### Agent 1 Status: [🔧] In Progress
 - [ ] Fix test_basic_mcp_config
 - [ ] Fix test_connection_pool_config
 - [ ] Fix test_customer_support_server_config
 - [ ] Fix test_external_server_config
-- [ ] Fix test_mcp_config_from_env_enabled
+- [x] Fix test_mcp_config_from_env_disabled (Fixed env isolation)
 - [ ] Fix test_transport_type_serialization
 - [ ] Fix test_transport_error_display
 

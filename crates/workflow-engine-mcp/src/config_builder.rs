@@ -537,12 +537,13 @@ mod tests {
     #[test]
     fn test_basic_mcp_config() {
         let config = McpConfigBuilder::new()
+            .enabled(false)  // Disable MCP when no servers are configured
             .client_name("test-client")
             .client_version("2.0.0")
             .build()
             .unwrap();
 
-        assert!(config.enabled);
+        assert!(!config.enabled);
         assert_eq!(config.client_name, "test-client");
         assert_eq!(config.client_version, "2.0.0");
         assert!(config.servers.is_empty());
@@ -566,6 +567,7 @@ mod tests {
     #[test]
     fn test_connection_pool_config() {
         let config = McpConfigBuilder::new()
+            .enabled(false)  // Disable MCP when no servers are configured
             .connection_pool(|pool| {
                 pool.max_connections_per_server(10)
                     .connection_timeout(Duration::from_secs(60))

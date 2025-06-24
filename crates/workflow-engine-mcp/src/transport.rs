@@ -849,7 +849,7 @@ mod tests {
                 "Connection refused",
             ),
         };
-        assert!(format!("{}", io_error).contains("IO error"));
+        assert!(format!("{}", io_error).contains("I/O error"));
 
         let serialization_error = TransportError::SerializationError {
             message: "Invalid JSON".to_string(),
@@ -910,11 +910,12 @@ mod tests {
         };
         
         let json = serde_json::to_value(&stdio_transport).unwrap();
-        assert_eq!(json["command"], "python");
-        assert_eq!(json["args"][0], "-m");
-        assert_eq!(json["args"][1], "server");
-        assert_eq!(json["auto_restart"], true);
-        assert_eq!(json["max_restarts"], 3);
+        // For tagged enums, the variant is the top-level key
+        assert_eq!(json["Stdio"]["command"], "python");
+        assert_eq!(json["Stdio"]["args"][0], "-m");
+        assert_eq!(json["Stdio"]["args"][1], "server");
+        assert_eq!(json["Stdio"]["auto_restart"], true);
+        assert_eq!(json["Stdio"]["max_restarts"], 3);
 
         let ws_transport = TransportType::WebSocket {
             url: "ws://localhost:8080".to_string(),
@@ -923,9 +924,9 @@ mod tests {
         };
         
         let json = serde_json::to_value(&ws_transport).unwrap();
-        assert_eq!(json["url"], "ws://localhost:8080");
-        assert!(json["heartbeat_interval"].is_object());
-        assert!(json["reconnect_config"].is_object());
+        assert_eq!(json["WebSocket"]["url"], "ws://localhost:8080");
+        assert!(json["WebSocket"]["heartbeat_interval"].is_object());
+        assert!(json["WebSocket"]["reconnect_config"].is_object());
 
         let http_transport = TransportType::Http {
             base_url: "http://localhost:8080".to_string(),
@@ -933,8 +934,8 @@ mod tests {
         };
         
         let json = serde_json::to_value(&http_transport).unwrap();
-        assert_eq!(json["base_url"], "http://localhost:8080");
-        assert!(json["pool_config"].is_object());
+        assert_eq!(json["Http"]["base_url"], "http://localhost:8080");
+        assert!(json["Http"]["pool_config"].is_object());
     }
 
     #[test]
