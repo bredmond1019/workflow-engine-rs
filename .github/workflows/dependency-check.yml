@@ -268,10 +268,65 @@ jobs:
       run: |
         cargo vet || echo "Supply chain check completed with warnings"
 
+  security-policy-check:
+    name: Security Policy Enforcement
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-deny-policy-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-deny
+      run: |
+        cargo install cargo-deny --locked
+
+    - name: Comprehensive security check
+      run: |
+        echo "## Security Policy Check Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### Security Advisories" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cargo deny check advisories >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Advisories check failed" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### License Compliance" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cargo deny check licenses >> $GITHUB_STEP_SUMMARY 2>&1 || echo "License check failed" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### Banned Dependencies" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cargo deny check bans >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Bans check failed" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### Source Verification" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cargo deny check sources >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Sources check failed" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+        # Run comprehensive check and fail if critical issues found
+        cargo deny check
+
   create-issue-on-failure:
     name: Create Issue on Security Failure
     runs-on: ubuntu-latest
-    needs: [security-audit, license-check]
+    needs: [security-audit, license-check, security-policy-check]
     if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     permissions:
       issues: write
