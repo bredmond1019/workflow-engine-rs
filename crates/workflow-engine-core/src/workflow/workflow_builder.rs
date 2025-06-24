@@ -179,8 +179,8 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
 
         // Ensure we have at least one node
         if self.schema.nodes.is_empty() {
-            return Err(WorkflowError::ConfigurationError(
-                "Workflow must contain at least one node".to_string()
+            return Err(WorkflowError::configuration_error_simple(
+                "Workflow must contain at least one node"
             ));
         }
 
@@ -282,8 +282,8 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
         if let Some(timeout_value) = self.metadata.get("timeout_seconds") {
             if let Some(timeout_secs) = timeout_value.as_u64() {
                 if timeout_secs == 0 {
-                    return Err(WorkflowError::ConfigurationError(
-                        "Workflow timeout must be greater than 0 seconds".to_string()
+                    return Err(WorkflowError::configuration_error_simple(
+                        "Workflow timeout must be greater than 0 seconds"
                     ));
                 }
             }

@@ -149,8 +149,8 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
         // Validate timeout
         if let Some(timeout) = self.timeout {
             if timeout.as_secs() == 0 {
-                return Err(WorkflowError::ConfigurationError(
-                    "Timeout must be greater than 0".to_string()
+                return Err(WorkflowError::configuration_error_simple(
+                    "Timeout must be greater than 0"
                 ));
             }
         }
@@ -158,13 +158,13 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
         // Validate retry configuration
         if let Some(attempts) = self.retry_attempts {
             if attempts == 0 {
-                return Err(WorkflowError::ConfigurationError(
-                    "Retry attempts must be greater than 0".to_string()
+                return Err(WorkflowError::configuration_error_simple(
+                    "Retry attempts must be greater than 0"
                 ));
             }
             if self.retry_delay.is_none() {
-                return Err(WorkflowError::ConfigurationError(
-                    "Retry delay must be specified when retry attempts are set".to_string()
+                return Err(WorkflowError::configuration_error_simple(
+                    "Retry delay must be specified when retry attempts are set"
                 ));
             }
         }
@@ -172,8 +172,8 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
         // Validate priority
         if let Some(priority) = self.priority {
             if priority == 0 {
-                return Err(WorkflowError::ConfigurationError(
-                    "Priority must be greater than 0".to_string()
+                return Err(WorkflowError::configuration_error_simple(
+                    "Priority must be greater than 0"
                 ));
             }
         }
@@ -181,8 +181,8 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
         // Validate max concurrent executions
         if let Some(max) = self.max_concurrent_executions {
             if max == 0 {
-                return Err(WorkflowError::ConfigurationError(
-                    "Max concurrent executions must be greater than 0".to_string()
+                return Err(WorkflowError::configuration_error_simple(
+                    "Max concurrent executions must be greater than 0"
                 ));
             }
         }

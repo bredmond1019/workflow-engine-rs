@@ -383,6 +383,10 @@ impl TaskContext {
         serde_json::from_value(self.event_data.clone()).map_err(|e| {
             WorkflowError::DeserializationError {
                 message: format!("Failed to deserialize event data: {}", e),
+                expected_type: std::any::type_name::<T>().to_string(),
+                context: "from event data".to_string(),
+                raw_data: Some(self.event_data.to_string()),
+                source: Some(e),
             }
         })
     }
@@ -399,6 +403,10 @@ impl TaskContext {
                             "Failed to deserialize node data for {}: {}",
                             node_name, e
                         ),
+                        expected_type: std::any::type_name::<T>().to_string(),
+                        context: format!("from node '{}' data", node_name),
+                        raw_data: Some(value.to_string()),
+                        source: Some(e),
                     }
                 })?;
                 Ok(Some(data))
@@ -429,6 +437,9 @@ impl TaskContext {
     pub fn set_data<T: Serialize>(&mut self, key: &str, data: T) -> Result<(), WorkflowError> {
         let value = serde_json::to_value(data).map_err(|e| WorkflowError::SerializationError {
             message: format!("Failed to serialize data for key {}: {}", key, e),
+            type_name: std::any::type_name::<T>().to_string(),
+            context: format!("for key '{}'", key),
+            source: Some(e),
         })?;
         self.nodes.insert(key.to_string(), value);
         self.updated_at = Utc::now();
@@ -450,6 +461,9 @@ impl TaskContext {
     pub fn set_metadata<T: Serialize>(&mut self, key: &str, value: T) -> Result<(), WorkflowError> {
         let serialized_value = serde_json::to_value(value).map_err(|e| WorkflowError::SerializationError {
             message: format!("Failed to serialize metadata for key {}: {}", key, e),
+            type_name: std::any::type_name::<T>().to_string(),
+            context: format!("for metadata key '{}'", key),
+            source: Some(e),
         })?;
         self.metadata.insert(key.to_string(), serialized_value);
         self.updated_at = Utc::now();
@@ -462,6 +476,10 @@ impl TaskContext {
                 let data = serde_json::from_value(value.clone()).map_err(|e| {
                     WorkflowError::DeserializationError {
                         message: format!("Failed to deserialize metadata for {}: {}", key, e),
+                        expected_type: std::any::type_name::<T>().to_string(),
+                        context: format!("from metadata key '{}'", key),
+                        raw_data: Some(value.to_string()),
+                        source: Some(e),
                     }
                 })?;
                 Ok(Some(data))

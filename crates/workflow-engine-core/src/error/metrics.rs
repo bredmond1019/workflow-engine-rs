@@ -224,7 +224,7 @@ fn get_error_code(error: &WorkflowError) -> String {
         WorkflowError::UnreachableNodes { .. } => "WF_UNREACH_001",
         WorkflowError::InvalidRouter { .. } => "WF_ROUTER_001",
         WorkflowError::ValidationError { .. } => "VAL_001",
-        WorkflowError::InvalidInput(_) => "INPUT_001",
+        WorkflowError::InvalidInput { .. } => "INPUT_001",
         WorkflowError::NodeNotFound { .. } => "NODE_404",
         WorkflowError::ProcessingError { .. } => "PROC_001",
         WorkflowError::SerializationError { .. } => "SER_001",

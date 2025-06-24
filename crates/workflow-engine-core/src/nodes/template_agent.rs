@@ -80,6 +80,9 @@ impl TemplateAgentNode {
                 .render(template_id, &vars)
                 .map_err(|e| WorkflowError::ProcessingError {
                     message: format!("Failed to render system prompt template: {}", e),
+                    node_id: None,
+                    node_type: "template_agent".to_string(),
+                    source: Some(Box::new(e)),
                 })
         } else {
             // Use static system prompt
@@ -115,6 +118,9 @@ impl TemplateAgentNode {
                 .render(template_id, &vars)
                 .map_err(|e| WorkflowError::ProcessingError {
                     message: format!("Failed to render user message template: {}", e),
+                    node_id: None,
+                    node_type: "template_agent".to_string(),
+                    source: Some(Box::new(e)),
                 })
         } else {
             // Return prompt as-is
@@ -314,6 +320,9 @@ Current context:
 Always be helpful, accurate, and concise in your responses."#
     ).map_err(|e| WorkflowError::ProcessingError {
         message: format!("Failed to create system prompt template: {}", e),
+        node_id: None,
+        node_type: "template_agent".to_string(),
+        source: Some(Box::new(e)),
     })?;
     
     template_manager.register(system_prompt)?;
@@ -336,6 +345,9 @@ User request: {{prompt}}
 Timestamp: {{timestamp}}"#
     ).map_err(|e| WorkflowError::ProcessingError {
         message: format!("Failed to create user message template: {}", e),
+        node_id: None,
+        node_type: "template_agent".to_string(),
+        source: Some(Box::new(e)),
     })?;
     
     template_manager.register(user_message)?;
@@ -355,6 +367,9 @@ Available tools:
 List the tool names that would be most helpful for this request, one per line with a dash prefix:"#
     ).map_err(|e| WorkflowError::ProcessingError {
         message: format!("Failed to create tool selection template: {}", e),
+        node_id: None,
+        node_type: "template_agent".to_string(),
+        source: Some(Box::new(e)),
     })?
     .with_context("tool_selection");
     

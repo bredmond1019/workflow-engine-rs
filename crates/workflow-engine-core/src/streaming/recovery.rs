@@ -159,6 +159,9 @@ impl RecoveryStreamingProvider {
                     if !cb.can_execute() {
                         yield Err(WorkflowError::ProcessingError {
                             message: "Circuit breaker is open - streaming service unavailable".to_string(),
+                            node_id: None,
+                            node_type: "streaming_recovery".to_string(),
+                            source: None,
                         });
                         return;
                     }
@@ -241,6 +244,9 @@ impl RecoveryStreamingProvider {
                                 if retry_count >= recovery_config.max_retries {
                                     yield Err(WorkflowError::ProcessingError {
                                         message: format!("Streaming failed after {} retries: {}", retry_count, e),
+                                        node_id: None,
+                                        node_type: "streaming_recovery".to_string(),
+                                        source: Some(Box::new(e)),
                                     });
                                     return;
                                 }
@@ -265,6 +271,9 @@ impl RecoveryStreamingProvider {
                         if retry_count >= recovery_config.max_retries {
                             yield Err(WorkflowError::ProcessingError {
                                 message: format!("Streaming timed out after {} retries", retry_count),
+                                node_id: None,
+                                node_type: "streaming_recovery".to_string(),
+                                source: None,
                             });
                             return;
                         }

@@ -224,23 +224,23 @@ impl TypedWorkflowBuilder {
     pub fn validate(&self) -> Result<(), WorkflowError> {
         // Check for cycles
         if self.has_cycles() {
-            return Err(WorkflowError::ValidationError {
-                message: "Workflow contains cycles".to_string()
-            });
+            return Err(WorkflowError::validation_error_simple(
+                "Workflow contains cycles"
+            ));
         }
         
         // Check for orphaned nodes
         if self.has_orphaned_nodes() {
-            return Err(WorkflowError::ValidationError {
-                message: "Workflow contains orphaned nodes".to_string()
-            });
+            return Err(WorkflowError::validation_error_simple(
+                "Workflow contains orphaned nodes"
+            ));
         }
         
         // Check for disabled critical paths
         if self.has_disabled_critical_path() {
-            return Err(WorkflowError::ValidationError {
-                message: "Critical path contains disabled nodes".to_string()
-            });
+            return Err(WorkflowError::validation_error_simple(
+                "Critical path contains disabled nodes"
+            ));
         }
         
         Ok(())

@@ -844,6 +844,72 @@ impl From<prometheus::Error> for WorkflowError {
 }
 
 impl WorkflowError {
+    /// Create a configuration error with a simple message (backward compatibility)
+    pub fn configuration_error_simple(message: impl Into<String>) -> Self {
+        Self::ConfigurationError {
+            message: message.into(),
+            config_key: "unknown".to_string(),
+            config_source: "application".to_string(),
+            expected_format: "valid configuration".to_string(),
+            received_value: None,
+            source: None,
+        }
+    }
+
+    /// Create an API error with minimal information (backward compatibility)
+    pub fn api_error_simple(message: impl Into<String>) -> Self {
+        Self::ApiError {
+            message: message.into(),
+            service: "external_service".to_string(),
+            endpoint: "unknown".to_string(),
+            status_code: None,
+            retry_count: 0,
+            source: None,
+        }
+    }
+
+    /// Create a processing error with minimal information (backward compatibility) 
+    pub fn processing_error_simple(message: impl Into<String>) -> Self {
+        Self::ProcessingError {
+            message: message.into(),
+            node_id: None,
+            node_type: "unknown".to_string(),
+            source: None,
+        }
+    }
+
+    /// Create a validation error with minimal information (backward compatibility)
+    pub fn validation_error_simple(message: impl Into<String>) -> Self {
+        Self::ValidationError {
+            message: message.into(),
+            field: "unknown".to_string(),
+            value: None,
+            constraint: "validation_failed".to_string(),
+            context: "during validation".to_string(),
+        }
+    }
+
+    /// Create a serialization error with minimal information (backward compatibility)
+    pub fn serialization_error_simple(message: impl Into<String>) -> Self {
+        Self::SerializationError {
+            message: message.into(),
+            type_name: "unknown".to_string(),
+            context: "during serialization".to_string(),
+            source: None,
+        }
+    }
+
+    /// Create a deserialization error with minimal information (backward compatibility)
+    pub fn deserialization_error_simple(message: impl Into<String>) -> Self {
+        Self::DeserializationError {
+            message: message.into(),
+            expected_type: "unknown".to_string(),
+            context: "during deserialization".to_string(),
+            raw_data: None,
+            source: None,
+        }
+    }
+
     /// Create a processing error with basic information
     pub fn processing_error(message: impl Into<String>, node_type: impl Into<String>) -> Self {
         Self::ProcessingError {
