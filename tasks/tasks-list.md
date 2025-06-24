@@ -50,7 +50,7 @@
 
 ## Tasks
 
-- [ ] 1.0 Fix Critical Compilation Errors
+- [x] 1.0 Fix Critical Compilation Errors
   - [x] 1.1 Implement Missing JWT Authentication Methods
     - [x] 1.1.1 Add `JwtAuth::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/auth.rs`
     - [x] 1.1.2 Add `JwtMiddleware::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/middleware.rs`
@@ -66,11 +66,11 @@
     - [x] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()
     - [x] 1.3.3 Use safe environment variable setting without unsafe block
     - [x] 1.3.4 Add proper error propagation for startup configuration
-  - [ ] 1.4 Fix Import Resolution Errors
-    - [ ] 1.4.1 Fix missing `workflows` import in `crates/workflow-engine-app/src/main.rs` line 8
-    - [ ] 1.4.2 Ensure all module imports resolve correctly across workspace
-    - [ ] 1.4.3 Update any broken internal crate dependencies
-    - [ ] 1.4.4 Verify `cargo check --workspace` passes without errors
+  - [x] 1.4 Fix Import Resolution Errors
+    - [x] 1.4.1 Fix missing `workflows` import in `crates/workflow-engine-app/src/main.rs` line 8
+    - [x] 1.4.2 Ensure all module imports resolve correctly across workspace
+    - [x] 1.4.3 Update any broken internal crate dependencies
+    - [x] 1.4.4 Verify `cargo check --workspace` passes without errors
 
 - [ ] 2.0 Resolve Security Vulnerabilities
   - [ ] 2.1 Update Protobuf Dependency (RUSTSEC-2024-0437)

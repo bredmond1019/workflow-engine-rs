@@ -70,7 +70,7 @@ async fn main() -> std::io::Result<()> {
 
     // TODO: Re-enable when workflows module is fixed
     // info!("Starting Demo Workflows");
-    // workflows::demos::run_all_demos().await;
+    // workflow_engine_api::workflows::demos::run_all_demos().await;
 
     // Start HTTP server
     HttpServer::new(move || {
