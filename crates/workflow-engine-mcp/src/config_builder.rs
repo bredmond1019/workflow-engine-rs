@@ -88,6 +88,30 @@ impl McpConfigBuilder {
         self
     }
 
+    /// Add a WebSocket server with custom configuration
+    pub fn add_websocket_server_with_config(
+        mut self,
+        name: impl Into<String>,
+        url: impl Into<String>,
+        heartbeat_interval: Option<Duration>,
+        reconnect_config: ReconnectConfig,
+    ) -> Self {
+        let server_name = name.into();
+        let server_config = McpServerConfig {
+            name: server_name.clone(),
+            enabled: true,
+            transport: TransportType::WebSocket {
+                url: url.into(),
+                heartbeat_interval,
+                reconnect_config,
+            },
+            auto_connect: true,
+            retry_on_failure: true,
+        };
+        self.servers.insert(server_name, server_config);
+        self
+    }
+
     /// Add an HTTP server
     pub fn add_http_server(
         mut self,
@@ -133,6 +157,84 @@ impl McpConfigBuilder {
         self
     }
 
+    /// Add a stdio server with custom configuration
+    pub fn add_stdio_server_with_config(
+        mut self,
+        name: impl Into<String>,
+        command: impl Into<String>,
+        args: Vec<String>,
+        auto_restart: bool,
+        max_restarts: u32,
+    ) -> Self {
+        let server_name = name.into();
+        let server_config = McpServerConfig {
+            name: server_name.clone(),
+            enabled: true,
+            transport: TransportType::Stdio {
+                command: command.into(),
+                args,
+                auto_restart,
+                max_restarts,
+            },
+            auto_connect: true,
+            retry_on_failure: true,
+        };
+        self.servers.insert(server_name, server_config);
+        self
+    }
+
+    /// Add server with custom enablement and connection settings
+    pub fn add_server_with_settings(
+        mut self,
+        name: impl Into<String>,
+        config: McpServerConfig,
+        enabled: bool,
+        auto_connect: bool,
+        retry_on_failure: bool,
+    ) -> Self {
+        let server_name = name.into();
+        let mut server_config = config;
+        server_config.name = server_name.clone();
+        server_config.enabled = enabled;
+        server_config.auto_connect = auto_connect;
+        server_config.retry_on_failure = retry_on_failure;
+        self.servers.insert(server_name, server_config);
+        self
+    }
+
+    /// Remove a server configuration
+    pub fn remove_server(mut self, name: impl Into<String>) -> Self {
+        self.servers.remove(&name.into());
+        self
+    }
+
+    /// Disable a server
+    pub fn disable_server(mut self, name: impl Into<String>) -> Self {
+        let server_name = name.into();
+        if let Some(config) = self.servers.get_mut(&server_name) {
+            config.enabled = false;
+        }
+        self
+    }
+
+    /// Enable a server
+    pub fn enable_server(mut self, name: impl Into<String>) -> Self {
+        let server_name = name.into();
+        if let Some(config) = self.servers.get_mut(&server_name) {
+            config.enabled = true;
+        }
+        self
+    }
+
+    /// Set auto-connect for a server
+    pub fn set_server_auto_connect(mut self, name: impl Into<String>, auto_connect: bool) -> Self {
+        let server_name = name.into();
+        if let Some(config) = self.servers.get_mut(&server_name) {
+            config.auto_connect = auto_connect;
+        }
+        self
+    }
+
     /// Build the McpConfig with validation
     pub fn build(self) -> Result<McpConfig, WorkflowError> {
         // Validate client name
@@ -147,6 +249,71 @@ impl McpConfigBuilder {
             return Err(WorkflowError::ConfigurationError(
                 "Client version cannot be empty".to_string()
             ));
+        }
+
+        // Validate client name format (basic validation)
+        if !self.client_name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+            return Err(WorkflowError::ConfigurationError(
+                "Client name can only contain alphanumeric characters, hyphens, and underscores".to_string()
+            ));
+        }
+
+        // Validate servers if MCP is enabled
+        if self.enabled {
+            for (name, server_config) in &self.servers {
+                // Validate server name matches config name
+                if name != &server_config.name {
+                    return Err(WorkflowError::ConfigurationError(
+                        format!("Server name mismatch: key '{}' vs config name '{}'", name, server_config.name)
+                    ));
+                }
+
+                // Validate transport configurations
+                match &server_config.transport {
+                    TransportType::WebSocket { url, .. } => {
+                        if url.is_empty() {
+                            return Err(WorkflowError::ConfigurationError(
+                                format!("WebSocket URL cannot be empty for server '{}'", name)
+                            ));
+                        }
+                        if !url.starts_with("ws://") && !url.starts_with("wss://") {
+                            return Err(WorkflowError::ConfigurationError(
+                                format!("WebSocket URL must start with 'ws://' or 'wss://' for server '{}'", name)
+                            ));
+                        }
+                    }
+                    TransportType::Http { base_url, .. } => {
+                        if base_url.is_empty() {
+                            return Err(WorkflowError::ConfigurationError(
+                                format!("HTTP base URL cannot be empty for server '{}'", name)
+                            ));
+                        }
+                        if !base_url.starts_with("http://") && !base_url.starts_with("https://") {
+                            return Err(WorkflowError::ConfigurationError(
+                                format!("HTTP base URL must start with 'http://' or 'https://' for server '{}'", name)
+                            ));
+                        }
+                    }
+                    TransportType::Stdio { command, .. } => {
+                        if command.is_empty() {
+                            return Err(WorkflowError::ConfigurationError(
+                                format!("Stdio command cannot be empty for server '{}'", name)
+                            ));
+                        }
+                    }
+                }
+            }
+
+            // Ensure at least one enabled server if MCP is enabled
+            let enabled_servers: Vec<_> = self.servers.values()
+                .filter(|config| config.enabled)
+                .collect();
+            
+            if enabled_servers.is_empty() {
+                return Err(WorkflowError::ConfigurationError(
+                    "At least one server must be enabled when MCP is enabled".to_string()
+                ));
+            }
         }
 
         // Build connection config
@@ -378,5 +545,97 @@ mod tests {
 
         assert!(!config.enabled);
         assert_eq!(config.servers.len(), 1); // Server is added but MCP is disabled
+    }
+
+    #[test]
+    fn test_enhanced_fluent_interface() {
+        let config = McpConfigBuilder::new()
+            .client_name("enhanced-client")
+            .client_version("2.1.0")
+            .add_websocket_server_with_config(
+                "ws-server",
+                "wss://secure.example.com/mcp",
+                Some(Duration::from_secs(60)),
+                ReconnectConfig::default()
+            )
+            .add_stdio_server_with_config(
+                "stdio-server",
+                "python3",
+                vec!["server.py".to_string(), "--port".to_string(), "8080".to_string()],
+                true,
+                5
+            )
+            .disable_server("stdio-server")
+            .set_server_auto_connect("ws-server", false)
+            .connection_pool(|pool| {
+                pool.max_connections_per_server(15)
+                    .health_check_interval(Duration::from_secs(45))
+                    .auto_reconnect(true)
+            })
+            .build()
+            .unwrap();
+
+        assert_eq!(config.client_name, "enhanced-client");
+        assert_eq!(config.client_version, "2.1.0");
+        assert_eq!(config.servers.len(), 2);
+        
+        let ws_server = &config.servers["ws-server"];
+        assert!(ws_server.enabled);
+        assert!(!ws_server.auto_connect);
+        
+        let stdio_server = &config.servers["stdio-server"];
+        assert!(!stdio_server.enabled);
+        
+        assert_eq!(config.connection_pool.max_connections_per_server, 15);
+    }
+
+    #[test]
+    fn test_server_management() {
+        let config = McpConfigBuilder::new()
+            .add_websocket_server("server1", "ws://localhost:8080")
+            .add_http_server("server2", "http://localhost:8081")
+            .remove_server("server1")
+            .enable_server("server2")
+            .build()
+            .unwrap();
+
+        assert_eq!(config.servers.len(), 1);
+        assert!(config.servers.contains_key("server2"));
+        assert!(!config.servers.contains_key("server1"));
+    }
+
+    #[test]
+    fn test_enhanced_validation_errors() {
+        // Invalid client name format
+        let result = McpConfigBuilder::new()
+            .client_name("invalid client name!")
+            .build();
+        assert!(result.is_err());
+
+        // Invalid WebSocket URL
+        let result = McpConfigBuilder::new()
+            .add_websocket_server("test", "invalid-url")
+            .build();
+        assert!(result.is_err());
+
+        // Invalid HTTP URL
+        let result = McpConfigBuilder::new()
+            .add_http_server("test", "invalid-url")
+            .build();
+        assert!(result.is_err());
+
+        // Empty command for stdio
+        let result = McpConfigBuilder::new()
+            .add_stdio_server("test", "", vec![])
+            .build();
+        assert!(result.is_err());
+
+        // No enabled servers when MCP is enabled
+        let result = McpConfigBuilder::new()
+            .enabled(true)
+            .add_websocket_server("test", "ws://localhost:8080")
+            .disable_server("test")
+            .build();
+        assert!(result.is_err());
     }
 }

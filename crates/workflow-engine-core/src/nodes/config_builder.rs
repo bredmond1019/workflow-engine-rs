@@ -6,6 +6,7 @@
 use std::any::TypeId;
 use std::time::Duration;
 use std::marker::PhantomData;
+use std::collections::HashMap;
 
 use crate::error::WorkflowError;
 use crate::nodes::{Node, config::NodeConfig};
@@ -21,6 +22,10 @@ pub struct NodeConfigBuilder<T: Node> {
     retry_attempts: Option<u32>,
     retry_delay: Option<Duration>,
     required_inputs: Vec<String>,
+    metadata: std::collections::HashMap<String, serde_json::Value>,
+    max_concurrent_executions: Option<usize>,
+    priority: Option<u8>,
+    tags: Vec<String>,
     _phantom: PhantomData<T>,
 }
 
@@ -37,6 +42,10 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
             retry_attempts: None,
             retry_delay: None,
             required_inputs: Vec::new(),
+            metadata: std::collections::HashMap::new(),
+            max_concurrent_executions: None,
+            priority: None,
+            tags: Vec::new(),
             _phantom: PhantomData,
         }
     }
@@ -96,6 +105,38 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
         self
     }
 
+    /// Add metadata to the node configuration
+    pub fn metadata(mut self, key: impl Into<String>, value: impl serde::Serialize) -> Self {
+        if let Ok(json_value) = serde_json::to_value(value) {
+            self.metadata.insert(key.into(), json_value);
+        }
+        self
+    }
+
+    /// Set the maximum number of concurrent executions for this node
+    pub fn max_concurrent_executions(mut self, max: usize) -> Self {
+        self.max_concurrent_executions = Some(max);
+        self
+    }
+
+    /// Set node priority (1-255, higher numbers = higher priority)
+    pub fn priority(mut self, priority: u8) -> Self {
+        self.priority = Some(priority);
+        self
+    }
+
+    /// Add tags to the node for categorization and filtering
+    pub fn tags(mut self, tags: Vec<impl Into<String>>) -> Self {
+        self.tags = tags.into_iter().map(|t| t.into()).collect();
+        self
+    }
+
+    /// Add a single tag
+    pub fn tag(mut self, tag: impl Into<String>) -> Self {
+        self.tags.push(tag.into());
+        self
+    }
+
     /// Build the NodeConfig with validation
     pub fn build(self) -> Result<NodeConfig, WorkflowError> {
         // Validate router configuration
@@ -128,16 +169,43 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
             }
         }
 
-        // Create the base config
-        let mut config = NodeConfig::new::<T>();
-        config.connections = self.connections;
-        config.is_router = self.is_router;
-        config.description = self.description;
-        config.parallel_nodes = self.parallel_nodes;
+        // Validate priority
+        if let Some(priority) = self.priority {
+            if priority == 0 {
+                return Err(WorkflowError::ConfigurationError(
+                    "Priority must be greater than 0".to_string()
+                ));
+            }
+        }
 
-        // Store additional configuration as metadata
-        // Note: This would require extending NodeConfig with a metadata field
-        // For now, we return the basic config
+        // Validate max concurrent executions
+        if let Some(max) = self.max_concurrent_executions {
+            if max == 0 {
+                return Err(WorkflowError::ConfigurationError(
+                    "Max concurrent executions must be greater than 0".to_string()
+                ));
+            }
+        }
+
+        // Create the full config with all fields
+        let config = NodeConfig {
+            node_type: self.node_type,
+            connections: self.connections,
+            is_router: self.is_router,
+            description: self.description,
+            parallel_nodes: self.parallel_nodes,
+            timeout: self.timeout,
+            retry_attempts: self.retry_attempts,
+            retry_delay: self.retry_delay,
+            required_inputs: self.required_inputs,
+            metadata: self.metadata,
+            max_concurrent_executions: self.max_concurrent_executions,
+            priority: self.priority,
+            tags: self.tags,
+        };
+
+        // Run final validation
+        config.validate()?;
 
         Ok(config)
     }
@@ -244,8 +312,64 @@ mod tests {
             .build()
             .unwrap();
 
-        // Note: Additional configuration would be stored in metadata
-        // once NodeConfig is extended to support it
         assert!(config.node_type == TypeId::of::<TestNode>());
+        assert_eq!(config.timeout, Some(Duration::from_secs(30)));
+        assert_eq!(config.retry_attempts, Some(3));
+        assert_eq!(config.retry_delay, Some(Duration::from_millis(100)));
+        assert_eq!(config.required_inputs.len(), 3);
+        assert!(config.required_inputs.contains(&"user_id".to_string()));
+    }
+
+    #[test]
+    fn test_enhanced_configuration() {
+        let config = NodeConfigBuilder::<TestNode>::new()
+            .description("Enhanced test node")
+            .timeout(Duration::from_secs(60))
+            .priority(10)
+            .max_concurrent_executions(5)
+            .metadata("version", "1.0.0")
+            .metadata("environment", "test")
+            .tags(vec!["processing", "test", "enhanced"])
+            .tag("additional")
+            .build()
+            .unwrap();
+
+        assert_eq!(config.description, Some("Enhanced test node".to_string()));
+        assert_eq!(config.timeout, Some(Duration::from_secs(60)));
+        assert_eq!(config.priority, Some(10));
+        assert_eq!(config.max_concurrent_executions, Some(5));
+        assert_eq!(config.metadata.len(), 2);
+        assert!(config.metadata.contains_key("version"));
+        assert!(config.metadata.contains_key("environment"));
+        assert_eq!(config.tags.len(), 4);
+        assert!(config.tags.contains(&"processing".to_string()));
+        assert!(config.tags.contains(&"additional".to_string()));
+    }
+
+    #[test]
+    fn test_validation_errors() {
+        // Invalid priority
+        let result = NodeConfigBuilder::<TestNode>::new()
+            .priority(0)
+            .build();
+        assert!(result.is_err());
+
+        // Invalid max concurrent executions
+        let result = NodeConfigBuilder::<TestNode>::new()
+            .max_concurrent_executions(0)
+            .build();
+        assert!(result.is_err());
+
+        // Invalid timeout
+        let result = NodeConfigBuilder::<TestNode>::new()
+            .timeout(Duration::from_secs(0))
+            .build();
+        assert!(result.is_err());
+
+        // Invalid retry configuration (attempts without delay)
+        let result = NodeConfigBuilder::<TestNode>::new()
+            .retry(3, Duration::from_millis(0))
+            .build();
+        assert!(result.is_err());
     }
 }
