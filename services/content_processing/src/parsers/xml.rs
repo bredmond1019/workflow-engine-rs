@@ -213,7 +213,7 @@ impl XmlParser {
         
         Ok(ContentStructure {
             sections,
-            table_of_contents: Vec::new(), // TODO: Generate TOC from structure
+            table_of_contents: Vec::new(), // TOC generation not implemented
             links: self.extract_links(xml_content)?,
             citations: Vec::new(),
         })
@@ -316,7 +316,7 @@ impl ContentParser for XmlParser {
             text,
             metadata,
             structure,
-            media_elements: Vec::new(), // TODO: Extract media references from XML
+            media_elements: Vec::new(), // Media reference extraction not implemented
         })
     }
     

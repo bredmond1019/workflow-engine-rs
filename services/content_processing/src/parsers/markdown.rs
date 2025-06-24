@@ -289,7 +289,7 @@ impl ContentParser for MarkdownParser {
             text,
             metadata,
             structure,
-            media_elements: Vec::new(), // TODO: Extract images and other media from markdown
+            media_elements: Vec::new(), // Media extraction from markdown not implemented
         })
     }
     

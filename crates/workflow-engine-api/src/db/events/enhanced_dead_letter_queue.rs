@@ -591,6 +591,43 @@ pub struct EnhancedDLQStatistics {
     pub circuit_breaker_state: CircuitBreakerState,
 }
 
+// Implement the DeadLetterQueue trait for EnhancedDeadLetterQueue
+#[async_trait]
+impl super::dead_letter_queue::DeadLetterQueue for EnhancedDeadLetterQueue {
+    async fn add_failed_event(
+        &self,
+        event: &EventEnvelope,
+        error_message: String,
+        error_details: serde_json::Value,
+    ) -> EventResult<()> {
+        self.add_failed_event(event, error_message, error_details).await
+    }
+    
+    async fn get_retry_candidates(&self, limit: usize) -> EventResult<Vec<DeadLetterEntry>> {
+        self.get_retry_candidates(limit).await
+    }
+    
+    async fn mark_retrying(&self, entry_id: Uuid) -> EventResult<()> {
+        self.mark_retrying(entry_id).await
+    }
+    
+    async fn mark_resolved(&self, entry_id: Uuid) -> EventResult<()> {
+        self.mark_resolved(entry_id).await
+    }
+    
+    async fn increment_retry(&self, entry_id: Uuid, error_message: String) -> EventResult<()> {
+        self.increment_retry(entry_id, error_message).await
+    }
+    
+    async fn mark_permanently_failed(&self, entry_id: Uuid) -> EventResult<()> {
+        self.mark_permanently_failed(entry_id).await
+    }
+    
+    async fn get_statistics(&self) -> EventResult<DeadLetterStatistics> {
+        Ok(self.get_enhanced_statistics().await.base_stats)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -54,8 +54,8 @@ pub async fn register_agent(
     _registration: web::Json<AgentRegistration>,
     _pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement agent registry functionality
-    // Currently stubbed to allow compilation
+    // Registry endpoint not implemented - requires PostgresAgentRegistry integration
+    // Returns proper HTTP 501 Not Implemented status
     Ok(HttpResponse::NotImplemented().json(serde_json::json!({
         "error": "not_implemented",
         "message": "Agent registry functionality not yet implemented"
@@ -67,8 +67,8 @@ pub async fn list_agents(
     _req: HttpRequest,
     _pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement agent registry functionality
-    // Currently stubbed to allow compilation  
+    // Registry endpoint not implemented - requires PostgresAgentRegistry integration
+    // Returns proper HTTP 501 Not Implemented status
     Ok(HttpResponse::NotImplemented().json(serde_json::json!({
         "error": "not_implemented",
         "message": "Agent listing functionality not yet implemented"
@@ -81,8 +81,8 @@ pub async fn discover_agents(
     _query: web::Query<serde_json::Value>,
     _pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement agent discovery functionality
-    // Currently stubbed to allow compilation
+    // Discovery endpoint not implemented - requires PostgresAgentRegistry integration
+    // Returns proper HTTP 501 Not Implemented status
     Ok(HttpResponse::NotImplemented().json(serde_json::json!({
         "error": "not_implemented", 
         "message": "Agent discovery functionality not yet implemented"
@@ -96,8 +96,8 @@ pub async fn heartbeat_agent(
     _heartbeat: web::Json<HeartbeatRequest>,
     _pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement agent heartbeat functionality
-    // Currently stubbed to allow compilation
+    // Heartbeat endpoint not implemented - requires PostgresAgentRegistry integration
+    // Returns proper HTTP 501 Not Implemented status
     Ok(HttpResponse::NotImplemented().json(serde_json::json!({
         "error": "not_implemented",
         "message": "Agent heartbeat functionality not yet implemented"

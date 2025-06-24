@@ -36,8 +36,8 @@ pub mod rate_limit;
 pub mod routes;
 pub mod startup;
 pub mod uptime;
-// TODO: Re-enable when workflow module is fixed
-// pub mod workflows;
+// Workflow API endpoints for triggering and monitoring workflows
+pub mod workflows;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(events::create_event);
@@ -55,16 +55,16 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     );
     
     routes::configure(cfg);
-    // TODO: Re-enable when workflow routes are fixed  
-    // workflows::configure_routes(cfg);
+    // Workflow API routes for triggering and monitoring workflows
+    workflows::configure_routes(cfg);
     metrics::configure_routes(cfg);
     
     // Configure streaming routes
-    // TODO: Re-enable streaming routes when streaming module is available
+    // Streaming functionality not implemented - requires core::streaming module
     // crate::core::streaming::handlers::configure_streaming_routes(cfg);
     
-    // Configure WebSocket endpoint
-    // TODO: Re-enable WebSocket endpoint when streaming module is available
+    // Configure WebSocket endpoint  
+    // WebSocket streaming not implemented - requires core::streaming::websocket module
     // cfg.route("/ws/stream", web::get().to(crate::core::streaming::websocket::websocket_streaming_handler));
     
     // Configure OpenAPI/Swagger documentation

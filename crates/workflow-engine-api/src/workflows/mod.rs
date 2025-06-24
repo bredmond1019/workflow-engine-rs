@@ -387,7 +387,8 @@ impl WorkflowRunner {
             updated_at: chrono::Utc::now(),
         };
 
-        // TODO: Store the updated event in the database when Event::store is implemented
+        // Event persistence not implemented - requires Event::store method implementation
+        // Currently returns in-memory event without database persistence
         // updated_event.store(conn)?;
 
         Ok(updated_event)

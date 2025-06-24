@@ -68,7 +68,8 @@ async fn main() -> std::io::Result<()> {
         burst_size,
     };
 
-    // TODO: Re-enable when workflows module is fixed
+    // Optional: Run demo workflows on startup (disabled by default for production)
+    // Uncomment the following lines to run demos on server startup:
     // info!("Starting Demo Workflows");
     // workflow_engine_api::workflows::demos::run_all_demos().await;
 

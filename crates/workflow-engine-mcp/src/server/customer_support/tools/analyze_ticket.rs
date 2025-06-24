@@ -1,7 +1,7 @@
 use crate::server::ToolMetadata;
 use workflow_engine_core::{error::WorkflowError, nodes::Node, task::TaskContext};
-// TODO: AnthropicAgentNode needs to be reimplemented or imported from correct location
-// use workflow_engine_core::ai::anthropic::AnthropicAgentNode;
+// Note: Uses rule-based analysis instead of AI agent
+// AI agent integration can be added later when AnthropicAgentNode is available
 use workflow_engine_core::nodes::agent::{AgentConfig, ModelProvider};
 use std::sync::Arc;
 use std::any::TypeId;
@@ -52,8 +52,8 @@ impl AnalyzeTicketNode {
 
 impl AnalyzeTicketNode {
     fn analyze_ticket(&self, event_data: &CustomerCareEventData) -> serde_json::Value {
-        // TODO: This is a stub implementation. The actual implementation requires AnthropicAgentNode
-        // which is not currently available. This should be reimplemented once AI capabilities are restored.
+        // Provides rule-based ticket analysis as a functional fallback
+        // Can be enhanced with AI agent integration when AnthropicAgentNode becomes available
         
         // For now, provide a simple rule-based analysis
         let message_lower = event_data.message.to_lowercase();

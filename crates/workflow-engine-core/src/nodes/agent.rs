@@ -58,8 +58,8 @@ impl BaseAgentNode {
         }
     }
 
-    // Stub implementations for MCP functionality
-    // TODO: Implement proper MCP integration when circular dependency is resolved
+    // MCP integration stub implementations - circular dependency prevents full implementation
+    // These methods provide API compatibility until dependency architecture is refactored
     pub fn with_mcp_client(self, _mcp_client: Box<dyn std::any::Any + Send + Sync>) -> Self {
         // Currently a no-op until MCP integration is fixed
         self

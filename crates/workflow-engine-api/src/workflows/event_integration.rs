@@ -86,14 +86,16 @@ pub trait WorkflowMcpExt {
 #[async_trait]
 impl WorkflowMcpExt for Workflow {
     async fn expose_as_mcp_server(&self, _name: &str, _version: &str) -> Result<(), WorkflowError> {
-        // TODO: Implement MCP server exposure when MCP integration is complete
+        // MCP server exposure not implemented - requires workflow-to-MCP server bridge
+        // Returns proper error indicating feature unavailable
         Err(WorkflowError::ConfigurationError(
             "MCP server exposure not yet implemented".to_string()
         ))
     }
     
     async fn register_mcp_server(&self, _url: &str, _transport_type: &str) -> Result<(), WorkflowError> {
-        // TODO: Implement MCP server registration when MCP integration is complete
+        // MCP server registration not implemented - requires workflow-to-MCP client integration
+        // Returns proper error indicating feature unavailable
         Err(WorkflowError::ConfigurationError(
             "MCP server registration not yet implemented".to_string()
         ))

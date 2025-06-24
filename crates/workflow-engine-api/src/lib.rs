@@ -54,9 +54,10 @@ pub mod monitoring;
 pub mod integrations;
 
 // Re-export commonly used types
-// TODO: Re-enable exports when implementations are available
+// Note: ApiServer and ApiConfig exports disabled - use Actix web components directly
+// Note: ServiceContainer export disabled - not yet implemented
 // pub use api::{ApiServer, ApiConfig};
-// pub use bootstrap::{ServiceContainer, ServiceRegistry};
+// pub use bootstrap::{ServiceContainer};
 pub use bootstrap::{ServiceRegistry};
 
 // Workflows module re-exports
@@ -69,7 +70,7 @@ pub use workflows::{
 
 // Feature-specific re-exports
 #[cfg(feature = "auth")]
-// TODO: Re-enable auth exports when available
+// Note: Auth module exports disabled - use api::auth module directly
 // pub use api::auth::{AuthConfig, JwtClaims};
 
 #[cfg(feature = "monitoring")]
@@ -80,8 +81,8 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Prelude module for common API imports
 pub mod prelude {
-    // TODO: Re-enable exports when implementations are available
-    // pub use crate::{ApiServer, ApiConfig, ServiceContainer, ServiceRegistry};
+    // Note: Limited exports until full implementations are available
+    // pub use crate::{ApiServer, ApiConfig, ServiceContainer};
     pub use crate::bootstrap::ServiceRegistry;
     pub use crate::workflows::WorkflowRunner;
     pub use workflow_engine_core::prelude::*;

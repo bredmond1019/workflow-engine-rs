@@ -46,7 +46,7 @@ impl PdfParser {
             }
         }
         
-        // TODO: Extract PDF metadata using a more sophisticated PDF library
+        // Advanced PDF metadata extraction not implemented - requires specialized PDF library
         // For now, we'll use basic heuristics
         
         ContentMetadata {
@@ -144,7 +144,7 @@ impl PdfParser {
             sections,
             table_of_contents: toc_entries,
             links: self.extract_links(text),
-            citations: Vec::new(), // TODO: Extract citations from PDF
+            citations: Vec::new(), // Citation extraction not implemented
         }
     }
     
@@ -255,7 +255,7 @@ impl ContentParser for PdfParser {
             text,
             metadata,
             structure,
-            media_elements: Vec::new(), // TODO: Extract images and other media from PDF
+            media_elements: Vec::new(), // Media extraction not implemented
         })
     }
     

@@ -158,7 +158,7 @@ impl GraphDatabase {
     {
         let start = std::time::Instant::now();
         
-        // TODO: Implement proper transaction with dgraph-tonic 0.11 API
+        // Uses dgraph client directly - transaction API pending dgraph-tonic 0.11 upgrade
         let result = operations(&self.client)?;
         
         let duration = start.elapsed();

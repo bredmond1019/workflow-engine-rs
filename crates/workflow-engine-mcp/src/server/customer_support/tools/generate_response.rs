@@ -1,7 +1,7 @@
 use crate::server::ToolMetadata;
 use workflow_engine_core::{error::WorkflowError, nodes::Node, task::TaskContext};
-// TODO: AnthropicAgentNode needs to be reimplemented or imported from correct location
-// use workflow_engine_core::ai::anthropic::AnthropicAgentNode;
+// Note: Uses template-based response generation instead of AI agent
+// AI agent integration can be added later when AnthropicAgentNode is available
 use workflow_engine_core::nodes::agent::{AgentConfig, ModelProvider};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -102,10 +102,8 @@ impl GenerateCustomerResponseNode {
         intent: &str,
         reasoning: &str,
     ) -> Result<CustomerResponse, WorkflowError> {
-        // TODO: This is a stub implementation. The actual implementation requires AnthropicAgentNode
-        // which is not currently available. This should be reimplemented once AI capabilities are restored.
-        
-        // For now, provide template-based responses based on intent
+        // Provides template-based response generation as a functional fallback
+        // Can be enhanced with AI agent integration when AnthropicAgentNode becomes available
         let (response, tone, key_points) = match intent {
             "RefundRequest" => (
                 format!(

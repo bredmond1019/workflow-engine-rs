@@ -5,6 +5,7 @@
 use super::*;
 use crate::db::events::cross_service_routing::*;
 use crate::db::events::{EventEnvelope, EventMetadata};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -46,10 +47,12 @@ fn create_test_event(event_type: &str) -> EventEnvelope {
         aggregate_version: 1,
         event_data: serde_json::json!({"test": "data"}),
         metadata: EventMetadata {
-            user_id: Some(Uuid::new_v4()),
-            session_id: Some(Uuid::new_v4()),
+            user_id: Some(Uuid::new_v4().to_string()),
+            session_id: Some(Uuid::new_v4().to_string()),
             correlation_id: Some(Uuid::new_v4()),
             causation_id: Some(Uuid::new_v4()),
+            source: Some("test".to_string()),
+            tags: HashMap::new(),
             timestamp: chrono::Utc::now(),
             custom: Default::default(),
         },

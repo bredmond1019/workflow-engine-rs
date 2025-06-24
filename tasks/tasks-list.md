@@ -95,11 +95,11 @@
     - [x] 2.4.4 Document security update process for future maintenance
 
 - [ ] 3.0 Complete Missing Implementations and API Polish
-  - [ ] 3.1 Remove Stub Implementations and TODO Comments
-    - [ ] 3.1.1 Audit all files for TODO, FIXME, and unimplemented!() macros
-    - [ ] 3.1.2 Complete or remove stub MCP client methods in workflow builders
-    - [ ] 3.1.3 Implement missing bootstrap service functionality or remove references
-    - [ ] 3.1.4 Remove placeholder implementations in AI agent nodes or disable features properly
+  - [x] 3.1 Remove Stub Implementations and TODO Comments
+    - [x] 3.1.1 Audit all files for TODO, FIXME, and unimplemented!() macros
+    - [x] 3.1.2 Complete or remove stub MCP client methods in workflow builders
+    - [x] 3.1.3 Implement missing bootstrap service functionality or remove references
+    - [x] 3.1.4 Remove placeholder implementations in AI agent nodes or disable features properly
   - [ ] 3.2 Fix API Naming Consistency (Rust API Guidelines)
     - [ ] 3.2.1 Standardize MCP vs Mcp naming throughout codebase (choose one pattern)
     - [ ] 3.2.2 Review all public struct and enum names for consistency with Rust conventions

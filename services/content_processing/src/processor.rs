@@ -142,7 +142,7 @@ impl ContentProcessorTrait for DefaultContentProcessor {
             language,
             processing_time_ms: processing_time,
             processed_at: chrono::Utc::now(),
-            plugin_results: std::collections::HashMap::new(), // TODO: Plugin processing
+            plugin_results: std::collections::HashMap::new(), // Plugin system not implemented
         };
         
         Ok(ProcessingResult::Success(output))
