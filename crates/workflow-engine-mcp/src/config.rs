@@ -296,9 +296,68 @@ impl Default for MCPConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::env;
+    use serial_test::serial;
+    
+    // Helper functions for safe environment variable manipulation in tests
+    fn with_env_vars<F, R>(vars: Vec<(&str, &str)>, f: F) -> R
+    where
+        F: FnOnce() -> R,
+    {
+        // Save original values
+        let mut original_values = Vec::new();
+        for (key, _) in &vars {
+            original_values.push((key.to_string(), std::env::var(key).ok()));
+        }
+        
+        // Set new values
+        for (key, value) in &vars {
+            std::env::set_var(key, value);
+        }
+        
+        // Run the test function
+        let result = f();
+        
+        // Restore original values
+        for (key, original) in original_values {
+            match original {
+                Some(value) => std::env::set_var(&key, value),
+                None => std::env::remove_var(&key),
+            }
+        }
+        
+        result
+    }
+    
+    fn without_env_vars<F, R>(vars: Vec<&str>, f: F) -> R
+    where
+        F: FnOnce() -> R,
+    {
+        // Save original values
+        let mut original_values = Vec::new();
+        for key in &vars {
+            original_values.push((key.to_string(), std::env::var(key).ok()));
+        }
+        
+        // Remove variables
+        for key in &vars {
+            std::env::remove_var(key);
+        }
+        
+        // Run the test function
+        let result = f();
+        
+        // Restore original values
+        for (key, original) in original_values {
+            if let Some(value) = original {
+                std::env::set_var(&key, value);
+            }
+        }
+        
+        result
+    }
 
     #[test]
+    #[serial]
     fn test_mcp_config_default() {
         let config = MCPConfig::default();
         assert!(!config.enabled);
@@ -308,178 +367,153 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_mcp_config_from_env_disabled() {
         // Clear all MCP environment variables
-        unsafe { 
-            env::remove_var("MCP_ENABLED");
-            env::remove_var("MCP_CLIENT_NAME");
-            env::remove_var("MCP_CLIENT_VERSION");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ENABLED");
-            // Clean up any external server variables
-            for i in 1..10 {
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_NAME", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_ENABLED", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_URI", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_TRANSPORT", i));
-            }
-        };
-
-        let config = MCPConfig::from_env().unwrap();
-        assert!(!config.enabled);
+        without_env_vars(vec![
+            "MCP_ENABLED",
+            "MCP_CLIENT_NAME",
+            "MCP_CLIENT_VERSION",
+            "MCP_CUSTOMER_SUPPORT_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_NAME",
+            "MCP_EXTERNAL_SERVER_1_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_URI",
+            "MCP_EXTERNAL_SERVER_1_TRANSPORT",
+            "MCP_EXTERNAL_SERVER_2_NAME",
+            "MCP_EXTERNAL_SERVER_2_ENABLED",
+            "MCP_EXTERNAL_SERVER_2_URI",
+            "MCP_EXTERNAL_SERVER_2_TRANSPORT",
+            "MCP_EXTERNAL_SERVER_3_NAME",
+            "MCP_EXTERNAL_SERVER_3_ENABLED",
+            "MCP_EXTERNAL_SERVER_3_URI",
+            "MCP_EXTERNAL_SERVER_3_TRANSPORT",
+        ], || {
+            let config = MCPConfig::from_env().unwrap();
+            assert!(!config.enabled);
+        });
     }
 
     #[test]
+    #[serial]
     fn test_mcp_config_from_env_enabled() {
-        unsafe {
-            env::set_var("MCP_ENABLED", "true");
-            env::set_var("MCP_CLIENT_NAME", "test-client");
-            env::set_var("MCP_CLIENT_VERSION", "2.0.0");
-        }
-
-        let config = MCPConfig::from_env().unwrap();
-        assert!(config.enabled);
-        assert_eq!(config.client_name, "test-client");
-        assert_eq!(config.client_version, "2.0.0");
-
-        // Cleanup
-        unsafe {
-            env::remove_var("MCP_ENABLED");
-            env::remove_var("MCP_CLIENT_NAME");
-            env::remove_var("MCP_CLIENT_VERSION");
-        }
+        with_env_vars(vec![
+            ("MCP_ENABLED", "true"),
+            ("MCP_CLIENT_NAME", "test-client"),
+            ("MCP_CLIENT_VERSION", "2.0.0"),
+        ], || {
+            let config = MCPConfig::from_env().unwrap();
+            assert!(config.enabled);
+            assert_eq!(config.client_name, "test-client");
+            assert_eq!(config.client_version, "2.0.0");
+        });
     }
 
     #[test]
+    #[serial]
     fn test_customer_support_server_config() {
         // Clean up environment variables first
-        unsafe {
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ENABLED");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_TRANSPORT");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_COMMAND");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ARGS");
-            // Clean up any external server variables that might interfere
-            for i in 1..10 {
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_NAME", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_ENABLED", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_URI", i));
-                env::remove_var(&format!("MCP_EXTERNAL_SERVER_{}_TRANSPORT", i));
-            }
-        }
+        without_env_vars(vec![
+            "MCP_CUSTOMER_SUPPORT_ENABLED",
+            "MCP_CUSTOMER_SUPPORT_TRANSPORT",
+            "MCP_CUSTOMER_SUPPORT_COMMAND",
+            "MCP_CUSTOMER_SUPPORT_ARGS",
+            "MCP_EXTERNAL_SERVER_1_NAME",
+            "MCP_EXTERNAL_SERVER_1_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_URI",
+            "MCP_EXTERNAL_SERVER_1_TRANSPORT",
+            "MCP_EXTERNAL_SERVER_2_NAME",
+            "MCP_EXTERNAL_SERVER_2_ENABLED",
+            "MCP_EXTERNAL_SERVER_2_URI",
+            "MCP_EXTERNAL_SERVER_2_TRANSPORT",
+        ], || {
+            with_env_vars(vec![
+                ("MCP_CUSTOMER_SUPPORT_ENABLED", "true"),
+                ("MCP_CUSTOMER_SUPPORT_TRANSPORT", "stdio"),
+                ("MCP_CUSTOMER_SUPPORT_COMMAND", "python3"),
+                ("MCP_CUSTOMER_SUPPORT_ARGS", "scripts/server.py --port 8080"),
+            ], || {
+                let config = MCPConfig::from_env().unwrap();
 
-        unsafe {
-            env::set_var("MCP_CUSTOMER_SUPPORT_ENABLED", "true");
-            env::set_var("MCP_CUSTOMER_SUPPORT_TRANSPORT", "stdio");
-            env::set_var("MCP_CUSTOMER_SUPPORT_COMMAND", "python3");
-            env::set_var("MCP_CUSTOMER_SUPPORT_ARGS", "scripts/server.py --port 8080");
-        }
+                assert!(config.is_server_enabled("customer-support"));
+                let server_config = config.get_server_config("customer-support").unwrap();
+                assert_eq!(server_config.name, "customer-support");
+                assert!(server_config.enabled);
 
-        let config = MCPConfig::from_env().unwrap();
-
-        assert!(config.is_server_enabled("customer-support"));
-        let server_config = config.get_server_config("customer-support").unwrap();
-        assert_eq!(server_config.name, "customer-support");
-        assert!(server_config.enabled);
-
-        match &server_config.transport {
-            TransportType::Stdio { command, args, .. } => {
-                assert_eq!(command, "python3");
-                assert_eq!(args, &vec!["scripts/server.py", "--port", "8080"]);
-            }
-            _ => panic!("Expected Stdio transport"),
-        }
-
-        // Cleanup
-        unsafe {
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ENABLED");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_TRANSPORT");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_COMMAND");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ARGS");
-        }
+                match &server_config.transport {
+                    TransportType::Stdio { command, args, .. } => {
+                        assert_eq!(command, "python3");
+                        assert_eq!(args, &vec!["scripts/server.py", "--port", "8080"]);
+                    }
+                    _ => panic!("Expected Stdio transport"),
+                }
+            });
+        });
     }
 
     #[test]
+    #[serial]
     fn test_external_server_config() {
         // Cleanup any existing environment variables first
-        unsafe {
-            env::remove_var("MCP_EXTERNAL_SERVER_1_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_TRANSPORT");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ENABLED");
-        }
+        without_env_vars(vec![
+            "MCP_EXTERNAL_SERVER_1_NAME",
+            "MCP_EXTERNAL_SERVER_1_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_URI",
+            "MCP_EXTERNAL_SERVER_1_TRANSPORT",
+            "MCP_CUSTOMER_SUPPORT_ENABLED",
+        ], || {
+            with_env_vars(vec![
+                ("MCP_EXTERNAL_SERVER_1_NAME", "test-server"),
+                ("MCP_EXTERNAL_SERVER_1_ENABLED", "true"),
+                ("MCP_EXTERNAL_SERVER_1_URI", "ws://localhost:9090/mcp"),
+                ("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket"),
+            ], || {
+                let config = MCPConfig::from_env().unwrap();
 
-        unsafe {
-            env::set_var("MCP_EXTERNAL_SERVER_1_NAME", "test-server");
-            env::set_var("MCP_EXTERNAL_SERVER_1_ENABLED", "true");
-            env::set_var("MCP_EXTERNAL_SERVER_1_URI", "ws://localhost:9090/mcp");
-            env::set_var("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket");
-        }
+                assert!(config.is_server_enabled("test-server"));
+                let server_config = config.get_server_config("test-server").unwrap();
+                assert_eq!(server_config.name, "test-server");
 
-        let config = MCPConfig::from_env().unwrap();
-
-        assert!(config.is_server_enabled("test-server"));
-        let server_config = config.get_server_config("test-server").unwrap();
-        assert_eq!(server_config.name, "test-server");
-
-        match &server_config.transport {
-            TransportType::WebSocket { url, .. } => {
-                assert_eq!(url, "ws://localhost:9090/mcp");
-            }
-            _ => panic!("Expected WebSocket transport"),
-        }
-
-        // Cleanup
-        unsafe {
-            env::remove_var("MCP_EXTERNAL_SERVER_1_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_TRANSPORT");
-        }
+                match &server_config.transport {
+                    TransportType::WebSocket { url, .. } => {
+                        assert_eq!(url, "ws://localhost:9090/mcp");
+                    }
+                    _ => panic!("Expected WebSocket transport"),
+                }
+            });
+        });
     }
 
     #[test]
+    #[serial]
     fn test_get_enabled_servers() {
         // Cleanup any existing environment variables first
-        unsafe {
-            env::remove_var("MCP_EXTERNAL_SERVER_1_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_TRANSPORT");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_TRANSPORT");
-            env::remove_var("MCP_CUSTOMER_SUPPORT_ENABLED");
-        }
+        without_env_vars(vec![
+            "MCP_EXTERNAL_SERVER_1_NAME",
+            "MCP_EXTERNAL_SERVER_1_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_URI",
+            "MCP_EXTERNAL_SERVER_1_TRANSPORT",
+            "MCP_EXTERNAL_SERVER_2_NAME",
+            "MCP_EXTERNAL_SERVER_2_ENABLED",
+            "MCP_EXTERNAL_SERVER_2_URI",
+            "MCP_EXTERNAL_SERVER_2_TRANSPORT",
+            "MCP_CUSTOMER_SUPPORT_ENABLED",
+        ], || {
+            with_env_vars(vec![
+                ("MCP_EXTERNAL_SERVER_1_NAME", "server1"),
+                ("MCP_EXTERNAL_SERVER_1_ENABLED", "true"),
+                ("MCP_EXTERNAL_SERVER_1_URI", "ws://localhost:8080"),
+                ("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket"),
+                ("MCP_EXTERNAL_SERVER_2_NAME", "server2"),
+                ("MCP_EXTERNAL_SERVER_2_ENABLED", "false"),
+                ("MCP_EXTERNAL_SERVER_2_URI", "ws://localhost:8081"),
+                ("MCP_EXTERNAL_SERVER_2_TRANSPORT", "websocket"),
+            ], || {
+                let config = MCPConfig::from_env().unwrap();
+                let enabled_servers = config.get_enabled_servers();
 
-        unsafe {
-            env::set_var("MCP_EXTERNAL_SERVER_1_NAME", "server1");
-            env::set_var("MCP_EXTERNAL_SERVER_1_ENABLED", "true");
-            env::set_var("MCP_EXTERNAL_SERVER_1_URI", "ws://localhost:8080");
-            env::set_var("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket");
-
-            env::set_var("MCP_EXTERNAL_SERVER_2_NAME", "server2");
-            env::set_var("MCP_EXTERNAL_SERVER_2_ENABLED", "false");
-            env::set_var("MCP_EXTERNAL_SERVER_2_URI", "ws://localhost:8081");
-            env::set_var("MCP_EXTERNAL_SERVER_2_TRANSPORT", "websocket");
-        }
-
-        let config = MCPConfig::from_env().unwrap();
-        let enabled_servers = config.get_enabled_servers();
-
-        assert_eq!(enabled_servers.len(), 1);
-        assert_eq!(enabled_servers[0].name, "server1");
-
-        // Cleanup
-        unsafe {
-            env::remove_var("MCP_EXTERNAL_SERVER_1_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_1_TRANSPORT");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_NAME");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_ENABLED");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_URI");
-            env::remove_var("MCP_EXTERNAL_SERVER_2_TRANSPORT");
-        }
+                assert_eq!(enabled_servers.len(), 1);
+                assert_eq!(enabled_servers[0].name, "server1");
+            });
+        });
     }
 }

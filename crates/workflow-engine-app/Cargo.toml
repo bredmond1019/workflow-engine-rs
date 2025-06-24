@@ -34,5 +34,9 @@ workflow-engine-api = { path = "../workflow-engine-api", version = "0.6.0", feat
 
 # Runtime dependencies
 dotenvy = { workspace = true }
+actix-web = { workspace = true }
+actix-cors = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
 
 # No dev-dependencies needed for app binary

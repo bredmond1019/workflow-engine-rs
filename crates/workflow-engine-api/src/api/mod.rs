@@ -34,6 +34,7 @@ pub mod openapi;
 pub mod openapi_types;
 pub mod rate_limit;
 pub mod routes;
+pub mod startup;
 pub mod uptime;
 // TODO: Re-enable when workflow module is fixed
 // pub mod workflows;

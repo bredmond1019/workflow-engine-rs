@@ -158,25 +158,12 @@ pub async fn health_check(
 pub async fn detailed_health_check(
     pool: web::Data<std::sync::Arc<DbPool>>,
 ) -> Result<HttpResponse> {
-    let start_time = match std::env::var("PROCESS_START_TIME") {
-        Ok(time) => time.parse::<u64>().unwrap_or_else(|_| {
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-        }),
-        Err(_) => SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs(),
-    };
+    let uptime_seconds = super::startup::get_uptime_seconds();
     
     let current_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs();
-    
-    let uptime_seconds = current_time - start_time;
     
     // Get system information
     let mut sys = System::new_all();

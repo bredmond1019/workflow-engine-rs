@@ -8,6 +8,7 @@ use backend::core::{
 };
 use serde_json::json;
 use std::env;
+use serial_test::serial;
 
 #[cfg(test)]
 mod base_agent_tests {
@@ -236,12 +237,11 @@ mod error_handling_tests {
     use super::*;
 
     #[test]
+    #[serial]
     fn test_missing_api_key_error() {
         // Temporarily unset API keys
         let _old_openai = env::var("OPENAI_API_KEY").ok();
-        unsafe {
-            env::remove_var("OPENAI_API_KEY");
-        }
+        env::remove_var("OPENAI_API_KEY");
 
         let config = AgentConfig {
             system_prompt: "Test".to_string(),
@@ -261,9 +261,7 @@ mod error_handling_tests {
 
         // Restore API key if it existed
         if let Some(key) = _old_openai {
-            unsafe {
-                env::set_var("OPENAI_API_KEY", key);
-            }
+            env::set_var("OPENAI_API_KEY", key);
         }
     }
 

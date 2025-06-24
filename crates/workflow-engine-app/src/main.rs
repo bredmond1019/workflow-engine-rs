@@ -2,7 +2,7 @@ use actix_cors::Cors;
 use actix_web::{App, HttpServer, middleware, web};
 use dotenvy::dotenv;
 use log::info;
-use std::{env, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{env, sync::Arc};
 
 use workflow_engine_api::db::session::DbPool;
 use workflow_engine_api::api;
@@ -12,24 +12,20 @@ use workflow_engine_api::api::rate_limit::{RateLimitConfig, RateLimitMiddleware}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Set backtrace and logging
-    // Note: In production, set these via environment or command line
-    if env::var("RUST_BACKTRACE").is_err() {
-        std::env::set_var("RUST_BACKTRACE", "1");
-    }
+    // Load environment variables from .env file first
+    dotenv().ok();
+    
+    // Initialize logging based on environment variables
+    // If RUST_LOG is not set, use default logging configuration
     if env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .init();
+    } else {
+        env_logger::init();
     }
     
-    // Set process start time for health checks
-    let start_time = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("System time before UNIX epoch")
-        .as_secs();
-    std::env::set_var("PROCESS_START_TIME", start_time.to_string());
-
-    // Load environment variables from .env file
-    dotenv().ok();
+    // Initialize process start time
+    workflow_engine_api::api::startup::init_startup_time();
 
     // Initialize structured logging with correlation ID support
     workflow_engine_api::monitoring::logging::init_structured_logging();

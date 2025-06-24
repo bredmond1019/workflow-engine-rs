@@ -61,11 +61,11 @@
     - [x] 1.2.2 Uncomment workflows module re-exports in `crates/workflow-engine-api/src/lib.rs` lines 52-53
     - [x] 1.2.3 Fix any compilation errors in the workflows module after re-enabling
     - [x] 1.2.4 Ensure workflows module exports are properly documented
-  - [ ] 1.3 Remove Unsafe Code Blocks
-    - [ ] 1.3.1 Replace unsafe environment variable setting in `crates/workflow-engine-app/src/main.rs` lines 16-27
-    - [ ] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()
-    - [ ] 1.3.3 Use safe environment variable setting without unsafe block
-    - [ ] 1.3.4 Add proper error propagation for startup configuration
+  - [x] 1.3 Remove Unsafe Code Blocks
+    - [x] 1.3.1 Replace unsafe environment variable setting in `crates/workflow-engine-app/src/main.rs` lines 16-27
+    - [x] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()
+    - [x] 1.3.3 Use safe environment variable setting without unsafe block
+    - [x] 1.3.4 Add proper error propagation for startup configuration
   - [ ] 1.4 Fix Import Resolution Errors
     - [ ] 1.4.1 Fix missing `workflows` import in `crates/workflow-engine-app/src/main.rs` line 8
     - [ ] 1.4.2 Ensure all module imports resolve correctly across workspace

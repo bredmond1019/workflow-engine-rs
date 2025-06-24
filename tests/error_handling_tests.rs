@@ -61,21 +61,21 @@ async fn test_retry_with_exponential_backoff() {
 
 #[tokio::test]
 async fn test_retry_builder_fluent_api() {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+    
     let result = RetryBuilder::new()
         .max_attempts(2)
         .initial_delay(Duration::from_millis(50))
         .jitter(0.1)
         .execute(|| async {
-            static mut COUNTER: u32 = 0;
-            unsafe {
-                COUNTER += 1;
-                if COUNTER == 1 {
-                    Err(WorkflowError::MCPConnectionError {
-                        message: "Connection failed".to_string(),
-                    })
-                } else {
-                    Ok("Connected")
-                }
+            let count = COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
+            if count == 1 {
+                Err(WorkflowError::MCPConnectionError {
+                    message: "Connection failed".to_string(),
+                })
+            } else {
+                Ok("Connected")
             }
         })
         .await;
@@ -284,21 +284,21 @@ async fn test_complex_error_recovery_scenario() {
     ) -> Result<String, WorkflowError> {
         // Try with circuit breaker
         match cb.call(|| async {
+            use std::sync::atomic::{AtomicU32, Ordering};
+            static CALL_COUNT: AtomicU32 = AtomicU32::new(0);
+            
             // Simulate API call with retries
             RetryBuilder::new()
                 .max_attempts(2)
                 .initial_delay(Duration::from_millis(50))
                 .execute(|| async {
-                    static mut CALL_COUNT: u32 = 0;
-                    unsafe {
-                        CALL_COUNT += 1;
-                        if CALL_COUNT < 4 {
-                            Err(WorkflowError::ApiError {
-                                message: "API error".to_string(),
-                            })
-                        } else {
-                            Ok("API Success".to_string())
-                        }
+                    let count = CALL_COUNT.fetch_add(1, Ordering::SeqCst) + 1;
+                    if count < 4 {
+                        Err(WorkflowError::ApiError {
+                            message: "API error".to_string(),
+                        })
+                    } else {
+                        Ok("API Success".to_string())
                     }
                 })
                 .await

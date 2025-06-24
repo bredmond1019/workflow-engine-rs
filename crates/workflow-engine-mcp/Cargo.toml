@@ -40,6 +40,7 @@ tokio-tungstenite = { workspace = true, optional = true }
 rand = { workspace = true }
 log = { workspace = true }
 prometheus = { workspace = true }
+once_cell = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
