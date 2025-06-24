@@ -59,6 +59,14 @@ pub mod integrations;
 // pub use bootstrap::{ServiceContainer, ServiceRegistry};
 pub use bootstrap::{ServiceRegistry};
 
+// Workflows module re-exports
+pub use workflows::{
+    WorkflowRunner,
+    customer_support_workflow,
+    knowledge_base_workflow,
+    demos,
+};
+
 // Feature-specific re-exports
 #[cfg(feature = "auth")]
 // TODO: Re-enable auth exports when available
@@ -75,6 +83,7 @@ pub mod prelude {
     // TODO: Re-enable exports when implementations are available
     // pub use crate::{ApiServer, ApiConfig, ServiceContainer, ServiceRegistry};
     pub use crate::bootstrap::ServiceRegistry;
+    pub use crate::workflows::WorkflowRunner;
     pub use workflow_engine_core::prelude::*;
     pub use workflow_engine_mcp::prelude::*;
     pub use actix_web::{web, App, HttpServer, Result as ActixResult};

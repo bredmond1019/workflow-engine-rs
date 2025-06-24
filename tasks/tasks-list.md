@@ -51,16 +51,16 @@
 ## Tasks
 
 - [ ] 1.0 Fix Critical Compilation Errors
-  - [ ] 1.1 Implement Missing JWT Authentication Methods
-    - [ ] 1.1.1 Add `JwtAuth::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/auth.rs`
-    - [ ] 1.1.2 Add `JwtMiddleware::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/middleware.rs`
-    - [ ] 1.1.3 Ensure both constructors properly initialize internal state and validate inputs
-    - [ ] 1.1.4 Add unit tests for both constructors with valid and invalid inputs
-  - [ ] 1.2 Re-enable and Fix Workflows Module
-    - [ ] 1.2.1 Uncomment `pub mod workflows;` in `crates/workflow-engine-api/src/lib.rs` line 53
-    - [ ] 1.2.2 Uncomment workflows module re-exports in `crates/workflow-engine-api/src/lib.rs` lines 52-53
-    - [ ] 1.2.3 Fix any compilation errors in the workflows module after re-enabling
-    - [ ] 1.2.4 Ensure workflows module exports are properly documented
+  - [x] 1.1 Implement Missing JWT Authentication Methods
+    - [x] 1.1.1 Add `JwtAuth::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/auth.rs`
+    - [x] 1.1.2 Add `JwtMiddleware::new(secret: String) -> Self` constructor in `crates/workflow-engine-api/src/middleware.rs`
+    - [x] 1.1.3 Ensure both constructors properly initialize internal state and validate inputs
+    - [x] 1.1.4 Add unit tests for both constructors with valid and invalid inputs
+  - [x] 1.2 Re-enable and Fix Workflows Module
+    - [x] 1.2.1 Uncomment `pub mod workflows;` in `crates/workflow-engine-api/src/lib.rs` line 53
+    - [x] 1.2.2 Uncomment workflows module re-exports in `crates/workflow-engine-api/src/lib.rs` lines 52-53
+    - [x] 1.2.3 Fix any compilation errors in the workflows module after re-enabling
+    - [x] 1.2.4 Ensure workflows module exports are properly documented
   - [ ] 1.3 Remove Unsafe Code Blocks
     - [ ] 1.3.1 Replace unsafe environment variable setting in `crates/workflow-engine-app/src/main.rs` lines 16-27
     - [ ] 1.3.2 Implement proper error handling for SystemTime operations instead of unwrap()

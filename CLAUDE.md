@@ -31,7 +31,7 @@ docker-compose logs -f ai-workflow-system
 # Run all tests
 cargo test
 
-# Run integration tests (requires MCP servers)
+# Integration tests (requires MCP servers)
 ./scripts/start_test_servers.sh
 cargo test -- --ignored
 
@@ -110,31 +110,26 @@ cd services/realtime_communication && cargo run
 ### Core Components
 
 1. **HTTP API Server** (`crates/workflow-engine-api/src/api/`)
-
    - Actix-web REST API with JWT authentication
    - Rate limiting and OpenAPI documentation
    - Correlation ID tracking across requests
 
 2. **MCP Framework** (`crates/workflow-engine-mcp/src/`)
-
    - Complete Model Context Protocol implementation
    - Support for HTTP, WebSocket, and stdio transports
    - Client implementations for external services
 
 3. **Workflow Engine** (`crates/workflow-engine-core/src/workflow/`)
-
    - Node-based workflow execution
    - Type-safe node registration and discovery
    - Built-in nodes for AI operations
 
 4. **Database Layer** (`crates/workflow-engine-api/src/db/`)
-
    - PostgreSQL with Diesel ORM
    - Repository pattern for data access
    - Event and session storage
 
 5. **Monitoring** (`crates/workflow-engine-api/src/monitoring/`)
-
    - Prometheus metrics with custom collectors
    - Structured logging with correlation IDs
    - Grafana dashboards for visualization
@@ -147,9 +142,8 @@ cd services/realtime_communication && cargo run
 ### External Services
 
 MCP servers are implemented in Python (`mcp-servers/`):
-
 - **HelpScout** (port 8001): Customer support integration
-- **Notion** (port 8002): Knowledge base integration
+- **Notion** (port 8002): Knowledge base integration  
 - **Slack** (port 8003): Team communication
 
 ### Key Design Patterns
@@ -163,14 +157,12 @@ MCP servers are implemented in Python (`mcp-servers/`):
 ### Environment Configuration
 
 Required environment variables:
-
 ```
 DATABASE_URL=postgresql://username:password@localhost/ai_workflow_db
 JWT_SECRET=your-secure-jwt-secret-key
 ```
 
 Optional AI provider keys:
-
 ```
 OPENAI_API_KEY=your_key
 ANTHROPIC_API_KEY=your_key
