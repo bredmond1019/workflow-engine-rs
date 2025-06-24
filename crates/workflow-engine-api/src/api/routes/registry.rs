@@ -129,8 +129,8 @@ mod tests {
         let registration = AgentRegistration {
             name: "test-agent".to_string(),
             endpoint: "http://localhost:8000".to_string(),
-            capabilities: serde_json::json!({"type": "test"}),
-            metadata: None,
+            capabilities: vec!["test".to_string()],
+            metadata: serde_json::json!({}),
         };
 
         let req = test::TestRequest::post()

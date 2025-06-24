@@ -478,7 +478,8 @@ pub struct ServiceStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
+    use crate::testing::mocks::MockAgentRegistry;
+    use workflow_engine_core::registry::Agent;
     
     #[tokio::test]
     async fn test_service_registration() {

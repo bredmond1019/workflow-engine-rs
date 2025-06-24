@@ -53,6 +53,10 @@ pub mod workflows;
 pub mod monitoring;
 pub mod integrations;
 
+// Testing utilities
+#[cfg(test)]
+pub mod testing;
+
 // Re-export commonly used types
 // Note: ApiServer and ApiConfig exports disabled - use Actix web components directly
 // Note: ServiceContainer export disabled - not yet implemented

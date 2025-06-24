@@ -236,15 +236,15 @@ mod tests {
         assert_eq!(body["role"], "developer");
     }
 
-    #[test]
-    fn test_new_with_valid_secret() {
+    #[tokio::test]
+    async fn test_new_with_valid_secret() {
         let middleware = JwtMiddleware::new("valid_secret".to_string());
         assert_eq!(middleware.secret, "valid_secret");
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "JWT secret cannot be empty")]
-    fn test_new_with_empty_secret_panics() {
+    async fn test_new_with_empty_secret_panics() {
         JwtMiddleware::new("".to_string());
     }
 }
