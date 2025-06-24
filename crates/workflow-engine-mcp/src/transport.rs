@@ -500,7 +500,6 @@ impl Default for TransportMetrics {
 mod tests {
     use super::*;
     use serde_json::json;
-    use tokio::test;
     use std::time::Duration;
 
     // Task 5.2.1: Create tests for HTTP transport in `src/core/mcp/transport.rs`

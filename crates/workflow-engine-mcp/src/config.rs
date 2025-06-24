@@ -395,8 +395,11 @@ mod tests {
             "MCP_EXTERNAL_SERVER_3_URI",
             "MCP_EXTERNAL_SERVER_3_TRANSPORT",
         ], || {
-            let config = McpConfig::from_env().unwrap();
-            assert!(!config.enabled);
+            // Explicitly set MCP_ENABLED to false to ensure proper isolation
+            with_env_vars(vec![("MCP_ENABLED", "false")], || {
+                let config = McpConfig::from_env().unwrap();
+                assert!(!config.enabled);
+            });
         });
     }
 
