@@ -56,9 +56,11 @@ impl McpConnection {
 
         match rx.await {
             Ok(response) => Ok(response),
-            Err(_) => Err(WorkflowError::MCPError {
-                message: "Request timeout or connection closed".to_string(),
-            }),
+            Err(_) => Err(WorkflowError::mcp_error(
+                "Request timeout or connection closed",
+                "connection_client",
+                "send_request"
+            )),
         }
     }
 

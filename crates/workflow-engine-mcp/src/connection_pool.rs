@@ -12,7 +12,7 @@ use crate::clients::{McpClient, stdio::StdioMcpClient, websocket::WebSocketMcpCl
 use crate::transport::TransportType;
 use crate::health::{ConnectionHealthMonitor, HealthConfig, HealthStatus, HealthSummary};
 use crate::load_balancer::{McpLoadBalancer, ConnectionInfo};
-use crate::metrics::{McpMetricsCollector, McpMetricsManager};
+use crate::metrics::{MCPMetricsCollector, MCPMetricsManager};
 
 /// A borrowed connection that automatically returns to the pool when dropped
 pub struct BorrowedConnection {
@@ -265,7 +265,7 @@ pub struct McpConnectionPool {
     circuit_breakers: Arc<CircuitBreakerRegistry>,
     health_monitor: Arc<ConnectionHealthMonitor>,
     load_balancer: Arc<RwLock<McpLoadBalancer>>,
-    metrics_collector: Option<Arc<McpMetricsCollector>>,
+    metrics_collector: Option<Arc<MCPMetricsCollector>>,
     background_tasks: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
 }
 
@@ -288,7 +288,7 @@ impl McpConnectionPool {
     }
 
     /// Set metrics collector for monitoring
-    pub fn set_metrics_collector(&mut self, collector: Arc<McpMetricsCollector>) {
+    pub fn set_metrics_collector(&mut self, collector: Arc<MCPMetricsCollector>) {
         self.metrics_collector = Some(collector);
     }
 
@@ -421,9 +421,11 @@ impl McpConnectionPool {
         let configs = self.server_configs.read().await;
         let (transport, client_name, client_version) = configs
             .get(server_id)
-            .ok_or_else(|| WorkflowError::MCPError {
-                message: format!("Server {} not registered", server_id),
-            })?
+            .ok_or_else(|| WorkflowError::mcp_error(
+                format!("Server {} not registered", server_id),
+                server_id,
+                "get_connection"
+            ))?
             .clone();
         drop(configs);
 
@@ -473,9 +475,9 @@ impl McpConnectionPool {
         }
 
         Err(
-            last_error.unwrap_or_else(|| WorkflowError::MCPConnectionError {
-                message: "Failed to create connection after retries".to_string(),
-            }),
+            last_error.unwrap_or_else(|| WorkflowError::mcp_connection_error_simple(
+                "Failed to create connection after retries"
+            )),
         )
     }
 
@@ -491,18 +493,20 @@ impl McpConnectionPool {
             }
             TransportType::WebSocket { url, .. } => Box::new(WebSocketMcpClient::new(url.clone())),
             TransportType::Http { .. } => {
-                return Err(WorkflowError::MCPError {
-                    message: "HTTP transport not yet supported for connection pooling".to_string(),
-                });
+                return Err(WorkflowError::mcp_error(
+                    "HTTP transport not yet supported for connection pooling",
+                    "unknown",
+                    "create_connection"
+                ));
             }
         };
 
         // Connect with timeout
         timeout(self.config.connection_timeout, client.connect())
             .await
-            .map_err(|_| WorkflowError::MCPConnectionError {
-                message: "Connection timeout".to_string(),
-            })??;
+            .map_err(|_| WorkflowError::mcp_connection_error_simple(
+                "Connection timeout"
+            ))??;
 
         // Initialize with timeout
         timeout(
@@ -510,9 +514,9 @@ impl McpConnectionPool {
             client.initialize(client_name, client_version),
         )
         .await
-        .map_err(|_| WorkflowError::MCPConnectionError {
-            message: "Initialization timeout".to_string(),
-        })??;
+        .map_err(|_| WorkflowError::mcp_connection_error_simple(
+            "Initialization timeout"
+        ))??;
 
         Ok(client)
     }
@@ -602,9 +606,11 @@ impl McpConnectionPool {
             }
         }
         
-        Err(WorkflowError::MCPError {
-            message: "Failed to create borrowed connection".to_string(),
-        })
+        Err(WorkflowError::mcp_error(
+            "Failed to create borrowed connection",
+            "unknown",
+            "borrow_connection"
+        ))
     }
     
     /// Get transport type for a server
@@ -612,9 +618,11 @@ impl McpConnectionPool {
         let configs = self.server_configs.read().await;
         let (transport, _, _) = configs
             .get(server_id)
-            .ok_or_else(|| WorkflowError::MCPError {
-                message: format!("Server {} not registered", server_id),
-            })?
+            .ok_or_else(|| WorkflowError::mcp_error(
+                format!("Server {} not registered", server_id),
+                server_id,
+                "get_transport"
+            ))?
             .clone();
         Ok(transport)
     }
@@ -624,9 +632,11 @@ impl McpConnectionPool {
         let configs = self.server_configs.read().await;
         let (transport, client_name, client_version) = configs
             .get(server_id)
-            .ok_or_else(|| WorkflowError::MCPError {
-                message: format!("Server {} not registered", server_id),
-            })?
+            .ok_or_else(|| WorkflowError::mcp_error(
+                format!("Server {} not registered", server_id),
+                server_id,
+                "create_connection"
+            ))?
             .clone();
         drop(configs);
         

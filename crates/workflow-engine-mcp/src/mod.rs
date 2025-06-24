@@ -398,9 +398,9 @@ pub mod protocol;
 pub mod server;
 pub mod transport;
 
-pub use clients::{HttpMCPClient, MCPClient, MCPConnection, StdioMCPClient, WebSocketMcpClient};
+pub use clients::{HttpMcpClient, McpClient, McpConnection, StdioMcpClient, WebSocketMcpClient};
 pub use config::{McpConfig, McpServerConfig};
-pub use connection_pool::{BorrowedConnection, ConnectionConfig, MCPConnectionPool, PoolStats, DetailedHealthInfo, ServerHealthInfo, LoadBalancingStrategy, BackoffConfig};
+pub use connection_pool::{BorrowedConnection, ConnectionConfig, McpConnectionPool, PoolStats, DetailedHealthInfo, ServerHealthInfo, LoadBalancingStrategy, BackoffConfig};
 pub use health::{ConnectionHealthMonitor, HealthConfig, HealthStatus, HealthMetrics};
 pub use load_balancer::{MCPLoadBalancer, AdvancedMCPLoadBalancer, ConnectionInfo, LoadBalancingMetrics};
 pub use metrics::{MCPMetricsCollector, MCPMetricsManager};

@@ -1114,6 +1114,99 @@ impl WorkflowError {
             source: None,
         }
     }
+
+    /// Create a general MCP error with minimal information
+    pub fn mcp_error_simple(message: impl Into<String>) -> Self {
+        Self::MCPError {
+            message: message.into(),
+            server_name: "unknown".to_string(),
+            operation: "unknown".to_string(),
+            source: None,
+        }
+    }
+
+    /// Create a general MCP error with full context
+    pub fn mcp_error(
+        message: impl Into<String>,
+        server_name: impl Into<String>,
+        operation: impl Into<String>,
+    ) -> Self {
+        Self::MCPError {
+            message: message.into(),
+            server_name: server_name.into(),
+            operation: operation.into(),
+            source: None,
+        }
+    }
+
+    /// Create an MCP connection error with minimal information
+    pub fn mcp_connection_error_simple(message: impl Into<String>) -> Self {
+        Self::MCPConnectionError {
+            message: message.into(),
+            server_name: "unknown".to_string(),
+            transport_type: "unknown".to_string(),
+            endpoint: "unknown".to_string(),
+            retry_count: 0,
+            source: None,
+        }
+    }
+
+    /// Create an MCP connection error with retry count
+    pub fn mcp_connection_error_with_retry(
+        message: impl Into<String>,
+        server_name: impl Into<String>,
+        transport_type: impl Into<String>,
+        endpoint: impl Into<String>,
+        retry_count: u32,
+    ) -> Self {
+        Self::MCPConnectionError {
+            message: message.into(),
+            server_name: server_name.into(),
+            transport_type: transport_type.into(),
+            endpoint: endpoint.into(),
+            retry_count,
+            source: None,
+        }
+    }
+
+    /// Create an MCP transport error with minimal information
+    pub fn mcp_transport_error_simple(message: impl Into<String>) -> Self {
+        Self::MCPTransportError {
+            message: message.into(),
+            server_name: "unknown".to_string(),
+            transport_type: "unknown".to_string(),
+            operation: "unknown".to_string(),
+            source: None,
+        }
+    }
+
+    /// Create an MCP transport error with full context
+    pub fn mcp_transport_error(
+        message: impl Into<String>,
+        server_name: impl Into<String>,
+        transport_type: impl Into<String>,
+        operation: impl Into<String>,
+    ) -> Self {
+        Self::MCPTransportError {
+            message: message.into(),
+            server_name: server_name.into(),
+            transport_type: transport_type.into(),
+            operation: operation.into(),
+            source: None,
+        }
+    }
+
+    /// Create an MCP protocol error with minimal information
+    pub fn mcp_protocol_error_simple(message: impl Into<String>) -> Self {
+        Self::MCPProtocolError {
+            message: message.into(),
+            server_name: "unknown".to_string(),
+            expected: "valid_protocol".to_string(),
+            received: "invalid_data".to_string(),
+            message_type: "unknown".to_string(),
+            source: None,
+        }
+    }
 }
 
 impl super::ErrorExt for WorkflowError {

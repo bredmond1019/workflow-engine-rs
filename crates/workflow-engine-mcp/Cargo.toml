@@ -36,6 +36,9 @@ futures-util = { workspace = true }
 # WebSocket support (optional)
 tokio-tungstenite = { workspace = true, optional = true }
 
+# Error handling
+thiserror = { workspace = true }
+
 # Utility libraries
 rand = { workspace = true }
 log = { workspace = true }

@@ -12,8 +12,8 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use workflow_engine_core::error::WorkflowError;
-use crate::clients::MCPClient;
-use crate::protocol::{MCPRequest, MCPResponse};
+use crate::clients::McpClient;
+use crate::protocol::{McpRequest, McpResponse};
 
 /// Health status of an MCP connection
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -175,7 +175,7 @@ impl ConnectionHealthMonitor {
     pub async fn check_connection_health(
         &self,
         connection_id: &str,
-        client: &mut Box<dyn MCPClient>,
+        client: &mut Box<dyn McpClient>,
     ) -> Result<HealthStatus, WorkflowError> {
         let start_time = Instant::now();
         
@@ -227,21 +227,23 @@ impl ConnectionHealthMonitor {
                 }
             }
         } else {
-            Err(WorkflowError::MCPError {
-                message: format!("Connection {} not being monitored", connection_id),
-            })
+            Err(WorkflowError::mcp_error(
+                format!("Connection {} not being monitored", connection_id),
+                "health_monitor",
+                "check_connection_health"
+            ))
         }
     }
 
     /// Perform the actual health check operation
     async fn perform_health_check(
         &self,
-        client: &mut Box<dyn MCPClient>,
+        client: &mut Box<dyn McpClient>,
     ) -> Result<(), WorkflowError> {
         if !client.is_connected() {
-            return Err(WorkflowError::MCPConnectionError {
-                message: "Client not connected".to_string(),
-            });
+            return Err(WorkflowError::mcp_connection_error_simple(
+                "Client not connected"
+            ));
         }
 
         // Try to list tools as a health check
@@ -251,7 +253,7 @@ impl ConnectionHealthMonitor {
     /// Send keep-alive ping to a connection
     pub async fn send_keep_alive(
         &self,
-        client: &mut Box<dyn MCPClient>,
+        client: &mut Box<dyn McpClient>,
     ) -> Result<(), WorkflowError> {
         if !self.config.enable_keep_alive {
             return Ok(());

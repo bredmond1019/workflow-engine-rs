@@ -66,17 +66,22 @@ impl HttpMcpClient {
     /// Send a request and get response using HTTP transport
     async fn send_http_request(&self, request: McpRequest) -> Result<McpResponse, WorkflowError> {
         self.transport.send_request(request).await
-            .map_err(|e| WorkflowError::MCPTransportError {
-                message: format!("HTTP request failed: {}", e),
-            })
+            .map_err(|e| WorkflowError::mcp_transport_error(
+                format!("HTTP request failed: {:?}", e),
+                "http_client",
+                "HTTP",
+                "send_request"
+            ))
     }
 
     /// Check if client is properly initialized
     fn ensure_initialized(&self) -> Result<(), WorkflowError> {
         if !self.is_initialized {
-            return Err(WorkflowError::MCPError {
-                message: "Client not initialized. Call initialize() first.".to_string(),
-            });
+            return Err(WorkflowError::mcp_error(
+                "Client not initialized. Call initialize() first.",
+                "http_client",
+                "ensure_initialized"
+            ));
         }
         Ok(())
     }
@@ -130,12 +135,18 @@ impl McpClient for HttpMcpClient {
                 log::info!("HTTP MCP Client initialized successfully");
                 Ok(())
             }
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("Initialize failed: {}", error.message),
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: "Unexpected response to initialize".to_string(),
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                format!("Initialize failed: {}", error.message),
+                "http_client",
+                "initialize"
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                "Unexpected response to initialize",
+                "http_client",
+                "initialize_response",
+                "unexpected_type",
+                "initialize"
+            )),
         }
     }
 

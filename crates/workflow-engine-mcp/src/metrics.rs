@@ -9,7 +9,7 @@ use prometheus::{Counter, Gauge, Histogram, IntCounter, IntGauge, Registry, Opts
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
 
-use crate::connection_pool::{MCPConnectionPool, DetailedHealthInfo};
+use crate::connection_pool::{McpConnectionPool, DetailedHealthInfo};
 use crate::health::HealthStatus;
 use workflow_engine_core::error::circuit_breaker::CircuitState;
 use workflow_engine_core::error::WorkflowError;
@@ -364,7 +364,7 @@ impl MCPMetricsCollector {
 /// MCP metrics manager that automatically collects metrics from connection pools
 pub struct MCPMetricsManager {
     collector: Arc<MCPMetricsCollector>,
-    pools: Arc<RwLock<HashMap<String, Arc<MCPConnectionPool>>>>,
+    pools: Arc<RwLock<HashMap<String, Arc<McpConnectionPool>>>>,
     collection_interval: Duration,
     running: Arc<RwLock<bool>>,
 }
@@ -380,7 +380,7 @@ impl MCPMetricsManager {
     }
     
     /// Register a connection pool for metrics collection
-    pub async fn register_pool(&self, pool_id: String, pool: Arc<MCPConnectionPool>) {
+    pub async fn register_pool(&self, pool_id: String, pool: Arc<McpConnectionPool>) {
         let mut pools = self.pools.write().await;
         pools.insert(pool_id, pool);
     }
@@ -399,7 +399,7 @@ impl MCPMetricsManager {
         }
         
         let collector = Arc::clone(&self.collector);
-        let pools = Arc::clone(&self.pools);
+        let pools: Arc<RwLock<HashMap<String, Arc<McpConnectionPool>>>> = Arc::clone(&self.pools);
         let running = Arc::clone(&self.running);
         let interval_duration = self.collection_interval;
         

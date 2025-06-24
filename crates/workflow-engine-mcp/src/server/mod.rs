@@ -203,9 +203,13 @@ impl McpToolServer {
             }
             McpRequest::Initialized => {
                 // Notification - no response needed
-                Err(WorkflowError::MCPProtocolError {
-                    message: "Initialized notification should not expect a response".to_string(),
-                })
+                Err(WorkflowError::mcp_protocol_error(
+                    "Initialized notification should not expect a response",
+                    "mcp_server",
+                    "notification",
+                    "response_request",
+                    "initialized"
+                ))
             }
         }
     }

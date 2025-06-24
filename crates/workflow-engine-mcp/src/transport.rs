@@ -422,7 +422,7 @@ impl From<TransportError> for workflow_engine_core::error::WorkflowError {
                 workflow_engine_core::error::WorkflowError::MCPTransportError {
                     message: format!("I/O error during {}: {}", operation, message),
                     server_name: "unknown".to_string(),
-                    transport_type: "unknown".to_string(),
+                    transport_type: "stdio".to_string(),
                     operation,
                     source: Some(Box::new(err)),
                 }
@@ -1053,9 +1053,12 @@ impl StdioTransport {
     
     async fn attempt_restart(&mut self) -> Result<(), TransportError> {
         if !self.auto_restart || self.restart_count >= self.max_restarts {
-            return Err(TransportError::ConnectionError(
-                "Process restart limit reached".to_string()
-            ));
+            return Err(TransportError::ConnectionError {
+                message: "Process restart limit reached".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: self.restart_count,
+            });
         }
         
         log::warn!(
@@ -1089,9 +1092,19 @@ impl McpTransport for StdioTransport {
                 .spawn()?;
 
             let stdout = child.stdout.take()
-                .ok_or_else(|| TransportError::ConnectionError("Failed to get stdout".to_string()))?;
+                .ok_or_else(|| TransportError::ConnectionError {
+                    message: "Failed to get stdout".to_string(),
+                    endpoint: "stdio".to_string(),
+                    transport_type: "stdio".to_string(),
+                    retry_count: 0,
+                })?;
             let stdin = child.stdin.take()
-                .ok_or_else(|| TransportError::ConnectionError("Failed to get stdin".to_string()))?;
+                .ok_or_else(|| TransportError::ConnectionError {
+                    message: "Failed to get stdin".to_string(),
+                    endpoint: "stdio".to_string(),
+                    transport_type: "stdio".to_string(),
+                    retry_count: 0,
+                })?;
 
             self.reader = Some(BufReader::new(stdout));
             self.writer = Some(stdin);
@@ -1118,7 +1131,12 @@ impl McpTransport for StdioTransport {
 
     async fn send(&mut self, message: McpRequest) -> Result<(), TransportError> {
         let writer = self.writer.as_mut()
-            .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
+            .ok_or_else(|| TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            })?;
 
         let json = serde_json::to_string(&message)?;
         let data = format!("{}\n", json);
@@ -1134,13 +1152,23 @@ impl McpTransport for StdioTransport {
 
     async fn receive(&mut self) -> Result<McpResponse, TransportError> {
         let reader = self.reader.as_mut()
-            .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
+            .ok_or_else(|| TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            })?;
 
         let mut line = String::new();
         reader.read_line(&mut line).await?;
 
         if line.is_empty() {
-            return Err(TransportError::ConnectionError("Connection closed".to_string()));
+            return Err(TransportError::ConnectionError {
+                message: "Connection closed".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            });
         }
 
         let response: McpResponse = serde_json::from_str(&line)?;
@@ -1182,7 +1210,12 @@ impl McpTransport for StdioTransport {
     async fn ping(&mut self) -> Result<Duration, TransportError> {
         // Stdio transport doesn't support ping, return a synthetic response
         if !self.is_connected() {
-            return Err(TransportError::ConnectionError("Not connected".to_string()));
+            return Err(TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "unknown".to_string(),
+                transport_type: "unknown".to_string(),
+                retry_count: 0,
+            });
         }
         Ok(Duration::from_millis(0))
     }
@@ -1238,9 +1271,12 @@ impl WebSocketTransport {
     
     async fn attempt_reconnect(&mut self) -> Result<(), TransportError> {
         if !self.reconnect_config.enabled || self.reconnect_attempts >= self.reconnect_config.max_attempts {
-            return Err(TransportError::ConnectionError(
-                "Reconnection limit reached".to_string()
-            ));
+            return Err(TransportError::ConnectionError {
+                message: "Reconnection limit reached".to_string(),
+                endpoint: self.url.clone(),
+                transport_type: "WebSocket".to_string(),
+                retry_count: self.reconnect_attempts,
+            });
         }
         
         log::warn!(
@@ -1290,7 +1326,12 @@ impl McpTransport for WebSocketTransport {
 
     async fn send(&mut self, message: McpRequest) -> Result<(), TransportError> {
         let stream = self.stream.as_mut()
-            .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
+            .ok_or_else(|| TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            })?;
 
         let json = serde_json::to_string(&message)?;
         stream.send(Message::Text(json.clone())).await?;
@@ -1303,7 +1344,12 @@ impl McpTransport for WebSocketTransport {
 
     async fn receive(&mut self) -> Result<McpResponse, TransportError> {
         let stream = self.stream.as_mut()
-            .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
+            .ok_or_else(|| TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            })?;
 
         if let Some(msg) = stream.next().await {
             let msg = msg?;
@@ -1372,7 +1418,12 @@ impl McpTransport for WebSocketTransport {
     
     async fn ping(&mut self) -> Result<Duration, TransportError> {
         let stream = self.stream.as_mut()
-            .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
+            .ok_or_else(|| TransportError::ConnectionError {
+                message: "Not connected".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            })?;
             
         let start = Instant::now();
         stream.send(Message::Ping(vec![])).await?;
@@ -1389,7 +1440,12 @@ impl McpTransport for WebSocketTransport {
                         continue;
                     }
                     Message::Close(_) => {
-                        return Err(TransportError::ConnectionError("Connection closed".to_string()));
+                        return Err(TransportError::ConnectionError {
+                message: "Connection closed".to_string(),
+                endpoint: "stdio".to_string(),
+                transport_type: "stdio".to_string(),
+                retry_count: 0,
+            });
                     }
                     _ => continue,
                 }
@@ -1461,9 +1517,13 @@ impl HttpTransport {
         let response = request_builder.send().await?;
 
         if !response.status().is_success() {
-            return Err(TransportError::ConnectionError(
-                format!("HTTP error: {}", response.status())
-            ));
+            return Err(TransportError::HttpError {
+                message: format!("HTTP error: {}", response.status()),
+                endpoint: self.base_url.clone(),
+                status_code: Some(response.status().as_u16()),
+                operation: "send_request".to_string(),
+                source: None,
+            });
         }
 
         let mcp_response: McpResponse = response.json().await?;
@@ -1491,9 +1551,13 @@ impl McpTransport for HttpTransport {
         let response = request_builder.send().await?;
 
         if !response.status().is_success() {
-            return Err(TransportError::ConnectionError(
-                format!("HTTP error: {}", response.status())
-            ));
+            return Err(TransportError::HttpError {
+                message: format!("HTTP error: {}", response.status()),
+                endpoint: self.base_url.clone(),
+                status_code: Some(response.status().as_u16()),
+                operation: "send_request".to_string(),
+                source: None,
+            });
         }
 
         Ok(())
