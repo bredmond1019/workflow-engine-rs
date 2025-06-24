@@ -8,17 +8,17 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use workflow_engine_core::error::{WorkflowError, circuit_breaker::{CircuitBreaker, CircuitBreakerConfig, CircuitBreakerRegistry, CircuitState}};
-use crate::clients::{MCPClient, stdio::StdioMCPClient, websocket::WebSocketMCPClient};
+use crate::clients::{McpClient, stdio::StdioMcpClient, websocket::WebSocketMcpClient};
 use crate::transport::TransportType;
 use crate::health::{ConnectionHealthMonitor, HealthConfig, HealthStatus, HealthSummary};
-use crate::load_balancer::{MCPLoadBalancer, ConnectionInfo};
-use crate::metrics::{MCPMetricsCollector, MCPMetricsManager};
+use crate::load_balancer::{McpLoadBalancer, ConnectionInfo};
+use crate::metrics::{McpMetricsCollector, McpMetricsManager};
 
 /// A borrowed connection that automatically returns to the pool when dropped
 pub struct BorrowedConnection {
-    client: Arc<RwLock<Box<dyn MCPClient>>>,
+    client: Arc<RwLock<Box<dyn McpClient>>>,
     connection_id: String,
-    pool: Arc<MCPConnectionPool>,
+    pool: Arc<McpConnectionPool>,
     server_id: String,
 }
 
@@ -32,7 +32,7 @@ impl BorrowedConnection {
         &self,
         name: &str,
         args: serde_json::Value,
-    ) -> Result<crate::protocol::MCPResponse, WorkflowError> {
+    ) -> Result<crate::protocol::McpResponse, WorkflowError> {
         let mut client = self.client.write().await;
         
         // Convert args to expected format
@@ -46,8 +46,8 @@ impl BorrowedConnection {
         
         let result = client.call_tool(name, args_map).await?;
         
-        // Convert CallToolResult to MCPResponse
-        Ok(crate::protocol::MCPResponse::Result {
+        // Convert CallToolResult to McpResponse
+        Ok(crate::protocol::McpResponse::Result {
             id: uuid::Uuid::new_v4().to_string(),
             result: crate::protocol::ResponseResult::CallTool(result),
         })
@@ -181,7 +181,7 @@ impl Default for ConnectionConfig {
 
 #[derive(Debug)]
 pub struct PooledConnection {
-    client: Arc<RwLock<Box<dyn MCPClient>>>,
+    client: Arc<RwLock<Box<dyn McpClient>>>,
     last_used: Arc<RwLock<Instant>>,
     is_healthy: Arc<RwLock<bool>>,
     connection_id: String,
@@ -192,7 +192,7 @@ pub struct PooledConnection {
 }
 
 impl PooledConnection {
-    fn new(client: Box<dyn MCPClient>, connection_id: String, transport_type: TransportType) -> Self {
+    fn new(client: Box<dyn McpClient>, connection_id: String, transport_type: TransportType) -> Self {
         let now = Instant::now();
         Self {
             client: Arc::new(RwLock::new(client)),
@@ -258,22 +258,22 @@ impl PooledConnection {
 }
 
 #[derive(Clone)]
-pub struct MCPConnectionPool {
+pub struct McpConnectionPool {
     connections: Arc<RwLock<HashMap<String, Vec<PooledConnection>>>>,
     config: ConnectionConfig,
     server_configs: Arc<RwLock<HashMap<String, (TransportType, String, String)>>>, // server_id -> (transport, client_name, client_version)
     circuit_breakers: Arc<CircuitBreakerRegistry>,
     health_monitor: Arc<ConnectionHealthMonitor>,
-    load_balancer: Arc<RwLock<MCPLoadBalancer>>,
-    metrics_collector: Option<Arc<MCPMetricsCollector>>,
+    load_balancer: Arc<RwLock<McpLoadBalancer>>,
+    metrics_collector: Option<Arc<McpMetricsCollector>>,
     background_tasks: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
 }
 
-impl MCPConnectionPool {
+impl McpConnectionPool {
     pub fn new(config: ConnectionConfig) -> Self {
         let circuit_breaker_registry = Arc::new(CircuitBreakerRegistry::new(config.circuit_breaker.clone()));
         let health_monitor = Arc::new(ConnectionHealthMonitor::new(config.health_monitoring.clone()));
-        let load_balancer = Arc::new(RwLock::new(MCPLoadBalancer::new(config.load_balancing_strategy)));
+        let load_balancer = Arc::new(RwLock::new(McpLoadBalancer::new(config.load_balancing_strategy)));
         
         Self {
             connections: Arc::new(RwLock::new(HashMap::new())),
@@ -288,7 +288,7 @@ impl MCPConnectionPool {
     }
 
     /// Set metrics collector for monitoring
-    pub fn set_metrics_collector(&mut self, collector: Arc<MCPMetricsCollector>) {
+    pub fn set_metrics_collector(&mut self, collector: Arc<McpMetricsCollector>) {
         self.metrics_collector = Some(collector);
     }
 
@@ -484,12 +484,12 @@ impl MCPConnectionPool {
         transport: &TransportType,
         client_name: &str,
         client_version: &str,
-    ) -> Result<Box<dyn MCPClient>, WorkflowError> {
-        let mut client: Box<dyn MCPClient> = match transport {
+    ) -> Result<Box<dyn McpClient>, WorkflowError> {
+        let mut client: Box<dyn McpClient> = match transport {
             TransportType::Stdio { command, args, .. } => {
-                Box::new(StdioMCPClient::new(command.clone(), args.clone()))
+                Box::new(StdioMcpClient::new(command.clone(), args.clone()))
             }
-            TransportType::WebSocket { url, .. } => Box::new(WebSocketMCPClient::new(url.clone())),
+            TransportType::WebSocket { url, .. } => Box::new(WebSocketMcpClient::new(url.clone())),
             TransportType::Http { .. } => {
                 return Err(WorkflowError::MCPError {
                     message: "HTTP transport not yet supported for connection pooling".to_string(),
@@ -520,7 +520,7 @@ impl MCPConnectionPool {
     async fn add_to_pool(
         &self,
         server_id: &str,
-        client: Box<dyn MCPClient>,
+        client: Box<dyn McpClient>,
         transport_type: &TransportType,
     ) -> Result<String, WorkflowError> {
         let mut connections = self.connections.write().await;
@@ -580,7 +580,7 @@ impl MCPConnectionPool {
     async fn create_borrowed_connection(
         &self,
         server_id: &str,
-        client: Box<dyn MCPClient>,
+        client: Box<dyn McpClient>,
     ) -> Result<BorrowedConnection, WorkflowError> {
         // Create a new connection for the pool
         let pool_client = self.create_single_connection_from_server(server_id).await?;
@@ -620,7 +620,7 @@ impl MCPConnectionPool {
     }
     
     /// Create a single connection for a registered server
-    async fn create_single_connection_from_server(&self, server_id: &str) -> Result<Box<dyn MCPClient>, WorkflowError> {
+    async fn create_single_connection_from_server(&self, server_id: &str) -> Result<Box<dyn McpClient>, WorkflowError> {
         let configs = self.server_configs.read().await;
         let (transport, client_name, client_version) = configs
             .get(server_id)
@@ -1096,7 +1096,7 @@ mod tests {
     #[tokio::test]
     async fn test_connection_pool_creation() {
         let config = ConnectionConfig::default();
-        let pool = MCPConnectionPool::new(config);
+        let pool = McpConnectionPool::new(config);
 
         let stats = pool.get_pool_stats().await;
         assert!(stats.is_empty());
@@ -1104,7 +1104,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_server_registration() {
-        let pool = MCPConnectionPool::new(ConnectionConfig::default());
+        let pool = McpConnectionPool::new(ConnectionConfig::default());
 
         pool.register_server(
             "test-server".to_string(),
@@ -1125,7 +1125,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_pool_stats() {
-        let pool = MCPConnectionPool::new(ConnectionConfig::default());
+        let pool = McpConnectionPool::new(ConnectionConfig::default());
 
         pool.register_server(
             "test-server".to_string(),
@@ -1145,7 +1145,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cleanup_expired_connections() {
-        let pool = MCPConnectionPool::new(ConnectionConfig::default());
+        let pool = McpConnectionPool::new(ConnectionConfig::default());
 
         let cleaned = pool.cleanup_expired_connections().await.unwrap();
         assert_eq!(cleaned, 0); // No connections to clean

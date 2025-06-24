@@ -14,7 +14,7 @@ use crate::connection_pool::{PoolStats, LoadBalancingStrategy};
 use crate::health::HealthStatus;
 
 /// Load balancer for MCP connections
-pub struct MCPLoadBalancer {
+pub struct McpLoadBalancer {
     strategy: LoadBalancingStrategy,
     round_robin_counters: Arc<RwLock<HashMap<String, usize>>>,
     server_weights: Arc<RwLock<HashMap<String, f64>>>,
@@ -40,7 +40,7 @@ pub struct LoadBalancingMetrics {
     pub load_distribution: HashMap<String, f64>,
 }
 
-impl MCPLoadBalancer {
+impl McpLoadBalancer {
     pub fn new(strategy: LoadBalancingStrategy) -> Self {
         Self {
             strategy,
@@ -233,17 +233,17 @@ impl MCPLoadBalancer {
 }
 
 /// Advanced load balancer with support for multiple servers and connection types
-pub struct AdvancedMCPLoadBalancer {
-    balancer: MCPLoadBalancer,
+pub struct AdvancedMcpLoadBalancer {
+    balancer: McpLoadBalancer,
     server_priorities: Arc<RwLock<HashMap<String, i32>>>,
     connection_affinities: Arc<RwLock<HashMap<String, String>>>, // client_id -> preferred_server_id
     metrics: Arc<RwLock<LoadBalancingMetrics>>,
 }
 
-impl AdvancedMCPLoadBalancer {
+impl AdvancedMcpLoadBalancer {
     pub fn new(strategy: LoadBalancingStrategy) -> Self {
         Self {
-            balancer: MCPLoadBalancer::new(strategy),
+            balancer: McpLoadBalancer::new(strategy),
             server_priorities: Arc::new(RwLock::new(HashMap::new())),
             connection_affinities: Arc::new(RwLock::new(HashMap::new())),
             metrics: Arc::new(RwLock::new(LoadBalancingMetrics {
@@ -380,7 +380,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_round_robin_selection() {
-        let balancer = MCPLoadBalancer::new(LoadBalancingStrategy::RoundRobin);
+        let balancer = McpLoadBalancer::new(LoadBalancingStrategy::RoundRobin);
         
         let connections = vec![
             create_test_connection("conn1", "server1", HealthStatus::Healthy, 0, None),
@@ -402,7 +402,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_least_connections_selection() {
-        let balancer = MCPLoadBalancer::new(LoadBalancingStrategy::LeastConnections);
+        let balancer = McpLoadBalancer::new(LoadBalancingStrategy::LeastConnections);
         
         let connections = vec![
             create_test_connection("conn1", "server1", HealthStatus::Healthy, 5, None),
@@ -416,7 +416,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_health_based_selection() {
-        let balancer = MCPLoadBalancer::new(LoadBalancingStrategy::HealthBased);
+        let balancer = McpLoadBalancer::new(LoadBalancingStrategy::HealthBased);
         
         let connections = vec![
             create_test_connection("conn1", "server1", HealthStatus::Degraded, 0, Some(Duration::from_millis(200))),
@@ -441,7 +441,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_no_available_connections() {
-        let balancer = MCPLoadBalancer::new(LoadBalancingStrategy::RoundRobin);
+        let balancer = McpLoadBalancer::new(LoadBalancingStrategy::RoundRobin);
         
         let connections = vec![
             create_test_connection("conn1", "server1", HealthStatus::Disconnected, 0, None),
@@ -453,7 +453,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_advanced_load_balancer() {
-        let balancer = AdvancedMCPLoadBalancer::new(LoadBalancingStrategy::HealthBased);
+        let balancer = AdvancedMcpLoadBalancer::new(LoadBalancingStrategy::HealthBased);
         
         // Set server priority
         balancer.set_server_priority("server1".to_string(), 10).await;

@@ -6,7 +6,7 @@ use workflow_engine_core::nodes::agent::{AgentConfig, ModelProvider};
 use std::sync::Arc;
 use std::any::TypeId;
 
-use super::{super::server::CustomerSupportMCPServer, CustomerCareEventData};
+use super::{super::server::CustomerSupportMcpServer, CustomerCareEventData};
 
 /// Analyze a customer support ticket
 #[derive(Debug)]
@@ -173,7 +173,7 @@ impl Node for AnalyzeTicketNode {
 }
 
 /// Register this node as a tool in the MCP server
-pub fn register_analyze_ticket_tool(server: &CustomerSupportMCPServer) -> Result<(), WorkflowError> {
+pub fn register_analyze_ticket_tool(server: &CustomerSupportMcpServer) -> Result<(), WorkflowError> {
     let node = Arc::new(AnalyzeTicketNode::new());
     let metadata = node.as_tool_metadata();
     

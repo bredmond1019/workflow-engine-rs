@@ -506,8 +506,8 @@
 use workflow_engine_core::{error::WorkflowError, workflow::Workflow};
 use crate::workflows::event_integration::{WorkflowEventExt, TaskContextEventExt, WorkflowMcpExt};
 use workflow_engine_mcp::{
-    config::MCPConfig,
-    connection_pool::{ConnectionConfig, MCPConnectionPool},
+    config::McpConfig,
+    connection_pool::{ConnectionConfig, McpConnectionPool},
     transport::{TransportType, ReconnectConfig},
 };
 use crate::workflows::{knowledge_base_workflow::create_knowledge_base_workflow, demos::timing::*};
@@ -668,9 +668,9 @@ pub async fn knowledge_base_mcp_demo() {
 
             println!("📋 Loading Knowledge Base MCP configuration...");
             sleep(CONFIGURATION_PAUSE).await;
-            let mcp_config = MCPConfig::from_env().unwrap_or_else(|_| {
+            let mcp_config = McpConfig::from_env().unwrap_or_else(|_| {
                 println!("   Using default MCP configuration for knowledge base");
-                MCPConfig::default()
+                McpConfig::default()
             });
 
             println!("   🔍 Knowledge Base MCP Enabled: {}", mcp_config.enabled);
@@ -708,7 +708,7 @@ pub async fn knowledge_base_mcp_demo() {
                 ..ConnectionConfig::default()
             };
 
-            let kb_connection_pool = MCPConnectionPool::new(kb_pool_config);
+            let kb_connection_pool = McpConnectionPool::new(kb_pool_config);
 
             // Register knowledge base servers
             let kb_servers = vec![

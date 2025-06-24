@@ -3,7 +3,7 @@ use workflow_engine_core::{error::WorkflowError, nodes::Node, task::TaskContext}
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use super::super::server::CustomerSupportMCPServer;
+use super::super::server::CustomerSupportMcpServer;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InvoiceProcessingResult {
@@ -255,7 +255,7 @@ struct InvoiceDetails {
 }
 
 impl ProcessInvoiceNode {
-    pub async fn register(server: &mut CustomerSupportMCPServer) -> Result<(), WorkflowError> {
+    pub async fn register(server: &mut CustomerSupportMcpServer) -> Result<(), WorkflowError> {
         let node = Arc::new(Self::new());
         let metadata = ToolMetadata::new(
             "process_invoice".to_string(),

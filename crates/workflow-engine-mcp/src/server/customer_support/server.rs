@@ -1,17 +1,17 @@
 use workflow_engine_core::error::WorkflowError;
-use crate::server::MCPToolServer;
+use crate::server::McpToolServer;
 use std::sync::Arc;
 
 use super::tools::register_customer_support_tools;
 
 /// Example MCP server that exposes customer support tools
-pub struct CustomerSupportMCPServer {
-    server: MCPToolServer,
+pub struct CustomerSupportMcpServer {
+    server: McpToolServer,
 }
 
-impl CustomerSupportMCPServer {
+impl CustomerSupportMcpServer {
     pub async fn new() -> Result<Self, WorkflowError> {
-        let server = MCPToolServer::new("customer-support-server".to_string(), "1.0.0".to_string());
+        let server = McpToolServer::new("customer-support-server".to_string(), "1.0.0".to_string());
 
         let mut mcp_server = Self { server };
         register_customer_support_tools(&mut mcp_server).await?;
@@ -26,7 +26,7 @@ impl CustomerSupportMCPServer {
         self.server.get_tool_names().await
     }
 
-    pub fn get_server(&self) -> &MCPToolServer {
+    pub fn get_server(&self) -> &McpToolServer {
         &self.server
     }
     

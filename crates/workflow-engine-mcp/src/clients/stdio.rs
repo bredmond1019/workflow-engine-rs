@@ -1,26 +1,24 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use workflow_engine_core::error::WorkflowError;
-use crate::clients::MCPClient;
-use crate::clients::connection::MCPConnection;
+use crate::clients::McpClient;
+use crate::clients::connection::McpConnection;
 use crate::protocol::{
-    CallToolResult, ClientCapabilities, ClientInfo, InitializeParams, MCPRequest, MCPResponse,
+    CallToolResult, ClientCapabilities, ClientInfo, InitializeParams, McpRequest, McpResponse,
     ResponseResult, ToolCallParams, ToolDefinition,
 };
 use crate::transport::StdioTransport;
 
 #[derive(Debug)]
-pub struct StdioMCPClient {
-    connection: Option<MCPConnection>,
+pub struct StdioMcpClient {
+    connection: Option<McpConnection>,
     command: String,
     args: Vec<String>,
 }
 
-impl StdioMCPClient {
+impl StdioMcpClient {
     pub fn new(command: String, args: Vec<String>) -> Self {
         Self {
             connection: None,
@@ -31,10 +29,10 @@ impl StdioMCPClient {
 }
 
 #[async_trait]
-impl MCPClient for StdioMCPClient {
+impl McpClient for StdioMcpClient {
     async fn connect(&mut self) -> Result<(), WorkflowError> {
         let transport = Box::new(StdioTransport::new(self.command.clone(), self.args.clone()));
-        let mut connection = MCPConnection::new(transport);
+        let mut connection = McpConnection::new(transport);
 
         connection.transport.connect().await?;
         connection.is_connected = true;
@@ -51,11 +49,11 @@ impl MCPClient for StdioMCPClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
+                .ok_or_else(|| WorkflowError::McpConnectionError {
                     message: "Not connected".to_string(),
                 })?;
 
-        let request = MCPRequest::Initialize {
+        let request = McpRequest::Initialize {
             id: Uuid::new_v4().to_string(),
             params: InitializeParams {
                 protocol_version: "2024-11-05".to_string(),
@@ -72,19 +70,19 @@ impl MCPClient for StdioMCPClient {
 
         let response = connection.send_request(request).await?;
         match response {
-            MCPResponse::Result {
+            McpResponse::Result {
                 result: ResponseResult::Initialize(_),
                 ..
             } => {
                 connection.is_initialized = true;
 
                 // Send initialized notification
-                let initialized = MCPRequest::Initialized;
+                let initialized = McpRequest::Initialized;
                 connection.transport.send(initialized).await?;
 
                 Ok(())
             }
-            MCPResponse::Error { error, .. } => Err(WorkflowError::MCPError {
+            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("Initialize failed: {}", error.message),
             }),
             _ => Err(WorkflowError::MCPProtocolError {
@@ -97,7 +95,7 @@ impl MCPClient for StdioMCPClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
+                .ok_or_else(|| WorkflowError::McpConnectionError {
                     message: "Not connected".to_string(),
                 })?;
 
@@ -107,17 +105,17 @@ impl MCPClient for StdioMCPClient {
             });
         }
 
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: Uuid::new_v4().to_string(),
         };
 
         let response = connection.send_request(request).await?;
         match response {
-            MCPResponse::Result {
+            McpResponse::Result {
                 result: ResponseResult::ListTools(tools_result),
                 ..
             } => Ok(tools_result.tools),
-            MCPResponse::Error { error, .. } => Err(WorkflowError::MCPError {
+            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("List tools failed: {}", error.message),
             }),
             _ => Err(WorkflowError::MCPProtocolError {
@@ -134,7 +132,7 @@ impl MCPClient for StdioMCPClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
+                .ok_or_else(|| WorkflowError::McpConnectionError {
                     message: "Not connected".to_string(),
                 })?;
 
@@ -144,7 +142,7 @@ impl MCPClient for StdioMCPClient {
             });
         }
 
-        let request = MCPRequest::CallTool {
+        let request = McpRequest::CallTool {
             id: Uuid::new_v4().to_string(),
             params: ToolCallParams {
                 name: name.to_string(),
@@ -154,11 +152,11 @@ impl MCPClient for StdioMCPClient {
 
         let response = connection.send_request(request).await?;
         match response {
-            MCPResponse::Result {
+            McpResponse::Result {
                 result: ResponseResult::CallTool(call_result),
                 ..
             } => Ok(call_result),
-            MCPResponse::Error { error, .. } => Err(WorkflowError::MCPError {
+            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("Tool call failed: {}", error.message),
             }),
             _ => Err(WorkflowError::MCPProtocolError {

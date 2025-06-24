@@ -6,16 +6,16 @@ pub mod http;
 pub mod stdio;
 pub mod websocket;
 
-pub use connection::MCPConnection;
-pub use http::HttpMCPClient;
-pub use stdio::StdioMCPClient;
-pub use websocket::WebSocketMCPClient;
+pub use connection::McpConnection;
+pub use http::HttpMcpClient;
+pub use stdio::StdioMcpClient;
+pub use websocket::WebSocketMcpClient;
 
 use workflow_engine_core::error::WorkflowError;
 use crate::protocol::{CallToolResult, ToolDefinition};
 
 #[async_trait]
-pub trait MCPClient: Send + Sync + std::fmt::Debug {
+pub trait McpClient: Send + Sync + std::fmt::Debug {
     async fn connect(&mut self) -> Result<(), WorkflowError>;
     async fn initialize(
         &mut self,

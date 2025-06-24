@@ -1,28 +1,28 @@
-//! Builder pattern for MCPConfig
+//! Builder pattern for McpConfig
 //!
 //! This module provides a fluent builder interface for creating
-//! MCPConfig instances with validation and sensible defaults.
+//! McpConfig instances with validation and sensible defaults.
 
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::config::{MCPConfig, MCPServerConfig};
+use crate::config::{McpConfig, McpServerConfig};
 use crate::connection_pool::{ConnectionConfig, LoadBalancingStrategy, BackoffConfig};
 use crate::transport::{TransportType, ReconnectConfig, HttpPoolConfig};
 use crate::health::HealthConfig;
 use workflow_engine_core::error::{WorkflowError, circuit_breaker::CircuitBreakerConfig};
 
-/// Builder for creating MCPConfig with fluent interface
-pub struct MCPConfigBuilder {
+/// Builder for creating McpConfig with fluent interface
+pub struct McpConfigBuilder {
     enabled: bool,
     client_name: String,
     client_version: String,
     connection_pool: ConnectionConfigBuilder,
-    servers: HashMap<String, MCPServerConfig>,
+    servers: HashMap<String, McpServerConfig>,
 }
 
-impl MCPConfigBuilder {
-    /// Create a new MCPConfig builder
+impl McpConfigBuilder {
+    /// Create a new McpConfig builder
     pub fn new() -> Self {
         Self {
             enabled: true,
@@ -61,7 +61,7 @@ impl MCPConfigBuilder {
     }
 
     /// Add a server configuration
-    pub fn add_server(mut self, name: impl Into<String>, config: MCPServerConfig) -> Self {
+    pub fn add_server(mut self, name: impl Into<String>, config: McpServerConfig) -> Self {
         self.servers.insert(name.into(), config);
         self
     }
@@ -73,7 +73,7 @@ impl MCPConfigBuilder {
         url: impl Into<String>,
     ) -> Self {
         let server_name = name.into();
-        let server_config = MCPServerConfig {
+        let server_config = McpServerConfig {
             name: server_name.clone(),
             enabled: true,
             transport: TransportType::WebSocket {
@@ -95,7 +95,7 @@ impl MCPConfigBuilder {
         base_url: impl Into<String>,
     ) -> Self {
         let server_name = name.into();
-        let server_config = MCPServerConfig {
+        let server_config = McpServerConfig {
             name: server_name.clone(),
             enabled: true,
             transport: TransportType::Http {
@@ -117,7 +117,7 @@ impl MCPConfigBuilder {
         args: Vec<String>,
     ) -> Self {
         let server_name = name.into();
-        let server_config = MCPServerConfig {
+        let server_config = McpServerConfig {
             name: server_name.clone(),
             enabled: true,
             transport: TransportType::Stdio {
@@ -133,8 +133,8 @@ impl MCPConfigBuilder {
         self
     }
 
-    /// Build the MCPConfig with validation
-    pub fn build(self) -> Result<MCPConfig, WorkflowError> {
+    /// Build the McpConfig with validation
+    pub fn build(self) -> Result<McpConfig, WorkflowError> {
         // Validate client name
         if self.client_name.is_empty() {
             return Err(WorkflowError::ConfigurationError(
@@ -152,7 +152,7 @@ impl MCPConfigBuilder {
         // Build connection config
         let connection_pool = self.connection_pool.build()?;
 
-        Ok(MCPConfig {
+        Ok(McpConfig {
             enabled: self.enabled,
             client_name: self.client_name,
             client_version: self.client_version,
@@ -162,7 +162,7 @@ impl MCPConfigBuilder {
     }
 }
 
-impl Default for MCPConfigBuilder {
+impl Default for McpConfigBuilder {
     fn default() -> Self {
         Self::new()
     }
@@ -291,15 +291,15 @@ impl Default for ConnectionConfigBuilder {
     }
 }
 
-/// Extension trait for MCPConfig to provide builder
-pub trait MCPConfigExt {
-    /// Create a builder for MCPConfig
-    fn builder() -> MCPConfigBuilder;
+/// Extension trait for McpConfig to provide builder
+pub trait McpConfigExt {
+    /// Create a builder for McpConfig
+    fn builder() -> McpConfigBuilder;
 }
 
-impl MCPConfigExt for MCPConfig {
-    fn builder() -> MCPConfigBuilder {
-        MCPConfigBuilder::new()
+impl McpConfigExt for McpConfig {
+    fn builder() -> McpConfigBuilder {
+        McpConfigBuilder::new()
     }
 }
 
@@ -309,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_basic_mcp_config() {
-        let config = MCPConfigBuilder::new()
+        let config = McpConfigBuilder::new()
             .client_name("test-client")
             .client_version("2.0.0")
             .build()
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     fn test_mcp_config_with_servers() {
-        let config = MCPConfigBuilder::new()
+        let config = McpConfigBuilder::new()
             .add_websocket_server("test-ws", "ws://localhost:8080")
             .add_http_server("test-http", "http://localhost:8081")
             .add_stdio_server("test-stdio", "python", vec!["server.py".to_string()])
@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn test_connection_pool_config() {
-        let config = MCPConfigBuilder::new()
+        let config = McpConfigBuilder::new()
             .connection_pool(|pool| {
                 pool.max_connections_per_server(10)
                     .connection_timeout(Duration::from_secs(60))
@@ -356,13 +356,13 @@ mod tests {
     #[test]
     fn test_validation_errors() {
         // Empty client name
-        let result = MCPConfigBuilder::new()
+        let result = McpConfigBuilder::new()
             .client_name("")
             .build();
         assert!(result.is_err());
 
         // Invalid connection pool config
-        let result = MCPConfigBuilder::new()
+        let result = McpConfigBuilder::new()
             .connection_pool(|pool| pool.max_connections_per_server(0))
             .build();
         assert!(result.is_err());
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_disabled_mcp() {
-        let config = MCPConfigBuilder::new()
+        let config = McpConfigBuilder::new()
             .enabled(false)
             .add_websocket_server("test", "ws://localhost:8080")
             .build()

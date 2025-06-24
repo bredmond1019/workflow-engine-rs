@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::any::TypeId;
 
-use super::{super::server::CustomerSupportMCPServer, CustomerCareEventData};
+use super::{super::server::CustomerSupportMcpServer, CustomerCareEventData};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CustomerResponse {
@@ -165,7 +165,7 @@ impl GenerateCustomerResponseNode {
 }
 
 /// Register this node as a tool in the MCP server
-pub fn register_generate_response_tool(server: &CustomerSupportMCPServer) -> Result<(), WorkflowError> {
+pub fn register_generate_response_tool(server: &CustomerSupportMcpServer) -> Result<(), WorkflowError> {
     let node = Arc::new(GenerateCustomerResponseNode::new());
     let metadata = node.as_tool_metadata();
     

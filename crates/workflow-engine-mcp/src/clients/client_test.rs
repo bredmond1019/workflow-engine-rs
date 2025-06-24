@@ -1,21 +1,21 @@
 #[cfg(test)]
 mod tests {
     use workflow_engine_core::mcp::ToolDefinition;
-    use workflow_engine_core::mcp::clients::{MCPClient, MCPConnection, StdioMCPClient, WebSocketMCPClient};
+    use workflow_engine_core::mcp::clients::{McpClient, McpConnection, StdioMcpClient, WebSocketMcpClient};
     use workflow_engine_core::mcp::protocol::{
-        CallToolResult, ListToolsResult, MCPRequest, MCPResponse, ResponseResult, ToolContent,
+        CallToolResult, ListToolsResult, McpRequest, McpResponse, ResponseResult, ToolContent,
     };
-    use workflow_engine_core::mcp::transport::{MCPTransport, TransportError};
+    use workflow_engine_core::mcp::transport::{McpTransport, TransportError};
     use async_trait::async_trait;
 
     struct MockTransport {
-        responses: Vec<MCPResponse>,
+        responses: Vec<McpResponse>,
         response_index: usize,
         connected: bool,
     }
 
     impl MockTransport {
-        fn new(responses: Vec<MCPResponse>) -> Self {
+        fn new(responses: Vec<McpResponse>) -> Self {
             Self {
                 responses,
                 response_index: 0,
@@ -25,20 +25,20 @@ mod tests {
     }
 
     #[async_trait]
-    impl MCPTransport for MockTransport {
+    impl McpTransport for MockTransport {
         async fn connect(&mut self) -> Result<(), TransportError> {
             self.connected = true;
             Ok(())
         }
 
-        async fn send(&mut self, _message: MCPRequest) -> Result<(), TransportError> {
+        async fn send(&mut self, _message: McpRequest) -> Result<(), TransportError> {
             if !self.connected {
                 return Err(TransportError::ConnectionError("Not connected".to_string()));
             }
             Ok(())
         }
 
-        async fn receive(&mut self) -> Result<MCPResponse, TransportError> {
+        async fn receive(&mut self) -> Result<McpResponse, TransportError> {
             if !self.connected {
                 return Err(TransportError::ConnectionError("Not connected".to_string()));
             }
@@ -63,7 +63,7 @@ mod tests {
     #[tokio::test]
     async fn test_mcp_connection_creation() {
         let transport = Box::new(MockTransport::new(vec![]));
-        let connection = MCPConnection::new(transport);
+        let connection = McpConnection::new(transport);
 
         assert!(!connection.is_connected);
         assert!(!connection.is_initialized);
@@ -71,20 +71,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_mcp_client_creation() {
-        let client = StdioMCPClient::new("echo".to_string(), vec!["hello".to_string()]);
+        let client = StdioMcpClient::new("echo".to_string(), vec!["hello".to_string()]);
         assert!(!client.is_connected());
     }
 
     #[tokio::test]
     async fn test_websocket_mcp_client_creation() {
-        let client = WebSocketMCPClient::new("ws://localhost:8080".to_string());
+        let client = WebSocketMcpClient::new("ws://localhost:8080".to_string());
         assert!(!client.is_connected());
     }
 
     #[tokio::test]
     async fn test_mcp_client_trait_methods() {
         // Test that we can create and use MCP clients through the trait
-        let client: Box<dyn MCPClient> = Box::new(StdioMCPClient::new(
+        let client: Box<dyn McpClient> = Box::new(StdioMcpClient::new(
             "echo".to_string(),
             vec!["hello".to_string()],
         ));
@@ -97,7 +97,7 @@ mod tests {
     async fn test_mcp_connection_with_mock_transport() {
         use workflow_engine_core::mcp::protocol::{InitializeResult, ServerCapabilities, ServerInfo};
 
-        let init_response = MCPResponse::Result {
+        let init_response = McpResponse::Result {
             id: "test-id".to_string(),
             result: ResponseResult::Initialize(InitializeResult {
                 protocol_version: "2024-11-05".to_string(),
@@ -115,14 +115,14 @@ mod tests {
         };
 
         let transport = Box::new(MockTransport::new(vec![init_response]));
-        let mut connection = MCPConnection::new(transport);
+        let mut connection = McpConnection::new(transport);
 
         // Test connection
         connection.transport.connect().await.unwrap();
         assert!(
             connection
                 .transport
-                .send(MCPRequest::Initialized)
+                .send(McpRequest::Initialized)
                 .await
                 .is_ok()
         );
@@ -163,19 +163,19 @@ mod tests {
 
     #[tokio::test]
     async fn test_mcp_request_id_extraction() {
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "test-123".to_string(),
         };
 
         assert_eq!(request.get_id(), Some("test-123"));
 
-        let notification = MCPRequest::Initialized;
+        let notification = McpRequest::Initialized;
         assert_eq!(notification.get_id(), None);
     }
 
     #[tokio::test]
     async fn test_mcp_response_id_extraction() {
-        let response = MCPResponse::Result {
+        let response = McpResponse::Result {
             id: "response-456".to_string(),
             result: ResponseResult::ListTools(ListToolsResult { tools: vec![] }),
         };

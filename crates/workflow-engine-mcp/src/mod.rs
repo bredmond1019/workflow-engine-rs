@@ -35,7 +35,7 @@
 //!
 //! ```rust
 //! use ai_architecture_core::mcp::{
-//!     clients::websocket::WebSocketMCPClient,
+//!     clients::websocket::WebSocketMcpClient,
 //!     protocol::{ToolCall, ToolDefinition},
 //!     transport::TransportType,
 //! };
@@ -44,7 +44,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Connect to MCP server
-//!     let client = WebSocketMCPClient::new("ws://localhost:8080/mcp".to_string());
+//!     let client = WebSocketMcpClient::new("ws://localhost:8080/mcp".to_string());
 //!     client.connect().await?;
 //!
 //!     // List available tools
@@ -195,7 +195,7 @@
 //!     workflow::{builder::WorkflowBuilder, Workflow},
 //!     ai_agents::anthropic::AnthropicAgentNode,
 //!     nodes::agent::AgentConfig,
-//!     mcp::clients::websocket::WebSocketMCPClient,
+//!     mcp::clients::websocket::WebSocketMcpClient,
 //! };
 //! use serde_json::json;
 //!
@@ -219,7 +219,7 @@
 //!     let mut agent = AnthropicAgentNode::new(agent_config);
 //!
 //!     // Connect MCP client
-//!     let mcp_client = WebSocketMCPClient::new("ws://localhost:8080/tools".to_string());
+//!     let mcp_client = WebSocketMcpClient::new("ws://localhost:8080/tools".to_string());
 //!     mcp_client.connect().await?;
 //!     agent.set_mcp_client(Box::new(mcp_client));
 //!
@@ -239,13 +239,13 @@
 //!
 //! ```rust
 //! use ai_architecture_core::{
-//!     mcp::clients::websocket::WebSocketMCPClient,
+//!     mcp::clients::websocket::WebSocketMcpClient,
 //!     error::WorkflowError,
 //! };
 //! use serde_json::json;
 //!
 //! async fn robust_mcp_call() -> Result<serde_json::Value, WorkflowError> {
-//!     let client = WebSocketMCPClient::new("ws://localhost:8080/mcp".to_string());
+//!     let client = WebSocketMcpClient::new("ws://localhost:8080/mcp".to_string());
 //!     
 //!     match client.connect().await {
 //!         Ok(_) => {
@@ -276,18 +276,18 @@
 //! MCP defines several message types for communication:
 //!
 //! ```rust
-//! use ai_architecture_core::mcp::protocol::{MCPMessage, MCPRequest, MCPResponse};
+//! use ai_architecture_core::mcp::protocol::{McpMessage, McpRequest, McpResponse};
 //!
 //! // Request to list available tools
-//! let list_tools_request = MCPRequest::ListTools;
+//! let list_tools_request = McpRequest::ListTools;
 //!
 //! // Response with tool definitions
-//! let tools_response = MCPResponse::Tools {
+//! let tools_response = McpResponse::Tools {
 //!     tools: vec![/* tool definitions */]
 //! };
 //!
 //! // Tool call request
-//! let call_request = MCPRequest::CallTool {
+//! let call_request = McpRequest::CallTool {
 //!     name: "analyze_sentiment".to_string(),
 //!     arguments: serde_json::json!({"text": "Great product!"})
 //! };
@@ -340,10 +340,10 @@
 //! ### Environment-based Configuration
 //!
 //! ```rust
-//! use ai_architecture_core::mcp::config::MCPConfig;
+//! use ai_architecture_core::mcp::config::McpConfig;
 //!
 //! // Load from environment variables
-//! let config = MCPConfig::from_env().unwrap_or_default();
+//! let config = McpConfig::from_env().unwrap_or_default();
 //!
 //! println!("MCP enabled: {}", config.enabled);
 //! println!("Client name: {}", config.client_name);
@@ -353,9 +353,9 @@
 //! ### Server-specific Configuration
 //!
 //! ```rust
-//! use ai_architecture_core::mcp::config::MCPServerConfig;
+//! use ai_architecture_core::mcp::config::McpServerConfig;
 //!
-//! let server_config = MCPServerConfig {
+//! let server_config = McpServerConfig {
 //!     enabled: true,
 //!     auto_connect: true,
 //!     connection_timeout: std::time::Duration::from_secs(30),
@@ -398,12 +398,12 @@ pub mod protocol;
 pub mod server;
 pub mod transport;
 
-pub use clients::{HttpMCPClient, MCPClient, MCPConnection, StdioMCPClient, WebSocketMCPClient};
-pub use config::{MCPConfig, MCPServerConfig};
+pub use clients::{HttpMCPClient, MCPClient, MCPConnection, StdioMCPClient, WebSocketMcpClient};
+pub use config::{McpConfig, McpServerConfig};
 pub use connection_pool::{BorrowedConnection, ConnectionConfig, MCPConnectionPool, PoolStats, DetailedHealthInfo, ServerHealthInfo, LoadBalancingStrategy, BackoffConfig};
 pub use health::{ConnectionHealthMonitor, HealthConfig, HealthStatus, HealthMetrics};
 pub use load_balancer::{MCPLoadBalancer, AdvancedMCPLoadBalancer, ConnectionInfo, LoadBalancingMetrics};
 pub use metrics::{MCPMetricsCollector, MCPMetricsManager};
-pub use protocol::{MCPMessage, MCPRequest, MCPResponse, ToolCall, ToolDefinition};
+pub use protocol::{McpMessage, McpRequest, McpResponse, ToolCall, ToolDefinition};
 pub use server::{MCPToolServer, ToolMetadata};
 pub use transport::{MCPTransport, TransportType};

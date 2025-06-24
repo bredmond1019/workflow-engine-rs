@@ -100,11 +100,11 @@
     - [x] 3.1.2 Complete or remove stub MCP client methods in workflow builders
     - [x] 3.1.3 Implement missing bootstrap service functionality or remove references
     - [x] 3.1.4 Remove placeholder implementations in AI agent nodes or disable features properly
-  - [ ] 3.2 Fix API Naming Consistency (Rust API Guidelines)
-    - [ ] 3.2.1 Standardize MCP vs Mcp naming throughout codebase (choose one pattern)
-    - [ ] 3.2.2 Review all public struct and enum names for consistency with Rust conventions
-    - [ ] 3.2.3 Ensure method names follow Rust naming guidelines (snake_case)
-    - [ ] 3.2.4 Update documentation to reflect naming changes
+  - [x] 3.2 Fix API Naming Consistency (Rust API Guidelines)
+    - [x] 3.2.1 Standardize MCP vs Mcp naming throughout codebase (choose one pattern)
+    - [x] 3.2.2 Review all public struct and enum names for consistency with Rust conventions
+    - [x] 3.2.3 Ensure method names follow Rust naming guidelines (snake_case)
+    - [x] 3.2.4 Update documentation to reflect naming changes
   - [ ] 3.3 Implement Proper Error Types and Chaining
     - [ ] 3.3.1 Replace string-only error variants with structured error types
     - [ ] 3.3.2 Add `#[source]` attributes for proper error chaining using thiserror

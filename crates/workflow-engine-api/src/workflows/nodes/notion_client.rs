@@ -12,7 +12,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 use workflow_engine_core::error::WorkflowError;
-use workflow_engine_mcp::clients::{MCPClient, HttpMCPClient};
+use workflow_engine_mcp::clients::{McpClient, HttpMcpClient};
 use crate::workflows::executor::{StepExecutor, WorkflowContext};
 use crate::workflows::schema::StepDefinition;
 
@@ -47,7 +47,7 @@ impl StepExecutor for WorkflowNotionClientNode {
         log::info!("Executing Notion workflow step: {}", step.id);
         
         // Create a mutable client for async operations
-        let mut client = HttpMCPClient::new(self.base_url.clone());
+        let mut client = HttpMcpClient::new(self.base_url.clone());
         
         // Render step input with current context
         let template_engine = context.create_template_engine();

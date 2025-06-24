@@ -58,11 +58,11 @@ pub mod load_balancer;
 pub mod server;
 
 // Re-export commonly used types
-pub use protocol::{MCPMessage, MCPRequest, MCPResponse, ToolDefinition as MCPTool, CallToolResult as MCPToolResult};
-pub use transport::{TransportType, MCPTransport};
-pub use clients::MCPClient;
-pub use config::MCPConfig;
-pub use connection_pool::{MCPConnectionPool as ConnectionPool, PooledConnection};
+pub use protocol::{McpMessage, McpRequest, McpResponse, ToolDefinition as McpTool, CallToolResult as McpToolResult};
+pub use transport::{TransportType, McpTransport};
+pub use clients::McpClient;
+pub use config::McpConfig;
+pub use connection_pool::{McpConnectionPool as ConnectionPool, PooledConnection};
 
 /// Current version of the MCP integration
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -70,9 +70,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Prelude module for common MCP imports
 pub mod prelude {
     pub use crate::{
-        MCPMessage, MCPRequest, MCPResponse, 
-        TransportType, MCPTransport, MCPClient,
-        MCPConfig, ConnectionPool,
+        McpMessage, McpRequest, McpResponse, 
+        TransportType, McpTransport, McpClient,
+        McpConfig, ConnectionPool,
         protocol::{ToolDefinition, CallToolResult},
     };
     pub use workflow_engine_core::prelude::*;

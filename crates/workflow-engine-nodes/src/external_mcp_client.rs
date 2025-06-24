@@ -6,15 +6,15 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::error::WorkflowError;
-use workflow_engine_mcp::clients::{MCPClient, StdioMCPClient, WebSocketMCPClient};
+use workflow_engine_mcp::clients::{McpClient, StdioMcpClient, WebSocketMcpClient};
 use workflow_engine_mcp::protocol::{CallToolResult, ToolDefinition};
-use workflow_engine_mcp::transport::{HttpTransport, MCPTransport, TransportType};
+use workflow_engine_mcp::transport::{HttpTransport, McpTransport, TransportType};
 use crate::nodes::Node;
 use crate::task::TaskContext;
 
 /// Configuration for external MCP server connections
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExternalMCPConfig {
+pub struct ExternalMcpConfig {
     /// Name of the external service (e.g., "notion", "slack", "helpscout")
     pub service_name: String,
 
@@ -67,9 +67,9 @@ impl Default for RetryConfig {
 
 /// Base trait for nodes that connect to external MCP servers
 #[async_trait]
-pub trait ExternalMCPClientNode: Node + Send + Sync {
+pub trait ExternalMcpClientNode: Node + Send + Sync {
     /// Get the configuration for this external MCP client
-    fn get_config(&self) -> &ExternalMCPConfig;
+    fn get_config(&self) -> &ExternalMcpConfig;
 
     /// Connect to the external MCP server
     async fn connect(&mut self) -> Result<(), WorkflowError>;
@@ -92,23 +92,23 @@ pub trait ExternalMCPClientNode: Node + Send + Sync {
 }
 
 /// Base implementation for external MCP client nodes
-pub struct BaseExternalMCPClient {
-    config: ExternalMCPConfig,
-    client: Option<Box<dyn MCPClient>>,
+pub struct BaseExternalMcpClient {
+    config: ExternalMcpConfig,
+    client: Option<Box<dyn McpClient>>,
     connection_pool: Arc<Mutex<ConnectionPool>>,
 }
 
-impl Debug for BaseExternalMCPClient {
+impl Debug for BaseExternalMcpClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BaseExternalMCPClient")
+        f.debug_struct("BaseExternalMcpClient")
             .field("config", &self.config)
             .field("connected", &self.is_connected())
             .finish()
     }
 }
 
-impl BaseExternalMCPClient {
-    pub fn new(config: ExternalMCPConfig) -> Self {
+impl BaseExternalMcpClient {
+    pub fn new(config: ExternalMcpConfig) -> Self {
         Self {
             config,
             client: None,
@@ -117,16 +117,16 @@ impl BaseExternalMCPClient {
     }
 
     /// Create an MCP client based on the transport type
-    fn create_client(&self) -> Result<Box<dyn MCPClient>, WorkflowError> {
+    fn create_client(&self) -> Result<Box<dyn McpClient>, WorkflowError> {
         match &self.config.transport {
             TransportType::Stdio { command, args, .. } => {
-                Ok(Box::new(StdioMCPClient::new(command.clone(), args.clone())))
+                Ok(Box::new(StdioMcpClient::new(command.clone(), args.clone())))
             }
-            TransportType::WebSocket { url, .. } => Ok(Box::new(WebSocketMCPClient::new(url.clone()))),
+            TransportType::WebSocket { url, .. } => Ok(Box::new(WebSocketMcpClient::new(url.clone()))),
             TransportType::Http { base_url, .. } => {
                 // For HTTP transport, we need a custom implementation
                 // that handles request/response pattern
-                Ok(Box::new(HttpMCPClient::new(
+                Ok(Box::new(HttpMcpClient::new(
                     base_url.clone(),
                     self.config.auth.clone(),
                 )))
@@ -188,8 +188,8 @@ impl BaseExternalMCPClient {
 }
 
 #[async_trait]
-impl ExternalMCPClientNode for BaseExternalMCPClient {
-    fn get_config(&self) -> &ExternalMCPConfig {
+impl ExternalMcpClientNode for BaseExternalMcpClient {
+    fn get_config(&self) -> &ExternalMcpConfig {
         &self.config
     }
 
@@ -237,7 +237,7 @@ impl ExternalMCPClientNode for BaseExternalMCPClient {
     }
 }
 
-impl Node for BaseExternalMCPClient {
+impl Node for BaseExternalMcpClient {
     fn process(&self, mut task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
         task_context.set_data("external_mcp_client_processed", true)?;
         Ok(task_context)
@@ -247,7 +247,7 @@ impl Node for BaseExternalMCPClient {
 /// Connection pool for managing MCP connections
 #[derive(Debug)]
 struct ConnectionPool {
-    connections: HashMap<String, Arc<Mutex<Box<dyn MCPClient>>>>,
+    connections: HashMap<String, Arc<Mutex<Box<dyn McpClient>>>>,
 }
 
 impl ConnectionPool {
@@ -260,8 +260,8 @@ impl ConnectionPool {
     async fn get_or_create(
         &mut self,
         key: &str,
-        creator: impl FnOnce() -> Box<dyn MCPClient>,
-    ) -> Arc<Mutex<Box<dyn MCPClient>>> {
+        creator: impl FnOnce() -> Box<dyn McpClient>,
+    ) -> Arc<Mutex<Box<dyn McpClient>>> {
         if let Some(conn) = self.connections.get(key) {
             conn.clone()
         } else {
@@ -278,14 +278,14 @@ impl ConnectionPool {
 
 /// HTTP MCP Client implementation
 #[derive(Debug)]
-struct HttpMCPClient {
+struct HttpMcpClient {
     base_url: String,
     auth: Option<AuthConfig>,
     client: reqwest::Client,
     is_connected: bool,
 }
 
-impl HttpMCPClient {
+impl HttpMcpClient {
     fn new(base_url: String, auth: Option<AuthConfig>) -> Self {
         Self {
             base_url,
@@ -297,7 +297,7 @@ impl HttpMCPClient {
 }
 
 #[async_trait]
-impl MCPClient for HttpMCPClient {
+impl McpClient for HttpMcpClient {
     async fn connect(&mut self) -> Result<(), WorkflowError> {
         // For HTTP, "connection" is just validation that the server is reachable
         self.is_connected = true;
@@ -420,16 +420,16 @@ mod tests {
     use mockall::*;
     use mockall::predicate::*;
 
-    // Mock trait for MCPClient
+    // Mock trait for McpClient
     mock! {
-        TestMCPClient {}
+        TestMcpClient {}
         
-        impl std::fmt::Debug for TestMCPClient {
+        impl std::fmt::Debug for TestMcpClient {
             fn fmt<'a>(&self, f: &mut std::fmt::Formatter<'a>) -> std::fmt::Result;
         }
         
         #[async_trait]
-        impl MCPClient for TestMCPClient {
+        impl McpClient for TestMcpClient {
             async fn connect(&mut self) -> Result<(), WorkflowError>;
             async fn initialize(&mut self, client_name: &str, client_version: &str) -> Result<(), WorkflowError>;
             async fn list_tools(&mut self) -> Result<Vec<ToolDefinition>, WorkflowError>;
@@ -439,8 +439,8 @@ mod tests {
         }
     }
 
-    fn create_test_config(service_name: &str) -> ExternalMCPConfig {
-        ExternalMCPConfig {
+    fn create_test_config(service_name: &str) -> ExternalMcpConfig {
+        ExternalMcpConfig {
             service_name: service_name.to_string(),
             transport: TransportType::Http {
                 base_url: "http://localhost:8080".to_string(),
@@ -454,7 +454,7 @@ mod tests {
     #[test]
     fn test_base_external_mcp_client_creation() {
         let config = create_test_config("test_service");
-        let client = BaseExternalMCPClient::new(config.clone());
+        let client = BaseExternalMcpClient::new(config.clone());
         
         assert_eq!(client.config.service_name, "test_service");
         assert!(!client.is_connected());
@@ -473,10 +473,10 @@ mod tests {
     #[tokio::test]
     async fn test_connect_success() {
         let config = create_test_config("test_service");
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
-        // We can't easily mock the internal client creation, so we'll test the HttpMCPClient directly
-        let mut http_client = HttpMCPClient::new("http://localhost:8080".to_string(), None);
+        // We can't easily mock the internal client creation, so we'll test the HttpMcpClient directly
+        let mut http_client = HttpMcpClient::new("http://localhost:8080".to_string(), None);
         let result = http_client.connect().await;
         
         assert!(result.is_ok());
@@ -486,7 +486,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_tool_not_connected() {
         let config = create_test_config("test_service");
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
         let result = client.execute_tool("test_tool", None).await;
         
@@ -502,7 +502,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_tools_not_connected() {
         let config = create_test_config("test_service");
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
         let result = client.list_tools().await;
         
@@ -518,7 +518,7 @@ mod tests {
     #[tokio::test]
     async fn test_disconnect_when_not_connected() {
         let config = create_test_config("test_service");
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
         let result = client.disconnect().await;
         
@@ -529,7 +529,7 @@ mod tests {
     #[test]
     fn test_node_process() {
         let config = create_test_config("test_service");
-        let client = BaseExternalMCPClient::new(config);
+        let client = BaseExternalMcpClient::new(config);
         
         let task_context = TaskContext::new("test_workflow".to_string(), serde_json::json!({}));
         let result = client.process(task_context);
@@ -567,11 +567,11 @@ mod tests {
         
         let key = "test_connection";
         let conn1 = pool.get_or_create(key, || {
-            Box::new(MockTestMCPClient::new())
+            Box::new(MockTestMcpClient::new())
         }).await;
         
         let conn2 = pool.get_or_create(key, || {
-            Box::new(MockTestMCPClient::new())
+            Box::new(MockTestMcpClient::new())
         }).await;
         
         // Should return the same connection
@@ -584,7 +584,7 @@ mod tests {
         
         let key = "test_connection";
         pool.get_or_create(key, || {
-            Box::new(MockTestMCPClient::new())
+            Box::new(MockTestMcpClient::new())
         }).await;
         
         assert!(!pool.connections.is_empty());
@@ -600,7 +600,7 @@ mod tests {
             headers: None,
         };
         
-        let mut client = HttpMCPClient::new("http://api.example.com".to_string(), Some(auth));
+        let mut client = HttpMcpClient::new("http://api.example.com".to_string(), Some(auth));
         
         assert_eq!(client.base_url, "http://api.example.com");
         assert!(!client.is_connected());
@@ -682,7 +682,7 @@ mod tests {
             headers: Some(headers),
         });
         
-        let config = ExternalMCPConfig {
+        let config = ExternalMcpConfig {
             service_name: "auth_service".to_string(),
             transport: TransportType::Http {
                 base_url: "https://api.example.com".to_string(),
@@ -703,7 +703,7 @@ mod tests {
     // Tests for mocking external MCP services
     #[tokio::test]
     async fn test_mock_external_service_success() {
-        let mut mock_client = MockTestMCPClient::new();
+        let mut mock_client = MockTestMcpClient::new();
         
         // Set up expectations
         mock_client
@@ -744,7 +744,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_external_service_connection_failure() {
-        let mut mock_client = MockTestMCPClient::new();
+        let mut mock_client = MockTestMcpClient::new();
         
         mock_client
             .expect_connect()
@@ -766,7 +766,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_tool_execution() {
-        let mut mock_client = MockTestMCPClient::new();
+        let mut mock_client = MockTestMcpClient::new();
         
         let mut args = HashMap::new();
         args.insert("param1".to_string(), serde_json::Value::String("value1".to_string()));
@@ -791,7 +791,7 @@ mod tests {
     #[tokio::test]
     async fn test_error_propagation_from_transport() {
         let config = create_test_config("error_service");
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
         // Since we can't inject a mock easily, we test with disconnected state
         let result = client.execute_tool("any_tool", None).await;
@@ -807,7 +807,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_error_propagation_invalid_tool() {
-        let mut mock_client = MockTestMCPClient::new();
+        let mut mock_client = MockTestMcpClient::new();
         
         mock_client
             .expect_call_tool()
@@ -839,7 +839,7 @@ mod tests {
         let mut config = create_test_config("retry_service");
         config.retry_config = retry_config;
         
-        let client = BaseExternalMCPClient::new(config);
+        let client = BaseExternalMcpClient::new(config);
         
         // We can verify the retry config is properly set
         assert_eq!(client.config.retry_config.max_retries, 2);
@@ -879,7 +879,7 @@ mod tests {
         // This test would connect to a real MCP server
         // For now, it's a placeholder showing the structure
         
-        let config = ExternalMCPConfig {
+        let config = ExternalMcpConfig {
             service_name: "test_integration".to_string(),
             transport: TransportType::Http {
                 base_url: "http://localhost:8001".to_string(), // HelpScout test server
@@ -889,7 +889,7 @@ mod tests {
             retry_config: RetryConfig::default(),
         };
         
-        let mut client = BaseExternalMCPClient::new(config);
+        let mut client = BaseExternalMcpClient::new(config);
         
         // Would test real connection
         let connect_result = client.connect().await;
@@ -906,7 +906,7 @@ mod tests {
     // Test different transport types
     #[test]
     fn test_create_client_with_different_transports() {
-        let config_http = ExternalMCPConfig {
+        let config_http = ExternalMcpConfig {
             service_name: "http_service".to_string(),
             transport: TransportType::Http {
                 base_url: "http://example.com".to_string(),
@@ -916,7 +916,7 @@ mod tests {
             retry_config: RetryConfig::default(),
         };
         
-        let config_ws = ExternalMCPConfig {
+        let config_ws = ExternalMcpConfig {
             service_name: "ws_service".to_string(),
             transport: TransportType::WebSocket {
                 url: "ws://example.com".to_string(),
@@ -927,7 +927,7 @@ mod tests {
             retry_config: RetryConfig::default(),
         };
         
-        let config_stdio = ExternalMCPConfig {
+        let config_stdio = ExternalMcpConfig {
             service_name: "stdio_service".to_string(),
             transport: TransportType::Stdio {
                 command: "python".to_string(),
@@ -939,9 +939,9 @@ mod tests {
             retry_config: RetryConfig::default(),
         };
         
-        let client_http = BaseExternalMCPClient::new(config_http);
-        let client_ws = BaseExternalMCPClient::new(config_ws);
-        let client_stdio = BaseExternalMCPClient::new(config_stdio);
+        let client_http = BaseExternalMcpClient::new(config_http);
+        let client_ws = BaseExternalMcpClient::new(config_ws);
+        let client_stdio = BaseExternalMcpClient::new(config_stdio);
         
         assert_eq!(client_http.config.service_name, "http_service");
         assert_eq!(client_ws.config.service_name, "ws_service");
@@ -960,7 +960,7 @@ mod tests {
             headers: Some(headers),
         });
         
-        let client = HttpMCPClient::new("https://api.example.com".to_string(), auth.clone());
+        let client = HttpMcpClient::new("https://api.example.com".to_string(), auth.clone());
         
         assert_eq!(client.base_url, "https://api.example.com");
         assert!(client.auth.is_some());
@@ -976,7 +976,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_http_client_error_handling() {
-        let mut client = HttpMCPClient::new("http://invalid.local".to_string(), None);
+        let mut client = HttpMcpClient::new("http://invalid.local".to_string(), None);
         client.is_connected = true; // Simulate connected state
         
         // This would fail with a real request to invalid.local

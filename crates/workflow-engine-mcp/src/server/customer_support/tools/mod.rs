@@ -1,7 +1,7 @@
 use workflow_engine_core::error::WorkflowError;
 use serde::{Deserialize, Serialize};
 
-use super::server::CustomerSupportMCPServer;
+use super::server::CustomerSupportMcpServer;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CustomerCareEventData {
@@ -39,7 +39,7 @@ use analyze_ticket::register_analyze_ticket_tool;
 use generate_response::register_generate_response_tool;
 
 
-pub async fn register_customer_support_tools(server: &mut CustomerSupportMCPServer) -> Result<(), WorkflowError> {
+pub async fn register_customer_support_tools(server: &mut CustomerSupportMcpServer) -> Result<(), WorkflowError> {
   ValidateTicketNode::register(server).await?;
   FilterSpamNode::register(server).await?;
   register_determine_intent_tool(server)?;

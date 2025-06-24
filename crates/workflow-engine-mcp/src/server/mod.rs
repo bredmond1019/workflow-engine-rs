@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 
 use workflow_engine_core::error::WorkflowError;
 use crate::protocol::{
-    CallToolResult, InitializeResult, ListToolsResult, MCPError, MCPRequest, MCPResponse,
+    CallToolResult, InitializeResult, ListToolsResult, McpError, McpRequest, McpResponse,
     ResponseResult, ServerCapabilities, ServerInfo, ToolContent, ToolDefinition,
 };
 use workflow_engine_core::nodes::Node;
@@ -47,14 +47,14 @@ impl ToolMetadata {
     }
 }
 
-pub struct MCPToolServer {
+pub struct McpToolServer {
     server_name: String,
     server_version: String,
     tools: Arc<RwLock<HashMap<String, (ToolMetadata, Arc<dyn Node>)>>>,
     capabilities: ServerCapabilities,
 }
 
-impl MCPToolServer {
+impl McpToolServer {
     pub fn new(server_name: String, server_version: String) -> Self {
         Self {
             server_name,
@@ -125,9 +125,9 @@ impl MCPToolServer {
         ))
     }
 
-    pub async fn handle_request(&self, request: MCPRequest) -> Result<MCPResponse, WorkflowError> {
+    pub async fn handle_request(&self, request: McpRequest) -> Result<McpResponse, WorkflowError> {
         match request {
-            MCPRequest::Initialize { id, params } => {
+            McpRequest::Initialize { id, params } => {
                 let result = InitializeResult {
                     protocol_version: params.protocol_version,
                     capabilities: self.capabilities.clone(),
@@ -137,26 +137,26 @@ impl MCPToolServer {
                     },
                 };
 
-                Ok(MCPResponse::Result {
+                Ok(McpResponse::Result {
                     id,
                     result: ResponseResult::Initialize(result),
                 })
             }
-            MCPRequest::ListTools { id } => {
+            McpRequest::ListTools { id } => {
                 let tools = self.tools.read().await;
                 let tool_definitions: Vec<ToolDefinition> = tools
                     .values()
                     .map(|(metadata, _)| metadata.to_tool_definition())
                     .collect();
 
-                Ok(MCPResponse::Result {
+                Ok(McpResponse::Result {
                     id,
                     result: ResponseResult::ListTools(ListToolsResult {
                         tools: tool_definitions,
                     }),
                 })
             }
-            MCPRequest::CallTool { id, params } => {
+            McpRequest::CallTool { id, params } => {
                 let tools = self.tools.read().await;
 
                 if let Some((metadata, node)) = tools.get(&params.name) {
@@ -168,7 +168,7 @@ impl MCPToolServer {
                         Ok(result_context) => {
                             let content = self.task_context_to_content(result_context)?;
 
-                            Ok(MCPResponse::Result {
+                            Ok(McpResponse::Result {
                                 id,
                                 result: ResponseResult::CallTool(CallToolResult {
                                     content,
@@ -181,7 +181,7 @@ impl MCPToolServer {
                                 text: format!("Error executing tool: {}", error),
                             }];
 
-                            Ok(MCPResponse::Result {
+                            Ok(McpResponse::Result {
                                 id,
                                 result: ResponseResult::CallTool(CallToolResult {
                                     content,
@@ -191,9 +191,9 @@ impl MCPToolServer {
                         }
                     }
                 } else {
-                    Ok(MCPResponse::Error {
+                    Ok(McpResponse::Error {
                         id,
-                        error: MCPError {
+                        error: McpError {
                             code: -32601,
                             message: format!("Tool '{}' not found", params.name),
                             data: None,
@@ -201,7 +201,7 @@ impl MCPToolServer {
                     })
                 }
             }
-            MCPRequest::Initialized => {
+            McpRequest::Initialized => {
                 // Notification - no response needed
                 Err(WorkflowError::MCPProtocolError {
                     message: "Initialized notification should not expect a response".to_string(),
@@ -304,7 +304,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mcp_tool_server_creation() {
-        let server = MCPToolServer::new("test-server".to_string(), "1.0.0".to_string());
+        let server = McpToolServer::new("test-server".to_string(), "1.0.0".to_string());
         assert_eq!(server.server_name, "test-server");
         assert_eq!(server.server_version, "1.0.0");
         assert_eq!(server.get_tool_count().await, 0);
@@ -312,7 +312,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_node_as_tool() {
-        let server = MCPToolServer::new("test-server".to_string(), "1.0.0".to_string());
+        let server = McpToolServer::new("test-server".to_string(), "1.0.0".to_string());
         let node = Arc::new(TestNode::new("TestNode".to_string()));
 
         let metadata = ToolMetadata::new(
@@ -329,7 +329,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tool_metadata_generation() {
-        let server = MCPToolServer::new("test-server".to_string(), "1.0.0".to_string());
+        let server = McpToolServer::new("test-server".to_string(), "1.0.0".to_string());
         let metadata = server.generate_tool_metadata("TestNode").unwrap();
 
         assert_eq!(metadata.name, "test");
@@ -338,17 +338,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_list_tools_request() {
-        let server = MCPToolServer::new("test-server".to_string(), "1.0.0".to_string());
+        let server = McpToolServer::new("test-server".to_string(), "1.0.0".to_string());
         let node = Arc::new(TestNode::new("TestNode".to_string()));
         server.register_node_with_auto_metadata(node).await.unwrap();
 
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "test-123".to_string(),
         };
 
         let response = server.handle_request(request).await.unwrap();
         match response {
-            MCPResponse::Result {
+            McpResponse::Result {
                 result: ResponseResult::ListTools(tools_result),
                 ..
             } => {

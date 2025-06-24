@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "method")]
-pub enum MCPRequest {
+pub enum McpRequest {
     #[serde(rename = "initialize")]
     Initialize {
         id: String,
@@ -24,7 +24,7 @@ pub enum MCPRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum MCPResponse {
+pub enum McpResponse {
     #[serde(rename = "result")]
     Result {
         id: String,
@@ -33,7 +33,7 @@ pub enum MCPResponse {
     #[serde(rename = "error")]
     Error {
         id: String,
-        error: MCPError,
+        error: McpError,
     },
 }
 
@@ -154,7 +154,7 @@ pub struct ResourceReference {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MCPError {
+pub struct McpError {
     pub code: i32,
     pub message: String,
     pub data: Option<serde_json::Value>,
@@ -162,9 +162,9 @@ pub struct MCPError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MCPMessage {
-    Request(MCPRequest),
-    Response(MCPResponse),
+pub enum McpMessage {
+    Request(McpRequest),
+    Response(McpResponse),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -173,22 +173,22 @@ pub struct ToolCall {
     pub arguments: HashMap<String, serde_json::Value>,
 }
 
-impl MCPRequest {
+impl McpRequest {
     pub fn get_id(&self) -> Option<&str> {
         match self {
-            MCPRequest::Initialize { id, .. } => Some(id),
-            MCPRequest::ListTools { id } => Some(id),
-            MCPRequest::CallTool { id, .. } => Some(id),
-            MCPRequest::Initialized => None,
+            McpRequest::Initialize { id, .. } => Some(id),
+            McpRequest::ListTools { id } => Some(id),
+            McpRequest::CallTool { id, .. } => Some(id),
+            McpRequest::Initialized => None,
         }
     }
 }
 
-impl MCPResponse {
+impl McpResponse {
     pub fn get_id(&self) -> &str {
         match self {
-            MCPResponse::Result { id, .. } => id,
-            MCPResponse::Error { id, .. } => id,
+            McpResponse::Result { id, .. } => id,
+            McpResponse::Error { id, .. } => id,
         }
     }
 }
@@ -203,7 +203,7 @@ mod tests {
     
     #[test]
     fn test_mcp_request_initialize_serialization() {
-        let request = MCPRequest::Initialize {
+        let request = McpRequest::Initialize {
             id: "test-123".to_string(),
             params: InitializeParams {
                 protocol_version: "1.0".to_string(),
@@ -221,10 +221,10 @@ mod tests {
         };
 
         let serialized = serde_json::to_string(&request).unwrap();
-        let deserialized: MCPRequest = serde_json::from_str(&serialized).unwrap();
+        let deserialized: McpRequest = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            MCPRequest::Initialize { id, params } => {
+            McpRequest::Initialize { id, params } => {
                 assert_eq!(id, "test-123");
                 assert_eq!(params.protocol_version, "1.0");
                 assert_eq!(params.client_info.name, "test-client");
@@ -237,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_mcp_request_list_tools_serialization() {
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "tools-req-1".to_string(),
         };
 
@@ -245,9 +245,9 @@ mod tests {
         assert_eq!(json["method"], "tools/list");
         assert_eq!(json["id"], "tools-req-1");
 
-        let deserialized: MCPRequest = serde_json::from_value(json).unwrap();
+        let deserialized: McpRequest = serde_json::from_value(json).unwrap();
         match deserialized {
-            MCPRequest::ListTools { id } => {
+            McpRequest::ListTools { id } => {
                 assert_eq!(id, "tools-req-1");
             }
             _ => panic!("Wrong request type"),
@@ -260,7 +260,7 @@ mod tests {
         arguments.insert("text".to_string(), json!("Hello world"));
         arguments.insert("count".to_string(), json!(42));
 
-        let request = MCPRequest::CallTool {
+        let request = McpRequest::CallTool {
             id: "call-1".to_string(),
             params: ToolCallParams {
                 name: "analyze_text".to_string(),
@@ -269,10 +269,10 @@ mod tests {
         };
 
         let serialized = serde_json::to_string(&request).unwrap();
-        let deserialized: MCPRequest = serde_json::from_str(&serialized).unwrap();
+        let deserialized: McpRequest = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            MCPRequest::CallTool { id, params } => {
+            McpRequest::CallTool { id, params } => {
                 assert_eq!(id, "call-1");
                 assert_eq!(params.name, "analyze_text");
                 assert!(params.arguments.is_some());
@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     fn test_mcp_response_result_serialization() {
-        let response = MCPResponse::Result {
+        let response = McpResponse::Result {
             id: "resp-1".to_string(),
             result: ResponseResult::Initialize(InitializeResult {
                 protocol_version: "1.0".to_string(),
@@ -309,10 +309,10 @@ mod tests {
         };
 
         let serialized = serde_json::to_string(&response).unwrap();
-        let deserialized: MCPResponse = serde_json::from_str(&serialized).unwrap();
+        let deserialized: McpResponse = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            MCPResponse::Result { id, result } => {
+            McpResponse::Result { id, result } => {
                 assert_eq!(id, "resp-1");
                 match result {
                     ResponseResult::Initialize(init) => {
@@ -330,9 +330,9 @@ mod tests {
 
     #[test]
     fn test_mcp_response_error_serialization() {
-        let response = MCPResponse::Error {
+        let response = McpResponse::Error {
             id: "err-1".to_string(),
-            error: MCPError {
+            error: McpError {
                 code: -32601,
                 message: "Method not found".to_string(),
                 data: Some(json!({"method": "unknown_method"})),
@@ -340,10 +340,10 @@ mod tests {
         };
 
         let serialized = serde_json::to_string(&response).unwrap();
-        let deserialized: MCPResponse = serde_json::from_str(&serialized).unwrap();
+        let deserialized: McpResponse = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            MCPResponse::Error { id, error } => {
+            McpResponse::Error { id, error } => {
                 assert_eq!(id, "err-1");
                 assert_eq!(error.code, -32601);
                 assert_eq!(error.message, "Method not found");
@@ -435,27 +435,27 @@ mod tests {
     #[test]
     fn test_mcp_error_codes() {
         let errors = vec![
-            MCPError {
+            McpError {
                 code: -32700,
                 message: "Parse error".to_string(),
                 data: None,
             },
-            MCPError {
+            McpError {
                 code: -32600,
                 message: "Invalid Request".to_string(),
                 data: Some(json!({"reason": "missing field"})),
             },
-            MCPError {
+            McpError {
                 code: -32601,
                 message: "Method not found".to_string(),
                 data: None,
             },
-            MCPError {
+            McpError {
                 code: -32602,
                 message: "Invalid params".to_string(),
                 data: Some(json!({"param": "text", "reason": "required"})),
             },
-            MCPError {
+            McpError {
                 code: -32603,
                 message: "Internal error".to_string(),
                 data: None,
@@ -464,7 +464,7 @@ mod tests {
 
         for error in errors {
             let serialized = serde_json::to_string(&error).unwrap();
-            let deserialized: MCPError = serde_json::from_str(&serialized).unwrap();
+            let deserialized: McpError = serde_json::from_str(&serialized).unwrap();
             
             assert_eq!(deserialized.code, error.code);
             assert_eq!(deserialized.message, error.message);
@@ -474,13 +474,13 @@ mod tests {
 
     #[test]
     fn test_error_response_construction() {
-        let error = MCPError {
+        let error = McpError {
             code: -32601,
             message: "Method 'invalid_method' not found".to_string(),
             data: Some(json!({"available_methods": ["initialize", "tools/list", "tools/call"]})),
         };
 
-        let response = MCPResponse::Error {
+        let response = McpResponse::Error {
             id: "req-123".to_string(),
             error,
         };
@@ -498,7 +498,7 @@ mod tests {
     #[test]
     fn test_all_request_types() {
         let requests = vec![
-            MCPRequest::Initialize {
+            McpRequest::Initialize {
                 id: "init-1".to_string(),
                 params: InitializeParams {
                     protocol_version: "1.0".to_string(),
@@ -512,26 +512,26 @@ mod tests {
                     },
                 },
             },
-            MCPRequest::ListTools {
+            McpRequest::ListTools {
                 id: "list-1".to_string(),
             },
-            MCPRequest::CallTool {
+            McpRequest::CallTool {
                 id: "call-1".to_string(),
                 params: ToolCallParams {
                     name: "test_tool".to_string(),
                     arguments: None,
                 },
             },
-            MCPRequest::Initialized,
+            McpRequest::Initialized,
         ];
 
         for request in requests {
             let serialized = serde_json::to_string(&request).unwrap();
-            let deserialized: MCPRequest = serde_json::from_str(&serialized).unwrap();
+            let deserialized: McpRequest = serde_json::from_str(&serialized).unwrap();
             
             // Test get_id method
             match &request {
-                MCPRequest::Initialized => assert_eq!(request.get_id(), None),
+                McpRequest::Initialized => assert_eq!(request.get_id(), None),
                 _ => assert!(request.get_id().is_some()),
             }
             
@@ -582,13 +582,13 @@ mod tests {
         ];
 
         for result in results {
-            let response = MCPResponse::Result {
+            let response = McpResponse::Result {
                 id: "resp-1".to_string(),
                 result,
             };
             
             let serialized = serde_json::to_string(&response).unwrap();
-            let deserialized: MCPResponse = serde_json::from_str(&serialized).unwrap();
+            let deserialized: McpResponse = serde_json::from_str(&serialized).unwrap();
             
             assert_eq!(response.get_id(), "resp-1");
             
@@ -600,33 +600,33 @@ mod tests {
 
     #[test]
     fn test_mcp_message_enum() {
-        let request = MCPMessage::Request(MCPRequest::ListTools {
+        let request = McpMessage::Request(McpRequest::ListTools {
             id: "req-1".to_string(),
         });
 
-        let response = MCPMessage::Response(MCPResponse::Result {
+        let response = McpMessage::Response(McpResponse::Result {
             id: "resp-1".to_string(),
             result: ResponseResult::ListTools(ListToolsResult {
                 tools: vec![],
             }),
         });
 
-        // Test serialization of MCPMessage enum
+        // Test serialization of McpMessage enum
         let req_json = serde_json::to_string(&request).unwrap();
         let resp_json = serde_json::to_string(&response).unwrap();
 
-        let deserialized_req: MCPMessage = serde_json::from_str(&req_json).unwrap();
-        let deserialized_resp: MCPMessage = serde_json::from_str(&resp_json).unwrap();
+        let deserialized_req: McpMessage = serde_json::from_str(&req_json).unwrap();
+        let deserialized_resp: McpMessage = serde_json::from_str(&resp_json).unwrap();
 
         match deserialized_req {
-            MCPMessage::Request(MCPRequest::ListTools { id }) => {
+            McpMessage::Request(McpRequest::ListTools { id }) => {
                 assert_eq!(id, "req-1");
             }
             _ => panic!("Wrong message type"),
         }
 
         match deserialized_resp {
-            MCPMessage::Response(MCPResponse::Result { id, .. }) => {
+            McpMessage::Response(McpResponse::Result { id, .. }) => {
                 assert_eq!(id, "resp-1");
             }
             _ => panic!("Wrong message type"),
@@ -698,7 +698,7 @@ mod tests {
     #[test]
     fn test_request_id_invariant() {
         // All requests with IDs should have non-empty IDs
-        let request = MCPRequest::Initialize {
+        let request = McpRequest::Initialize {
             id: "".to_string(), // Empty ID - should be avoided in practice
             params: InitializeParams {
                 protocol_version: "1.0".to_string(),
@@ -721,7 +721,7 @@ mod tests {
     #[test]
     fn test_response_always_has_id() {
         // All responses must have an ID
-        let response = MCPResponse::Result {
+        let response = McpResponse::Result {
             id: "resp-123".to_string(),
             result: ResponseResult::ListTools(ListToolsResult {
                 tools: vec![],

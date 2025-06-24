@@ -1,17 +1,17 @@
 #[cfg(test)]
 mod tests {
-    use super::super::server::CustomerSupportMCPServer;
+    use super::super::server::CustomerSupportMcpServer;
     use workflow_engine_core::mcp::protocol::MCPRequest;
 
     #[tokio::test]
     async fn test_customer_support_server_creation() {
-        let server = CustomerSupportMCPServer::new().await.unwrap();
+        let server = CustomerSupportMcpServer::new().await.unwrap();
         assert_eq!(server.get_tool_count().await, 8); // All customer support tools
     }
 
     #[tokio::test]
     async fn test_server_has_expected_tools() {
-        let server = CustomerSupportMCPServer::new().await.unwrap();
+        let server = CustomerSupportMcpServer::new().await.unwrap();
         let tool_names = server.get_tool_names().await;
         
         let expected_tools = vec![
@@ -32,7 +32,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_tools_request() {
-        let server = CustomerSupportMCPServer::new().await.unwrap();
+        let server = CustomerSupportMcpServer::new().await.unwrap();
         
         let request = MCPRequest::ListTools {
             id: "test-123".to_string(),

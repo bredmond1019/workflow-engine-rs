@@ -8,16 +8,16 @@ use crate::connection_pool::ConnectionConfig;
 use crate::transport::TransportType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MCPConfig {
+pub struct McpConfig {
     pub enabled: bool,
     pub client_name: String,
     pub client_version: String,
     pub connection_pool: ConnectionConfig,
-    pub servers: HashMap<String, MCPServerConfig>,
+    pub servers: HashMap<String, McpServerConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MCPServerConfig {
+pub struct McpServerConfig {
     pub name: String,
     pub enabled: bool,
     pub transport: TransportType,
@@ -25,7 +25,7 @@ pub struct MCPServerConfig {
     pub retry_on_failure: bool,
 }
 
-impl MCPConfig {
+impl McpConfig {
     pub fn from_env() -> Result<Self, WorkflowError> {
         let enabled = Self::get_enabled_from_env();
         let client_name = Self::get_client_name_from_env();
@@ -33,7 +33,7 @@ impl MCPConfig {
         let connection_pool = Self::get_connection_pool_from_env();
         let servers = Self::load_servers_from_env()?;
 
-        Ok(MCPConfig {
+        Ok(McpConfig {
             enabled,
             client_name,
             client_version,
@@ -108,7 +108,7 @@ impl MCPConfig {
             .unwrap_or(fallback)
     }
 
-    fn load_servers_from_env() -> Result<HashMap<String, MCPServerConfig>, WorkflowError> {
+    fn load_servers_from_env() -> Result<HashMap<String, McpServerConfig>, WorkflowError> {
         let mut servers = HashMap::new();
 
         Self::load_customer_support_server(&mut servers)?;
@@ -118,7 +118,7 @@ impl MCPConfig {
     }
 
     fn load_customer_support_server(
-        servers: &mut HashMap<String, MCPServerConfig>,
+        servers: &mut HashMap<String, McpServerConfig>,
     ) -> Result<(), WorkflowError> {
         if !Self::get_env_var_or_default("MCP_CUSTOMER_SUPPORT_ENABLED", "false", false) {
             return Ok(());
@@ -128,7 +128,7 @@ impl MCPConfig {
 
         servers.insert(
             "customer-support".to_string(),
-            MCPServerConfig {
+            McpServerConfig {
                 name: "customer-support".to_string(),
                 enabled: true,
                 transport,
@@ -176,7 +176,7 @@ impl MCPConfig {
     }
 
     fn load_external_servers(
-        servers: &mut HashMap<String, MCPServerConfig>,
+        servers: &mut HashMap<String, McpServerConfig>,
     ) -> Result<(), WorkflowError> {
         let mut server_index = 1;
 
@@ -198,7 +198,7 @@ impl MCPConfig {
     fn create_external_server_config(
         server_index: u32,
         name: &str,
-    ) -> Result<MCPServerConfig, WorkflowError> {
+    ) -> Result<McpServerConfig, WorkflowError> {
         let uri_key = format!("MCP_EXTERNAL_SERVER_{}_URI", server_index);
         let transport_key = format!("MCP_EXTERNAL_SERVER_{}_TRANSPORT", server_index);
 
@@ -210,7 +210,7 @@ impl MCPConfig {
         let transport =
             Self::create_transport_for_external_server(server_index, &transport_str, uri)?;
 
-        Ok(MCPServerConfig {
+        Ok(McpServerConfig {
             name: name.to_string(),
             enabled: true,
             transport,
@@ -262,11 +262,11 @@ impl MCPConfig {
         }
     }
 
-    pub fn get_server_config(&self, server_name: &str) -> Option<&MCPServerConfig> {
+    pub fn get_server_config(&self, server_name: &str) -> Option<&McpServerConfig> {
         self.servers.get(server_name)
     }
 
-    pub fn get_enabled_servers(&self) -> Vec<&MCPServerConfig> {
+    pub fn get_enabled_servers(&self) -> Vec<&McpServerConfig> {
         self.servers
             .values()
             .filter(|config| config.enabled)
@@ -281,7 +281,7 @@ impl MCPConfig {
     }
 }
 
-impl Default for MCPConfig {
+impl Default for McpConfig {
     fn default() -> Self {
         Self {
             enabled: false,
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_mcp_config_default() {
-        let config = MCPConfig::default();
+        let config = McpConfig::default();
         assert!(!config.enabled);
         assert_eq!(config.client_name, "ai-workflow-system");
         assert_eq!(config.client_version, "1.0.0");
@@ -388,7 +388,7 @@ mod tests {
             "MCP_EXTERNAL_SERVER_3_URI",
             "MCP_EXTERNAL_SERVER_3_TRANSPORT",
         ], || {
-            let config = MCPConfig::from_env().unwrap();
+            let config = McpConfig::from_env().unwrap();
             assert!(!config.enabled);
         });
     }
@@ -401,7 +401,7 @@ mod tests {
             ("MCP_CLIENT_NAME", "test-client"),
             ("MCP_CLIENT_VERSION", "2.0.0"),
         ], || {
-            let config = MCPConfig::from_env().unwrap();
+            let config = McpConfig::from_env().unwrap();
             assert!(config.enabled);
             assert_eq!(config.client_name, "test-client");
             assert_eq!(config.client_version, "2.0.0");
@@ -432,7 +432,7 @@ mod tests {
                 ("MCP_CUSTOMER_SUPPORT_COMMAND", "python3"),
                 ("MCP_CUSTOMER_SUPPORT_ARGS", "scripts/server.py --port 8080"),
             ], || {
-                let config = MCPConfig::from_env().unwrap();
+                let config = McpConfig::from_env().unwrap();
 
                 assert!(config.is_server_enabled("customer-support"));
                 let server_config = config.get_server_config("customer-support").unwrap();
@@ -467,7 +467,7 @@ mod tests {
                 ("MCP_EXTERNAL_SERVER_1_URI", "ws://localhost:9090/mcp"),
                 ("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket"),
             ], || {
-                let config = MCPConfig::from_env().unwrap();
+                let config = McpConfig::from_env().unwrap();
 
                 assert!(config.is_server_enabled("test-server"));
                 let server_config = config.get_server_config("test-server").unwrap();
@@ -508,7 +508,7 @@ mod tests {
                 ("MCP_EXTERNAL_SERVER_2_URI", "ws://localhost:8081"),
                 ("MCP_EXTERNAL_SERVER_2_TRANSPORT", "websocket"),
             ], || {
-                let config = MCPConfig::from_env().unwrap();
+                let config = McpConfig::from_env().unwrap();
                 let enabled_servers = config.get_enabled_servers();
 
                 assert_eq!(enabled_servers.len(), 1);

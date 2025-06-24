@@ -11,7 +11,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use futures_util::{SinkExt, StreamExt};
 use serde::{Serialize, Deserialize};
 
-use crate::protocol::{MCPMessage, MCPRequest, MCPResponse};
+use crate::protocol::{McpMessage, McpRequest, McpResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TransportType {
@@ -89,10 +89,10 @@ impl Default for HttpPoolConfig {
 }
 
 #[async_trait]
-pub trait MCPTransport: Send + Sync {
+pub trait McpTransport: Send + Sync {
     async fn connect(&mut self) -> Result<(), TransportError>;
-    async fn send(&mut self, message: MCPRequest) -> Result<(), TransportError>;
-    async fn receive(&mut self) -> Result<MCPResponse, TransportError>;
+    async fn send(&mut self, message: McpRequest) -> Result<(), TransportError>;
+    async fn receive(&mut self) -> Result<McpResponse, TransportError>;
     async fn disconnect(&mut self) -> Result<(), TransportError>;
     
     /// Check if the transport is currently connected
@@ -370,7 +370,7 @@ mod tests {
     #[tokio::test]
     async fn test_websocket_transport_send_when_disconnected() {
         let mut transport = WebSocketTransport::new("ws://localhost:8080".to_string());
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "test-1".to_string(),
         };
         
@@ -442,7 +442,7 @@ mod tests {
             vec!["-m".to_string(), "mcp_server".to_string()],
         );
         
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "test-1".to_string(),
         };
         
@@ -812,7 +812,7 @@ impl StdioTransport {
 }
 
 #[async_trait]
-impl MCPTransport for StdioTransport {
+impl McpTransport for StdioTransport {
     async fn connect(&mut self) -> Result<(), TransportError> {
         self.metrics.total_connections += 1;
         
@@ -852,7 +852,7 @@ impl MCPTransport for StdioTransport {
         }
     }
 
-    async fn send(&mut self, message: MCPRequest) -> Result<(), TransportError> {
+    async fn send(&mut self, message: McpRequest) -> Result<(), TransportError> {
         let writer = self.writer.as_mut()
             .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
 
@@ -868,7 +868,7 @@ impl MCPTransport for StdioTransport {
         Ok(())
     }
 
-    async fn receive(&mut self) -> Result<MCPResponse, TransportError> {
+    async fn receive(&mut self) -> Result<McpResponse, TransportError> {
         let reader = self.reader.as_mut()
             .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
 
@@ -879,7 +879,7 @@ impl MCPTransport for StdioTransport {
             return Err(TransportError::ConnectionError("Connection closed".to_string()));
         }
 
-        let response: MCPResponse = serde_json::from_str(&line)?;
+        let response: McpResponse = serde_json::from_str(&line)?;
         Ok(response)
     }
 
@@ -1000,7 +1000,7 @@ impl WebSocketTransport {
 }
 
 #[async_trait]
-impl MCPTransport for WebSocketTransport {
+impl McpTransport for WebSocketTransport {
     async fn connect(&mut self) -> Result<(), TransportError> {
         self.metrics.total_connections += 1;
         
@@ -1024,7 +1024,7 @@ impl MCPTransport for WebSocketTransport {
         }
     }
 
-    async fn send(&mut self, message: MCPRequest) -> Result<(), TransportError> {
+    async fn send(&mut self, message: McpRequest) -> Result<(), TransportError> {
         let stream = self.stream.as_mut()
             .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
 
@@ -1037,7 +1037,7 @@ impl MCPTransport for WebSocketTransport {
         Ok(())
     }
 
-    async fn receive(&mut self) -> Result<MCPResponse, TransportError> {
+    async fn receive(&mut self) -> Result<McpResponse, TransportError> {
         let stream = self.stream.as_mut()
             .ok_or_else(|| TransportError::ConnectionError("Not connected".to_string()))?;
 
@@ -1048,7 +1048,7 @@ impl MCPTransport for WebSocketTransport {
                     self.metrics.total_messages_received += 1;
                     self.metrics.total_bytes_received += text.len() as u64;
                     
-                    let response: MCPResponse = serde_json::from_str(&text)?;
+                    let response: McpResponse = serde_json::from_str(&text)?;
                     Ok(response)
                 }
                 Message::Close(_) => {
@@ -1184,7 +1184,7 @@ impl HttpTransport {
     }
     
     /// Send a request and wait for response (for HTTP-based MCP communication)
-    pub async fn send_request(&self, request: MCPRequest) -> Result<MCPResponse, TransportError> {
+    pub async fn send_request(&self, request: McpRequest) -> Result<McpResponse, TransportError> {
         let mut request_builder = self.client
             .post(&format!("{}/mcp", self.base_url))
             .json(&request);
@@ -1202,19 +1202,19 @@ impl HttpTransport {
             ));
         }
 
-        let mcp_response: MCPResponse = response.json().await?;
+        let mcp_response: McpResponse = response.json().await?;
 
         Ok(mcp_response)
     }
 }
 
 #[async_trait]
-impl MCPTransport for HttpTransport {
+impl McpTransport for HttpTransport {
     async fn connect(&mut self) -> Result<(), TransportError> {
         Ok(())
     }
 
-    async fn send(&mut self, message: MCPRequest) -> Result<(), TransportError> {
+    async fn send(&mut self, message: McpRequest) -> Result<(), TransportError> {
         let mut request_builder = self.client
             .post(&format!("{}/mcp", self.base_url))
             .json(&message);
@@ -1235,7 +1235,7 @@ impl MCPTransport for HttpTransport {
         Ok(())
     }
 
-    async fn receive(&mut self) -> Result<MCPResponse, TransportError> {
+    async fn receive(&mut self) -> Result<McpResponse, TransportError> {
         Err(TransportError::ProtocolError(
             "HTTP transport does not support receive - use request/response pattern".to_string()
         ))

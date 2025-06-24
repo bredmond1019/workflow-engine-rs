@@ -258,9 +258,9 @@
 //! ```rust
 //! #[tokio::test]
 //! async fn test_mcp_tool_integration() {
-//!     let server = CustomerSupportMCPServer::new().await?;
+//!     let server = CustomerSupportMcpServer::new().await?;
 //!     
-//!     let request = MCPRequest::CallTool {
+//!     let request = McpRequest::CallTool {
 //!         id: "test-001".to_string(),
 //!         params: ToolCallParams {
 //!             name: "validate_ticket".to_string(),
@@ -368,9 +368,9 @@
 use workflow_engine_core::{error::WorkflowError, workflow::Workflow};
 use crate::workflows::event_integration::{WorkflowEventExt, TaskContextEventExt, WorkflowMcpExt};
 use workflow_engine_mcp::{
-    config::MCPConfig,
-    connection_pool::{ConnectionConfig, MCPConnectionPool},
-    server::customer_support::CustomerSupportMCPServer,
+    config::McpConfig,
+    connection_pool::{ConnectionConfig, McpConnectionPool},
+    server::customer_support::CustomerSupportMcpServer,
     transport::{TransportType, ReconnectConfig},
 };
 use crate::workflows::{customer_support_workflow::create_customer_care_workflow, demos::{timing::*, utils::*}};
@@ -417,7 +417,7 @@ async fn demo_mcp_server_creation() {
     server_logger.execute_with_logging(
         "initializing customer support MCP server components",
         || async {
-            match CustomerSupportMCPServer::new().await {
+            match CustomerSupportMcpServer::new().await {
                 Ok(mcp_server) => {
                     display_server_info(&mcp_server).await;
                     test_list_tools(&mcp_server).await;
@@ -464,9 +464,9 @@ async fn demo_mcp_configuration() {
     config_logger.execute_with_logging(
         "loading and displaying MCP configuration settings",
         || async {
-            let mcp_config = MCPConfig::from_env().unwrap_or_else(|_| {
+            let mcp_config = McpConfig::from_env().unwrap_or_else(|_| {
                 println!("   ℹ️  Using default MCP configuration (MCP disabled by default)");
-                MCPConfig::default()
+                McpConfig::default()
             });
 
             println!("   📊 MCP Enabled: {}", mcp_config.enabled);
@@ -512,7 +512,7 @@ async fn demo_connection_pool() {
     registration_logger.execute_with_logging(
         "registering demo server in connection pool",
         || async {
-            let connection_pool = MCPConnectionPool::new(pool_config);
+            let connection_pool = McpConnectionPool::new(pool_config);
 
             connection_pool
                 .register_server(
@@ -570,7 +570,7 @@ async fn demo_external_mcp_server(workflow: &Workflow) {
     ).await;
 }
 
-async fn display_server_info(mcp_server: &CustomerSupportMCPServer) {
+async fn display_server_info(mcp_server: &CustomerSupportMcpServer) {
     println!("   📊 Server Information:");
     println!(
         "   🔧 Available tools: {}",
@@ -582,12 +582,12 @@ async fn display_server_info(mcp_server: &CustomerSupportMCPServer) {
     reading_pause().await;
 }
 
-async fn test_list_tools(mcp_server: &CustomerSupportMCPServer) {
+async fn test_list_tools(mcp_server: &CustomerSupportMcpServer) {
     let list_logger = NodeLogger::new("Tool Listing");
     list_logger.execute_with_logging(
         "fetching available MCP tools from server",
         || async {
-            let list_request = workflow_engine_mcp::protocol::MCPRequest::ListTools {
+            let list_request = workflow_engine_mcp::protocol::McpRequest::ListTools {
                 id: "demo-list-001".to_string(),
             };
 
@@ -595,7 +595,7 @@ async fn test_list_tools(mcp_server: &CustomerSupportMCPServer) {
                 Ok(response) => {
                     println!("   ✅ Successfully listed MCP tools");
                     match response {
-                        workflow_engine_mcp::protocol::MCPResponse::Result {
+                        workflow_engine_mcp::protocol::McpResponse::Result {
                             result:
                                 workflow_engine_mcp::protocol::ResponseResult::ListTools(
                                     tools_result,
@@ -623,14 +623,14 @@ async fn test_list_tools(mcp_server: &CustomerSupportMCPServer) {
     ).await;
 }
 
-async fn test_tool_call(mcp_server: &CustomerSupportMCPServer) {
+async fn test_tool_call(mcp_server: &CustomerSupportMcpServer) {
     subsection_break("🔧 Testing MCP Tool Call: validate_ticket").await;
 
     let tool_logger = NodeLogger::new("Tool Call");
     tool_logger.execute_with_logging(
         "preparing and executing validate_ticket tool call",
         || async {
-            let call_request = workflow_engine_mcp::protocol::MCPRequest::CallTool {
+            let call_request = workflow_engine_mcp::protocol::McpRequest::CallTool {
                 id: "demo-call-001".to_string(),
                 params: workflow_engine_mcp::protocol::ToolCallParams {
                     name: "validate_ticket".to_string(),
@@ -659,7 +659,7 @@ async fn test_tool_call(mcp_server: &CustomerSupportMCPServer) {
                         tool_elapsed.as_secs_f64()
                     );
                     match response {
-                        workflow_engine_mcp::protocol::MCPResponse::Result {
+                        workflow_engine_mcp::protocol::McpResponse::Result {
                             result:
                                 workflow_engine_mcp::protocol::ResponseResult::CallTool(
                                     call_result,

@@ -6,29 +6,29 @@ use uuid::Uuid;
 
 use workflow_engine_core::error::WorkflowError;
 use crate::protocol::{
-    CallToolResult, ClientCapabilities, ClientInfo, InitializeParams, MCPRequest, MCPResponse,
+    CallToolResult, ClientCapabilities, ClientInfo, InitializeParams, McpRequest, McpResponse,
     ResponseResult, ToolCallParams, ToolDefinition,
 };
-use crate::transport::{MCPTransport, StdioTransport, WebSocketTransport};
+use crate::transport::{McpTransport, StdioTransport, WebSocketTransport};
 
-pub struct MCPConnection {
-    pub transport: Box<dyn MCPTransport>,
+pub struct McpConnection {
+    pub transport: Box<dyn McpTransport>,
     pub is_connected: bool,
     pub is_initialized: bool,
-    pending_requests: Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<MCPResponse>>>>,
+    pending_requests: Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<McpResponse>>>>,
 }
 
-impl std::fmt::Debug for MCPConnection {
+impl std::fmt::Debug for McpConnection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MCPConnection")
+        f.debug_struct("McpConnection")
             .field("is_connected", &self.is_connected)
             .field("is_initialized", &self.is_initialized)
             .finish()
     }
 }
 
-impl MCPConnection {
-    pub fn new(transport: Box<dyn MCPTransport>) -> Self {
+impl McpConnection {
+    pub fn new(transport: Box<dyn McpTransport>) -> Self {
         Self {
             transport,
             is_connected: false,
@@ -39,8 +39,8 @@ impl MCPConnection {
 
     pub async fn send_request(
         &mut self,
-        request: MCPRequest,
-    ) -> Result<MCPResponse, WorkflowError> {
+        request: McpRequest,
+    ) -> Result<McpResponse, WorkflowError> {
         let id = request
             .get_id()
             .map(|id| id.to_string())
