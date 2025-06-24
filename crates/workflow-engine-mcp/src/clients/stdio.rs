@@ -49,8 +49,13 @@ impl McpClient for StdioMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::McpConnectionError {
+                .ok_or_else(|| WorkflowError::MCPConnectionError {
                     message: "Not connected".to_string(),
+                    server_name: self.command.clone(),
+                    transport_type: "stdio".to_string(),
+                    endpoint: self.command.clone(),
+                    retry_count: 0,
+                    source: None,
                 })?;
 
         let request = McpRequest::Initialize {
@@ -84,9 +89,17 @@ impl McpClient for StdioMcpClient {
             }
             McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("Initialize failed: {}", error.message),
+                server_name: self.command.clone(),
+                operation: "initialize".to_string(),
+                source: None,
             }),
             _ => Err(WorkflowError::MCPProtocolError {
                 message: "Unexpected response to initialize".to_string(),
+                server_name: self.command.clone(),
+                expected: "InitializeResult".to_string(),
+                received: "unknown response type".to_string(),
+                message_type: "response".to_string(),
+                source: None,
             }),
         }
     }
@@ -95,13 +108,21 @@ impl McpClient for StdioMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::McpConnectionError {
+                .ok_or_else(|| WorkflowError::MCPConnectionError {
                     message: "Not connected".to_string(),
+                    server_name: self.command.clone(),
+                    transport_type: "stdio".to_string(),
+                    endpoint: self.command.clone(),
+                    retry_count: 0,
+                    source: None,
                 })?;
 
         if !connection.is_initialized {
             return Err(WorkflowError::MCPError {
                 message: "Client not initialized".to_string(),
+                server_name: self.command.clone(),
+                operation: "list_tools".to_string(),
+                source: None,
             });
         }
 
@@ -117,9 +138,17 @@ impl McpClient for StdioMcpClient {
             } => Ok(tools_result.tools),
             McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("List tools failed: {}", error.message),
+                server_name: self.command.clone(),
+                operation: "list_tools".to_string(),
+                source: None,
             }),
             _ => Err(WorkflowError::MCPProtocolError {
                 message: "Unexpected response to list_tools".to_string(),
+                server_name: self.command.clone(),
+                expected: "ListToolsResult".to_string(),
+                received: "unknown response type".to_string(),
+                message_type: "response".to_string(),
+                source: None,
             }),
         }
     }
@@ -132,13 +161,21 @@ impl McpClient for StdioMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::McpConnectionError {
+                .ok_or_else(|| WorkflowError::MCPConnectionError {
                     message: "Not connected".to_string(),
+                    server_name: self.command.clone(),
+                    transport_type: "stdio".to_string(),
+                    endpoint: self.command.clone(),
+                    retry_count: 0,
+                    source: None,
                 })?;
 
         if !connection.is_initialized {
             return Err(WorkflowError::MCPError {
                 message: "Client not initialized".to_string(),
+                server_name: self.command.clone(),
+                operation: "list_tools".to_string(),
+                source: None,
             });
         }
 
@@ -158,9 +195,17 @@ impl McpClient for StdioMcpClient {
             } => Ok(call_result),
             McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
                 message: format!("Tool call failed: {}", error.message),
+                server_name: self.command.clone(),
+                operation: format!("call_tool:{}", name),
+                source: None,
             }),
             _ => Err(WorkflowError::MCPProtocolError {
                 message: "Unexpected response to call_tool".to_string(),
+                server_name: self.command.clone(),
+                expected: "CallToolResult".to_string(),
+                received: "unknown response type".to_string(),
+                message_type: "response".to_string(),
+                source: None,
             }),
         }
     }

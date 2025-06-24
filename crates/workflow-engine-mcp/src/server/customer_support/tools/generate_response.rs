@@ -74,18 +74,30 @@ impl Node for GenerateCustomerResponseNode {
             .get_data::<CustomerCareEventData>("customer_event")?
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing customer_event data".to_string(),
+                field: "customer_event".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in generate_response node".to_string(),
             })?;
 
         let intent = task_context
             .get_data::<String>("intent")?
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing intent data".to_string(),
+                field: "intent".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in generate_response node".to_string(),
             })?;
 
         let reasoning = task_context
             .get_data::<String>("reasoning")?
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing reasoning data".to_string(),
+                field: "reasoning".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in generate_response node".to_string(),
             })?;
 
         let response = self.generate_response(customer_event, &intent, &reasoning)?;

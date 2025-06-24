@@ -35,12 +35,20 @@ impl EscalateTicketNode {
         if escalation_reason.trim().is_empty() {
             return Err(WorkflowError::ValidationError {
                 message: "Escalation reason cannot be empty".to_string(),
+                field: "escalation_reason".to_string(),
+                value: Some(escalation_reason.to_string()),
+                constraint: "non-empty string".to_string(),
+                context: "in escalate_ticket validation".to_string(),
             });
         }
         
         if escalation_reason.len() < 10 {
             return Err(WorkflowError::ValidationError {
                 message: "Escalation reason must be at least 10 characters long".to_string(),
+                field: "escalation_reason".to_string(),
+                value: Some(escalation_reason.to_string()),
+                constraint: "minimum 10 characters".to_string(),
+                context: "in escalate_ticket validation".to_string(),
             });
         }
         
@@ -304,6 +312,10 @@ impl Node for EscalateTicketNode {
             .and_then(|v| v["ticket_id"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: ticket_id".to_string(),
+                field: "ticket_id".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in escalate_ticket node".to_string(),
             })?.to_string();
             
         let escalation_reason = context_data
@@ -311,6 +323,10 @@ impl Node for EscalateTicketNode {
             .and_then(|v| v["escalation_reason"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: escalation_reason".to_string(),
+                field: "escalation_reason".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in escalate_ticket node".to_string(),
             })?.to_string();
         
         let target_team = context_data

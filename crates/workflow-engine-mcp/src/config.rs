@@ -171,6 +171,9 @@ impl McpConfig {
             }
             _ => Err(WorkflowError::MCPError {
                 message: "Invalid transport type for customer support server".to_string(),
+                server_name: "customer-support".to_string(),
+                operation: "load_transport".to_string(),
+                source: None,
             }),
         }
     }
@@ -204,6 +207,9 @@ impl McpConfig {
 
         let uri = env::var(&uri_key).map_err(|_| WorkflowError::MCPError {
             message: format!("Missing URI for external server {}", name),
+            server_name: name.to_string(),
+            operation: "load_external_server".to_string(),
+            source: None,
         })?;
 
         let transport_str = env::var(&transport_key).unwrap_or_else(|_| "websocket".to_string());
@@ -258,6 +264,9 @@ impl McpConfig {
                     "Invalid transport type '{}' for server {}",
                     transport_str, server_index
                 ),
+                server_name: format!("external-server-{}", server_index),
+                operation: "create_transport".to_string(),
+                source: None,
             }),
         }
     }

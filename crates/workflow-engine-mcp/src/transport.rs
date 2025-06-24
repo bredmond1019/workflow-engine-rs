@@ -417,20 +417,20 @@ impl workflow_engine_core::error::ErrorExt for TransportError {
 // Convert TransportError to WorkflowError
 impl From<TransportError> for workflow_engine_core::error::WorkflowError {
     fn from(err: TransportError) -> Self {
-        match err {
+        match &err {
             TransportError::IoError { message, operation, .. } => {
                 workflow_engine_core::error::WorkflowError::MCPTransportError {
                     message: format!("I/O error during {}: {}", operation, message),
                     server_name: "unknown".to_string(),
                     transport_type: "stdio".to_string(),
-                    operation,
+                    operation: operation.clone(),
                     source: Some(Box::new(err)),
                 }
             },
             TransportError::SerializationError { message, data_type, operation, .. } => {
                 workflow_engine_core::error::WorkflowError::SerializationError {
                     message: format!("MCP serialization error for {}: {}", data_type, message),
-                    type_name: data_type,
+                    type_name: data_type.clone(),
                     context: format!("during MCP {}", operation),
                     source: None, // Can't extract serde_json::Error due to Box constraints
                 }
@@ -440,7 +440,7 @@ impl From<TransportError> for workflow_engine_core::error::WorkflowError {
                     message: format!("WebSocket error during {}: {}", operation, message),
                     server_name: "unknown".to_string(),
                     transport_type: "WebSocket".to_string(),
-                    endpoint,
+                    endpoint: endpoint.clone(),
                     retry_count: 0,
                     source: Some(Box::new(err)),
                 }
@@ -449,29 +449,29 @@ impl From<TransportError> for workflow_engine_core::error::WorkflowError {
                 workflow_engine_core::error::WorkflowError::ApiError {
                     message: format!("HTTP transport error during {}: {}", operation, message),
                     service: "mcp_server".to_string(),
-                    endpoint,
-                    status_code,
+                    endpoint: endpoint.clone(),
+                    status_code: *status_code,
                     retry_count: 0,
                     source: Some(Box::new(err)),
                 }
             },
             TransportError::ConnectionError { message, endpoint, transport_type, retry_count } => {
                 workflow_engine_core::error::WorkflowError::MCPConnectionError {
-                    message,
+                    message: message.clone(),
                     server_name: "unknown".to_string(),
-                    transport_type,
-                    endpoint,
-                    retry_count,
+                    transport_type: transport_type.clone(),
+                    endpoint: endpoint.clone(),
+                    retry_count: *retry_count,
                     source: Some(Box::new(err)),
                 }
             },
             TransportError::ProtocolError { message, operation, expected, received } => {
                 workflow_engine_core::error::WorkflowError::MCPProtocolError {
-                    message,
+                    message: message.clone(),
                     server_name: "unknown".to_string(),
-                    expected,
-                    received,
-                    message_type: operation,
+                    expected: expected.clone(),
+                    received: received.clone(),
+                    message_type: operation.clone(),
                     source: Some(Box::new(err)),
                 }
             },
@@ -543,8 +543,8 @@ mod tests {
         // HTTP transport doesn't support receive
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ProtocolError(msg) => {
-                assert!(msg.contains("HTTP transport does not support receive"));
+            TransportError::ProtocolError { message, .. } => {
+                assert!(message.contains("HTTP transport does not support receive"));
             }
             _ => panic!("Expected ProtocolError"),
         }
@@ -641,8 +641,8 @@ mod tests {
         let result = transport.send(request).await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -655,8 +655,8 @@ mod tests {
         let result = transport.receive().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -669,8 +669,8 @@ mod tests {
         let result = transport.ping().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -713,8 +713,8 @@ mod tests {
         let result = transport.send(request).await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -730,8 +730,8 @@ mod tests {
         let result = transport.receive().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -762,8 +762,8 @@ mod tests {
         let result = transport.ping().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Not connected");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Not connected");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -856,11 +856,21 @@ mod tests {
         );
         assert!(format!("{}", serialization_error).contains("Serialization error"));
 
-        let connection_error = TransportError::ConnectionError("Test connection error".to_string());
-        assert_eq!(format!("{}", connection_error), "Connection error: Test connection error");
+        let connection_error = TransportError::connection_error(
+            "Test connection error",
+            "test-endpoint",
+            "test",
+            0
+        );
+        assert!(format!("{}", connection_error).contains("Test connection error"));
 
-        let protocol_error = TransportError::ProtocolError("Test protocol error".to_string());
-        assert_eq!(format!("{}", protocol_error), "Protocol error: Test protocol error");
+        let protocol_error = TransportError::protocol_error(
+            "Test protocol error",
+            "test-operation",
+            "expected",
+            "received"
+        );
+        assert!(format!("{}", protocol_error).contains("Test protocol error"));
     }
 
     #[test]
@@ -987,8 +997,8 @@ mod tests {
         let result = transport.attempt_restart().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Process restart limit reached");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Process restart limit reached");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -1006,8 +1016,8 @@ mod tests {
         let result = transport.attempt_reconnect().await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            TransportError::ConnectionError(msg) => {
-                assert_eq!(msg, "Reconnection limit reached");
+            TransportError::ConnectionError { message, .. } => {
+                assert_eq!(message, "Reconnection limit reached");
             }
             _ => panic!("Expected ConnectionError"),
         }
@@ -1317,7 +1327,12 @@ impl McpTransport for WebSocketTransport {
             }
             Err(e) => {
                 self.metrics.failed_connections += 1;
-                let error = TransportError::WebSocketError(e);
+                let error = TransportError::websocket_error(
+                    "Failed to connect",
+                    self.url.clone(),
+                    "connect",
+                    e
+                );
                 self.last_error = Some(error.to_string());
                 Err(error)
             }
@@ -1362,7 +1377,12 @@ impl McpTransport for WebSocketTransport {
                     Ok(response)
                 }
                 Message::Close(_) => {
-                    Err(TransportError::ConnectionError("Connection closed".to_string()))
+                    Err(TransportError::connection_error(
+                        "Connection closed",
+                        self.url.clone(),
+                        "websocket",
+                        self.reconnect_attempts
+                    ))
                 }
                 Message::Ping(_) => {
                     // Handle ping frames automatically
@@ -1372,10 +1392,20 @@ impl McpTransport for WebSocketTransport {
                     // Handle pong frames automatically
                     self.receive().await
                 }
-                _ => Err(TransportError::ProtocolError("Unexpected message type".to_string())),
+                _ => Err(TransportError::protocol_error(
+                    "Unexpected message type",
+                    "receive",
+                    "Text message",
+                    format!("{:?}", msg)
+                )),
             }
         } else {
-            Err(TransportError::ConnectionError("Connection closed".to_string()))
+            Err(TransportError::connection_error(
+                "Connection closed",
+                self.url.clone(),
+                "websocket",
+                self.reconnect_attempts
+            ))
         }
     }
 
@@ -1450,12 +1480,22 @@ impl McpTransport for WebSocketTransport {
                     _ => continue,
                 }
             }
-            Err(TransportError::ConnectionError("Connection closed during ping".to_string()))
+            Err(TransportError::connection_error(
+                "Connection closed during ping",
+                self.url.clone(),
+                "websocket",
+                self.reconnect_attempts
+            ))
         }).await;
         
         match result {
             Ok(_) => Ok(start.elapsed()),
-            Err(_) => Err(TransportError::ConnectionError("Ping timeout".to_string())),
+            Err(_) => Err(TransportError::connection_error(
+                "Ping timeout",
+                self.url.clone(),
+                "websocket",
+                self.reconnect_attempts
+            )),
         }
     }
     
@@ -1517,13 +1557,12 @@ impl HttpTransport {
         let response = request_builder.send().await?;
 
         if !response.status().is_success() {
-            return Err(TransportError::HttpError {
-                message: format!("HTTP error: {}", response.status()),
-                endpoint: self.base_url.clone(),
-                status_code: Some(response.status().as_u16()),
-                operation: "send_request".to_string(),
-                source: None,
-            });
+            return Err(TransportError::connection_error(
+                format!("HTTP error: {}", response.status()),
+                self.base_url.clone(),
+                "http",
+                0
+            ));
         }
 
         let mcp_response: McpResponse = response.json().await?;
@@ -1551,21 +1590,23 @@ impl McpTransport for HttpTransport {
         let response = request_builder.send().await?;
 
         if !response.status().is_success() {
-            return Err(TransportError::HttpError {
-                message: format!("HTTP error: {}", response.status()),
-                endpoint: self.base_url.clone(),
-                status_code: Some(response.status().as_u16()),
-                operation: "send_request".to_string(),
-                source: None,
-            });
+            return Err(TransportError::connection_error(
+                format!("HTTP error: {}", response.status()),
+                self.base_url.clone(),
+                "http",
+                0
+            ));
         }
 
         Ok(())
     }
 
     async fn receive(&mut self) -> Result<McpResponse, TransportError> {
-        Err(TransportError::ProtocolError(
-            "HTTP transport does not support receive - use request/response pattern".to_string()
+        Err(TransportError::protocol_error(
+            "HTTP transport does not support receive - use request/response pattern",
+            "receive",
+            "response",
+            "not supported"
         ))
     }
 
@@ -1596,7 +1637,13 @@ impl McpTransport for HttpTransport {
         let response = self.client.get(&format!("{}/health", self.base_url)).send().await;
         match response {
             Ok(_) => Ok(start.elapsed()),
-            Err(e) => Err(TransportError::HttpError(e)),
+            Err(e) => Err(TransportError::http_error(
+                "Health check failed",
+                self.base_url.clone(),
+                "ping",
+                None,
+                e
+            )),
         }
     }
     

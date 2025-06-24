@@ -35,6 +35,10 @@ impl Node for QueryRouterNode {
         if event_data.user_query.trim().is_empty() {
             return Err(WorkflowError::ValidationError {
                 message: "User query cannot be empty".to_string(),
+                field: "user_query".to_string(),
+                value: Some(event_data.user_query.clone()),
+                constraint: "non-empty string".to_string(),
+                context: "in query_router node".to_string(),
             });
         }
 

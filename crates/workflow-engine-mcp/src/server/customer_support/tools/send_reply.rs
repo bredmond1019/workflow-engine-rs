@@ -28,12 +28,20 @@ impl SendReplyNode {
         if message.trim().is_empty() {
             return Err(WorkflowError::ValidationError {
                 message: "Reply message cannot be empty".to_string(),
+                field: "message".to_string(),
+                value: Some(message.to_string()),
+                constraint: "non-empty string".to_string(),
+                context: "in send_reply validation".to_string(),
             });
         }
         
         if message.len() > 5000 {
             return Err(WorkflowError::ValidationError {
                 message: "Reply message exceeds maximum length of 5000 characters".to_string(),
+                field: "message".to_string(),
+                value: Some(format!("{} characters", message.len())),
+                constraint: "maximum 5000 characters".to_string(),
+                context: "in send_reply validation".to_string(),
             });
         }
         
@@ -58,6 +66,10 @@ impl SendReplyNode {
             "sms" | "text" => Ok("sms".to_string()),
             _ => Err(WorkflowError::ValidationError {
                 message: format!("Unsupported communication channel: {}", channel),
+                field: "channel".to_string(),
+                value: Some(channel.to_string()),
+                constraint: "one of: email, chat, phone, sms".to_string(),
+                context: "in send_reply validation".to_string(),
             }),
         }
     }
@@ -80,6 +92,9 @@ impl SendReplyNode {
             "sms" => self.send_sms_reply(ticket_id, message, priority)?,
             _ => return Err(WorkflowError::ProcessingError {
                 message: format!("Unknown channel: {}", channel),
+                node_id: Some("send_reply".to_string()),
+                node_type: "SendReplyNode".to_string(),
+                source: None,
             }),
         };
         
@@ -211,6 +226,10 @@ impl Node for SendReplyNode {
             .map(|s| s.to_string())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: ticket_id".to_string(),
+                field: "ticket_id".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in send_reply node".to_string(),
             })?;
             
         let message = context_data
@@ -219,6 +238,10 @@ impl Node for SendReplyNode {
             .map(|s| s.to_string())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: message".to_string(),
+                field: "message".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in send_reply node".to_string(),
             })?;
             
         let channel = context_data
@@ -227,6 +250,10 @@ impl Node for SendReplyNode {
             .map(|s| s.to_string())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: channel".to_string(),
+                field: "channel".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in send_reply node".to_string(),
             })?;
         
         let priority = context_data

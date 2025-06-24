@@ -35,12 +35,20 @@ impl CloseTicketNode {
         if resolution.trim().is_empty() {
             return Err(WorkflowError::ValidationError {
                 message: "Resolution cannot be empty".to_string(),
+                field: "resolution".to_string(),
+                value: Some(resolution.to_string()),
+                constraint: "non-empty string".to_string(),
+                context: "in close_ticket validation".to_string(),
             });
         }
         
         if resolution.len() < 10 {
             return Err(WorkflowError::ValidationError {
                 message: "Resolution must be at least 10 characters long".to_string(),
+                field: "resolution".to_string(),
+                value: Some(resolution.to_string()),
+                constraint: "minimum 10 characters".to_string(),
+                context: "in close_ticket validation".to_string(),
             });
         }
         
@@ -299,6 +307,10 @@ impl Node for CloseTicketNode {
             .and_then(|v| v["ticket_id"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: ticket_id".to_string(),
+                field: "ticket_id".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in close_ticket node".to_string(),
             })?.to_string();
             
         let resolution = context_data
@@ -306,6 +318,10 @@ impl Node for CloseTicketNode {
             .and_then(|v| v["resolution"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: resolution".to_string(),
+                field: "resolution".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in close_ticket node".to_string(),
             })?.to_string();
         
         let customer_satisfaction = context_data

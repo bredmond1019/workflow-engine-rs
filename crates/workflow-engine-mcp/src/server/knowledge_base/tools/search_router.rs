@@ -36,6 +36,10 @@ impl Node for SearchRouterNode {
         if !is_valid || is_spam {
             return Err(WorkflowError::ValidationError {
                 message: "Query failed validation or was detected as spam".to_string(),
+                field: "query".to_string(),
+                value: None,
+                constraint: "valid and non-spam query".to_string(),
+                context: "in search_router node".to_string(),
             });
         }
 

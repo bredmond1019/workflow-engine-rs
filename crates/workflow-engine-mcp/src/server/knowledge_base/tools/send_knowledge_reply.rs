@@ -31,6 +31,10 @@ impl Node for SendKnowledgeReplyNode {
             .get_data::<String>("generated_response")?
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "No generated response found".to_string(),
+                field: "generated_response".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in send_knowledge_reply node".to_string(),
             })?;
 
         let response_type = task_context

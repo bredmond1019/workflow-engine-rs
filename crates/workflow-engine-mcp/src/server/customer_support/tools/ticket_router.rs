@@ -217,6 +217,10 @@ impl Node for TicketRouterNode {
             .and_then(|v| v["ticket_id"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: ticket_id".to_string(),
+                field: "ticket_id".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in ticket_router node".to_string(),
             })?.to_string();
             
         let department = context_data
@@ -224,6 +228,10 @@ impl Node for TicketRouterNode {
             .and_then(|v| v["department"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: department".to_string(),
+                field: "department".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in ticket_router node".to_string(),
             })?.to_string();
             
         let routing_reason = context_data
@@ -231,6 +239,10 @@ impl Node for TicketRouterNode {
             .and_then(|v| v["routing_reason"].as_str())
             .ok_or_else(|| WorkflowError::ValidationError {
                 message: "Missing required field: routing_reason".to_string(),
+                field: "routing_reason".to_string(),
+                value: None,
+                constraint: "required field".to_string(),
+                context: "in ticket_router node".to_string(),
             })?.to_string();
         
         let priority = context_data

@@ -252,6 +252,9 @@ impl McpToolServer {
         let context_json = serde_json::to_string_pretty(&task_context).map_err(|e| {
             WorkflowError::SerializationError {
                 message: format!("Failed to serialize task context: {}", e),
+                type_name: "TaskContext".to_string(),
+                context: "in convert_to_tool_content".to_string(),
+                source: Some(e),
             }
         })?;
 
