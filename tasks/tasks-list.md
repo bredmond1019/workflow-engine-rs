@@ -73,21 +73,21 @@
     - [x] 1.4.4 Verify `cargo check --workspace` passes without errors
 
 - [ ] 2.0 Resolve Security Vulnerabilities
-  - [ ] 2.1 Update Protobuf Dependency (RUSTSEC-2024-0437)
-    - [ ] 2.1.1 Update protobuf dependency to >=3.7.2 in workspace Cargo.toml
-    - [ ] 2.1.2 Update any transitive dependencies that pull in vulnerable protobuf versions
-    - [ ] 2.1.3 Test that updated protobuf version works with existing code
-    - [ ] 2.1.4 Run `cargo audit` to verify vulnerability is resolved
-  - [ ] 2.2 Replace Deprecated dotenv Dependency (RUSTSEC-2021-0141)
-    - [ ] 2.2.1 Replace `dotenv = "0.15.0"` with `dotenvy = "0.15"` in workspace dependencies
-    - [ ] 2.2.2 Update all `use dotenv::` imports to `use dotenvy::`
-    - [ ] 2.2.3 Update any dotenv method calls to dotenvy equivalents
-    - [ ] 2.2.4 Test environment variable loading still works correctly
-  - [ ] 2.3 Update proc-macro-error Chain (RUSTSEC-2024-0370)
-    - [ ] 2.3.1 Identify which dependencies bring in proc-macro-error (likely utoipa chain)
-    - [ ] 2.3.2 Update utoipa and related dependencies to latest versions
-    - [ ] 2.3.3 Verify OpenAPI documentation generation still works
-    - [ ] 2.3.4 Ensure no breaking changes in updated dependencies
+  - [x] 2.1 Update Protobuf Dependency (RUSTSEC-2024-0437)
+    - [x] 2.1.1 Update protobuf dependency to >=3.7.2 in workspace Cargo.toml
+    - [x] 2.1.2 Update any transitive dependencies that pull in vulnerable protobuf versions
+    - [x] 2.1.3 Test that updated protobuf version works with existing code
+    - [x] 2.1.4 Run `cargo audit` to verify vulnerability is resolved
+  - [x] 2.2 Replace Deprecated dotenv Dependency (RUSTSEC-2021-0141)
+    - [x] 2.2.1 Replace `dotenv = "0.15.0"` with `dotenvy = "0.15"` in workspace dependencies
+    - [x] 2.2.2 Update all `use dotenv::` imports to `use dotenvy::`
+    - [x] 2.2.3 Update any dotenv method calls to dotenvy equivalents
+    - [x] 2.2.4 Test environment variable loading still works correctly
+  - [x] 2.3 Update proc-macro-error Chain (RUSTSEC-2024-0370)
+    - [x] 2.3.1 Identify which dependencies bring in proc-macro-error (likely utoipa chain)
+    - [x] 2.3.2 Update utoipa and related dependencies to latest versions
+    - [x] 2.3.3 Verify OpenAPI documentation generation still works
+    - [x] 2.3.4 Ensure no breaking changes in updated dependencies
   - [ ] 2.4 Comprehensive Security Audit
     - [ ] 2.4.1 Run `cargo audit` and ensure zero vulnerabilities reported
     - [ ] 2.4.2 Review all dependencies for maintenance status and security

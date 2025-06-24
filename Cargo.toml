@@ -49,7 +49,7 @@ actix = "0.13.5"
 
 # OpenAPI documentation features
 utoipa = { version = "5.4", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "8.1", features = ["actix-web"] }
+utoipa-swagger-ui = { version = "9.0", features = ["actix-web"] }
 
 # Monitoring features
 prometheus = { version = "0.14.0", default-features = false, features = ["process"] }
