@@ -1,10 +1,87 @@
-# CLAUDE.md
+# CLAUDE.md - Parent Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides high-level guidance to Claude Code (claude.ai/code) when working with code in this repository. For detailed component-specific guidance, refer to the individual CLAUDE.md files in each crate and service directory.
 
 ## Project Overview
 
 This is a production-ready AI workflow orchestration system built in Rust with Python MCP (Model Context Protocol) servers. The system provides a foundation for building AI-powered applications with external service integrations.
+
+## Component-Specific Documentation
+
+Each crate and service has its own CLAUDE.md file with detailed guidance. Navigate to these files for component-specific information:
+
+### Core Crates
+- **[workflow-engine-api](crates/workflow-engine-api/CLAUDE.md)**: Main HTTP API server with authentication, workflow endpoints, and service bootstrap
+- **[workflow-engine-core](crates/workflow-engine-core/CLAUDE.md)**: Core workflow engine logic, AI integration, error handling, and shared types
+- **[workflow-engine-mcp](crates/workflow-engine-mcp/CLAUDE.md)**: Model Context Protocol implementation with multi-transport support
+- **[workflow-engine-nodes](crates/workflow-engine-nodes/CLAUDE.md)**: Built-in workflow nodes for AI agents, external MCP, and templates
+- **[workflow-engine-app](crates/workflow-engine-app/CLAUDE.md)**: Main binary entry point that integrates all components
+
+### Microservices
+- **[content_processing](services/content_processing/CLAUDE.md)**: Document analysis service with WASM plugin support
+- **[knowledge_graph](services/knowledge_graph/CLAUDE.md)**: Graph database service with Dgraph integration
+- **[realtime_communication](services/realtime_communication/CLAUDE.md)**: WebSocket-based real-time messaging with actor model
+
+## Where to Search for Features
+
+### Authentication & Authorization
+- **JWT Implementation**: See `workflow-engine-core` CLAUDE.md (auth module)
+- **API Authentication Middleware**: See `workflow-engine-api` CLAUDE.md (middleware section)
+- **Service-Level Auth**: See `realtime_communication` CLAUDE.md (JWT validation)
+
+### Database & Persistence
+- **Main PostgreSQL/Diesel**: See `workflow-engine-api` CLAUDE.md (database layer)
+- **Content Storage (SQLx)**: See `content_processing` CLAUDE.md (database schema)
+- **Graph Database (Dgraph)**: See `knowledge_graph` CLAUDE.md (Dgraph integration)
+- **Event Sourcing**: See `workflow-engine-api` CLAUDE.md (event-driven architecture)
+
+### API Development
+- **REST Endpoints**: See `workflow-engine-api` CLAUDE.md (API endpoints)
+- **WebSocket APIs**: See `realtime_communication` CLAUDE.md (WebSocket protocol)
+- **GraphQL Support**: See `knowledge_graph` CLAUDE.md (GraphQL parsing)
+- **OpenAPI/Swagger**: See `workflow-engine-api` CLAUDE.md (OpenAPI section)
+
+### Workflow & Node Development
+- **Core Workflow Engine**: See `workflow-engine-core` CLAUDE.md (workflow module)
+- **Built-in Nodes**: See `workflow-engine-nodes` CLAUDE.md (available nodes)
+- **Custom Node Creation**: See both `workflow-engine-core` and `workflow-engine-nodes` CLAUDE.md
+- **Node Registration**: See `workflow-engine-api` CLAUDE.md (bootstrap section)
+
+### MCP (Model Context Protocol)
+- **Protocol Implementation**: See `workflow-engine-mcp` CLAUDE.md (protocol details)
+- **Transport Layers**: See `workflow-engine-mcp` CLAUDE.md (HTTP/WebSocket/stdio)
+- **External MCP Clients**: See `workflow-engine-nodes` CLAUDE.md (external MCP)
+- **MCP Servers**: See Python MCP servers in `mcp-servers/`
+
+### AI Integration
+- **AI Providers**: See `workflow-engine-nodes` CLAUDE.md (OpenAI/Anthropic agents)
+- **Token Management**: See `workflow-engine-core` CLAUDE.md (AI token section)
+- **Templates**: See `workflow-engine-core` CLAUDE.md (template engine)
+- **Content Analysis**: See `content_processing` CLAUDE.md (AI integration)
+
+### Real-time Features
+- **WebSocket Communication**: See `realtime_communication` CLAUDE.md
+- **Actor Model**: See `realtime_communication` CLAUDE.md (actor system)
+- **Presence Tracking**: See `realtime_communication` CLAUDE.md (presence features)
+- **Message Routing**: See `realtime_communication` CLAUDE.md (routing section)
+
+### Monitoring & Observability
+- **Metrics Collection**: See `workflow-engine-api` CLAUDE.md (monitoring section)
+- **Structured Logging**: See `workflow-engine-api` CLAUDE.md (correlation tracking)
+- **Health Checks**: See individual service CLAUDE.md files
+- **Performance Monitoring**: See `workflow-engine-mcp` CLAUDE.md (metrics section)
+
+### Testing
+- **Unit Testing Patterns**: See individual crate CLAUDE.md files
+- **Integration Testing**: See `workflow-engine-api` CLAUDE.md (testing section)
+- **MCP Testing**: See `workflow-engine-mcp` CLAUDE.md (test servers)
+- **Load Testing**: See root testing commands below
+
+### Microservice Patterns
+- **Service Discovery**: See `workflow-engine-api` CLAUDE.md (bootstrap/discovery)
+- **Circuit Breakers**: See `realtime_communication` CLAUDE.md (protection mechanisms)
+- **Rate Limiting**: See both `workflow-engine-api` and `realtime_communication` CLAUDE.md
+- **Connection Pooling**: See `workflow-engine-mcp` CLAUDE.md (connection pool)
 
 ## Essential Commands
 
@@ -107,37 +184,30 @@ cd services/realtime_communication && cargo run
 
 ## Architecture Overview
 
+This section provides a high-level overview. For detailed component information, refer to the individual CLAUDE.md files linked above.
+
 ### Core Components
 
-1. **HTTP API Server** (`crates/workflow-engine-api/src/api/`)
-   - Actix-web REST API with JWT authentication
-   - Rate limiting and OpenAPI documentation
-   - Correlation ID tracking across requests
+1. **HTTP API Server** - Main REST API gateway
+   - Details in: [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md)
+   - Key features: Actix-web, JWT auth, rate limiting, OpenAPI docs
 
-2. **MCP Framework** (`crates/workflow-engine-mcp/src/`)
-   - Complete Model Context Protocol implementation
-   - Support for HTTP, WebSocket, and stdio transports
-   - Client implementations for external services
+2. **MCP Framework** - Model Context Protocol implementation
+   - Details in: [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md)
+   - Key features: Multi-transport support, connection pooling, load balancing
 
-3. **Workflow Engine** (`crates/workflow-engine-core/src/workflow/`)
-   - Node-based workflow execution
-   - Type-safe node registration and discovery
-   - Built-in nodes for AI operations
+3. **Workflow Engine** - Core orchestration logic
+   - Details in: [workflow-engine-core CLAUDE.md](crates/workflow-engine-core/CLAUDE.md)
+   - Key features: Node-based execution, type-safe registry, AI integration
 
-4. **Database Layer** (`crates/workflow-engine-api/src/db/`)
-   - PostgreSQL with Diesel ORM
-   - Repository pattern for data access
-   - Event and session storage
+4. **Node Library** - Pre-built workflow nodes
+   - Details in: [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
+   - Key features: AI agents, external MCP clients, templates
 
-5. **Monitoring** (`crates/workflow-engine-api/src/monitoring/`)
-   - Prometheus metrics with custom collectors
-   - Structured logging with correlation IDs
-   - Grafana dashboards for visualization
-
-6. **Microservices** (`services/`)
-   - **Content Processing**: SQLx-based content analysis with WASM plugins
-   - **Knowledge Graph**: Dgraph integration with graph algorithms
-   - **Realtime Communication**: WebSocket messaging with actor model
+5. **Microservices** - Specialized processing services
+   - **Content Processing**: Details in [content_processing CLAUDE.md](services/content_processing/CLAUDE.md)
+   - **Knowledge Graph**: Details in [knowledge_graph CLAUDE.md](services/knowledge_graph/CLAUDE.md)
+   - **Realtime Communication**: Details in [realtime_communication CLAUDE.md](services/realtime_communication/CLAUDE.md)
 
 ### External Services
 
@@ -194,13 +264,17 @@ cd services/realtime_communication && cargo test
 
 ### Common Development Tasks
 
-1. **Adding a new API endpoint**: Update `crates/workflow-engine-api/src/api/routes/`
-2. **Creating a workflow node**: Implement in `crates/workflow-engine-nodes/src/` or `crates/workflow-engine-core/src/nodes/`
-3. **Adding MCP integration**: Create client in `crates/workflow-engine-mcp/src/clients/`
-4. **Database changes**: Main app uses `crates/workflow-engine-api/src/db/models/`, services use their own schemas
-5. **Monitoring metrics**: Update `crates/workflow-engine-api/src/monitoring/metrics.rs`
-6. **Adding microservice**: Create new service in `services/` with own Cargo.toml
-7. **Testing external integrations**: Start test servers first, then use `--ignored` flag
+For detailed step-by-step instructions, see the relevant component CLAUDE.md files:
+
+1. **Adding a new API endpoint**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#common-development-tasks)
+2. **Creating a workflow node**: See [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md#common-development-tasks)
+3. **Adding MCP integration**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#common-development-tasks)
+4. **Database changes**: 
+   - Main app: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#database-interactions)
+   - Services: See individual service CLAUDE.md files
+5. **Monitoring metrics**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#monitoring-module)
+6. **Adding microservice**: Follow patterns in existing service CLAUDE.md files
+7. **Testing external integrations**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#testing-approach)
 
 ### Debugging Tips
 
@@ -219,3 +293,23 @@ cd services/realtime_communication && cargo test
 3. **Service bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/service.rs`
 4. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
 5. **Microservice isolation**: Each service in `services/` has independent database and configuration
+
+## How to Use This Documentation
+
+### When to Use This Parent Guide
+- **Initial project understanding**: Start here to understand the overall architecture
+- **Finding features**: Use the "Where to Search for Features" section to locate functionality
+- **Cross-component work**: When working across multiple crates/services
+- **General commands**: Reference the essential commands that apply system-wide
+
+### When to Use Component-Specific CLAUDE.md Files
+- **Deep diving into a crate/service**: Go directly to the component's CLAUDE.md
+- **Component-specific tasks**: Each CLAUDE.md has tailored development tasks
+- **Detailed architecture**: Component files have in-depth architectural details
+- **Testing strategies**: Each component has specific testing approaches
+
+### Navigation Tips
+1. Start with this parent guide for orientation
+2. Use "Where to Search for Features" to find the right component
+3. Navigate to the specific component's CLAUDE.md for detailed work
+4. Return to this guide for cross-component integration tasks

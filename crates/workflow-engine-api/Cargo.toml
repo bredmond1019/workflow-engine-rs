@@ -68,6 +68,7 @@ futures-util = { workspace = true }
 [dev-dependencies]
 mockall = { workspace = true }
 criterion = { workspace = true }
+tempfile = { workspace = true }
 
 [[bench]]
 name = "api_throughput"

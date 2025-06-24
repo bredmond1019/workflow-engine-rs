@@ -381,9 +381,7 @@ mod tests {
     async fn test_with_fallback() {
         let result = with_fallback(
             || async {
-                Err::<String, _>(WorkflowError::ApiError {
-                    message: "Service unavailable".to_string(),
-                })
+                Err::<String, _>(WorkflowError::api_error_simple("Service unavailable"))
             },
             "fallback_value".to_string(),
         ).await;
@@ -395,9 +393,7 @@ mod tests {
     async fn test_with_fallback_fn() {
         let result = with_fallback_fn(
             || async {
-                Err::<String, _>(WorkflowError::ApiError {
-                    message: "Service unavailable".to_string(),
-                })
+                Err::<String, _>(WorkflowError::api_error_simple("Service unavailable"))
             },
             |_error| Ok("recovered_value".to_string()),
         ).await;
@@ -417,9 +413,7 @@ mod tests {
         
         // Second call fails but uses cache
         let result = cache.execute("test_key", || async {
-            Err::<String, _>(WorkflowError::ApiError {
-                message: "Service error".to_string(),
-            })
+            Err::<String, _>(WorkflowError::api_error_simple("Service error"))
         }).await;
         assert_eq!(result.unwrap(), "cached_value");
     }

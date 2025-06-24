@@ -130,8 +130,9 @@ impl StepExecutor for CrossSystemExecutor {
     ) -> Result<Value, WorkflowError> {
         let cross_system = match &step.step_type {
             StepType::CrossSystem { system, operation, agent } => (system, operation, agent),
-            _ => return Err(WorkflowError::InvalidStepType(
-                "Expected CrossSystem step type".to_string()
+            _ => return Err(WorkflowError::invalid_step_type_simple(
+                "Expected CrossSystem step type".to_string(),
+                "unknown".to_string()
             )),
         };
         
@@ -147,10 +148,10 @@ impl StepExecutor for CrossSystemExecutor {
         let services = self.cross_system_client
             .discover_services(cross_system.0)
             .await
-            .map_err(|e| WorkflowError::CrossSystemError(format!("Service discovery failed: {}", e)))?;
+            .map_err(|e| WorkflowError::cross_system_error_simple(format!("Service discovery failed: {}", e)))?;
         
         if services.is_empty() {
-            return Err(WorkflowError::CrossSystemError(
+            return Err(WorkflowError::cross_system_error_simple(
                 format!("No services found for system: {}", cross_system.0)
             ));
         }
@@ -170,7 +171,7 @@ impl StepExecutor for CrossSystemExecutor {
         let result = self.cross_system_client
             .call_service(service_name, cross_system.1, rendered_input)
             .await
-            .map_err(|e| WorkflowError::CrossSystemError(format!("Service call failed: {}", e)))?;
+            .map_err(|e| WorkflowError::cross_system_error_simple(format!("Service call failed: {}", e)))?;
         
         log::info!("Cross-system call completed for step: {}", step.id);
         
@@ -213,8 +214,9 @@ impl StepExecutor for NodeExecutor {
     ) -> Result<Value, WorkflowError> {
         let node_type = match &step.step_type {
             StepType::Node { node } => node,
-            _ => return Err(WorkflowError::InvalidStepType(
-                "Expected Node step type".to_string()
+            _ => return Err(WorkflowError::invalid_step_type_simple(
+                "Expected Node step type".to_string(),
+                "unknown".to_string()
             )),
         };
         
@@ -476,8 +478,9 @@ impl WorkflowExecutor {
                 self.execute_transform(engine, template, context).await
             }
             _ => {
-                Err(WorkflowError::InvalidStepType(
-                    format!("Unsupported step type in step: {}", step.id)
+                Err(WorkflowError::invalid_step_type_simple(
+                    format!("Unsupported step type in step: {}", step.id),
+                    "unknown".to_string()
                 ))
             }
         }
@@ -534,13 +537,13 @@ impl WorkflowFactory {
     
     fn validate_inputs(workflow: &WorkflowDefinition, inputs: &Value) -> Result<(), WorkflowError> {
         let input_obj = inputs.as_object().ok_or_else(|| {
-            WorkflowError::InvalidInput("Inputs must be a JSON object".to_string())
+            WorkflowError::invalid_input_simple("Inputs must be a JSON object")
         })?;
         
         // Check required inputs
         for (key, def) in &workflow.inputs {
             if def.required && !input_obj.contains_key(key) {
-                return Err(WorkflowError::InvalidInput(
+                return Err(WorkflowError::invalid_input_simple(
                     format!("Required input '{}' is missing", key)
                 ));
             }

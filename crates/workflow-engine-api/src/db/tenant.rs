@@ -98,7 +98,7 @@ impl TenantConnection {
             let schema_query = format!("SET search_path TO {}, public", self.context.database_schema);
             diesel::sql_query(schema_query)
                 .execute(&mut self.conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
         }
 
         // Set row-level security context
@@ -109,11 +109,11 @@ impl TenantConnection {
             );
             diesel::sql_query(rls_query)
                 .execute(&mut self.conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
         }
 
         f(&mut self.conn, &self.context)
-            .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })
+            .map_err(|e| WorkflowError::database_error(e.to_string(), "tenant_context", None))
     }
 }
 
@@ -139,7 +139,7 @@ impl TenantManager {
         
         let tenant = tokio::task::spawn_blocking(move || -> Result<Tenant, WorkflowError> {
             let mut conn = pool.get()
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             conn.transaction(|conn| {
                 // Create tenant record
@@ -176,7 +176,7 @@ impl TenantManager {
                 Ok(tenant)
             })
         }).await
-            .map_err(|e| WorkflowError::RuntimeError { message: e.to_string() })??;
+            .map_err(|e| WorkflowError::RuntimeError { message: format!("spawn_blocking error: {}", e) })??;
         
         // Cache the tenant
         self.tenant_cache.write().await.insert(tenant.id, tenant.clone());
@@ -195,14 +195,14 @@ impl TenantManager {
         let pool = Arc::clone(&self.pool);
         let tenant = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             tenants::table
                 .find(tenant_id)
                 .first::<Tenant>(&mut conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "tenant_context", None))
         }).await
-            .map_err(|e| WorkflowError::RuntimeError { message: e.to_string() })??;
+            .map_err(|e| WorkflowError::RuntimeError { message: format!("spawn_blocking error: {}", e) })??;
         
         // Update cache
         self.tenant_cache.write().await.insert(tenant.id, tenant.clone());
@@ -217,15 +217,15 @@ impl TenantManager {
     ) -> Result<TenantConnection, WorkflowError> {
         let tenant = self.get_tenant(tenant_id).await?;
         let conn = self.pool.get()
-            .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+            .map_err(|e| WorkflowError::database_error(e.to_string(), "tenant_context", None))?;
         
         let isolation_mode = match tenant.isolation_mode.as_str() {
             "schema" => TenantIsolationMode::Schema,
             "row_level" => TenantIsolationMode::RowLevel,
             "hybrid" => TenantIsolationMode::Hybrid,
-            _ => return Err(WorkflowError::ValidationError { message:
+            _ => return Err(WorkflowError::validation_error_simple(
                 format!("Invalid isolation mode: {}", tenant.isolation_mode)
-            }),
+            )),
         };
         
         let context = TenantContext {
@@ -313,7 +313,7 @@ impl TenantManager {
         
         tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             diesel::update(tenants::table.find(tenant_id))
                 .set((
@@ -321,11 +321,11 @@ impl TenantManager {
                     tenants::updated_at.eq(Utc::now()),
                 ))
                 .execute(&mut conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             Ok(())
         }).await
-            .map_err(|e| WorkflowError::RuntimeError { message: e.to_string() })?
+            .map_err(|e| WorkflowError::RuntimeError { message: format!("spawn_blocking error: {}", e) })?
     }
 
     /// Deactivate a tenant
@@ -334,7 +334,7 @@ impl TenantManager {
         
         tokio::task::spawn_blocking(move || -> Result<(), WorkflowError> {
             let mut conn = pool.get()
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             diesel::update(tenants::table.find(tenant_id))
                 .set((
@@ -342,11 +342,11 @@ impl TenantManager {
                     tenants::updated_at.eq(Utc::now()),
                 ))
                 .execute(&mut conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             Ok(())
         }).await
-            .map_err(|e| WorkflowError::RuntimeError { message: e.to_string() })?;
+            .map_err(|e| WorkflowError::RuntimeError { message: format!("spawn_blocking error: {}", e) })?;
         
         // Remove from cache
         self.tenant_cache.write().await.remove(&tenant_id);
@@ -360,15 +360,15 @@ impl TenantManager {
         
         tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
             
             tenants::table
                 .filter(tenants::is_active.eq(true))
                 .order(tenants::created_at.asc())
                 .load::<Tenant>(&mut conn)
-                .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })
+                .map_err(|e| WorkflowError::database_error(e.to_string(), "tenant_context", None))
         }).await
-            .map_err(|e| WorkflowError::RuntimeError { message: e.to_string() })?
+            .map_err(|e| WorkflowError::RuntimeError { message: format!("spawn_blocking error: {}", e) })?
     }
 }
 

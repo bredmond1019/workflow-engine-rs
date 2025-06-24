@@ -57,11 +57,11 @@ impl StepExecutor for WorkflowNotionClientNode {
         
         // Extract parameters from rendered input
         let input_obj = rendered_input.as_object()
-            .ok_or_else(|| WorkflowError::InvalidInput("Input must be a JSON object".to_string()))?;
+            .ok_or_else(|| WorkflowError::invalid_input_simple("Input must be a JSON object"))?;
         
         let title = input_obj.get("title")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| WorkflowError::InvalidInput("Missing required field: title".to_string()))?;
+            .ok_or_else(|| WorkflowError::invalid_input_simple("Missing required field: title"))?;
         
         // Connect and initialize the client
         client.connect().await?;
@@ -74,8 +74,8 @@ impl StepExecutor for WorkflowNotionClientNode {
         if let Some(content) = input_obj.get("content") {
             arguments.insert("content".to_string(), content.clone());
         } else {
-            return Err(WorkflowError::InvalidInput(
-                "Missing required field: content".to_string()
+            return Err(WorkflowError::invalid_input_simple(
+                "Missing required field: content"
             ));
         }
         
@@ -96,9 +96,9 @@ impl StepExecutor for WorkflowNotionClientNode {
         log::info!("Notion step {} completed successfully", step.id);
         
         // Convert the result to JSON
-        serde_json::to_value(result).map_err(|e| WorkflowError::SerializationError {
-            message: format!("Failed to serialize MCP result: {}", e),
-        })
+        serde_json::to_value(result).map_err(|e| WorkflowError::serialization_error_simple(
+            format!("Failed to serialize MCP result: {}", e)
+        ))
     }
 }
 

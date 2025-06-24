@@ -620,11 +620,11 @@ pub async fn knowledge_base_workflow_demo() {
                                 );
                                 println!("   🔍 Missing node type: {:?}", node_type);
                             }
-                            WorkflowError::ProcessingError { message } => {
+                            WorkflowError::ProcessingError { message, .. } => {
                                 println!("   💡 Tip: Check search service configurations");
                                 println!("   🔍 Error details: {}", message);
                             }
-                            WorkflowError::DeserializationError { message } => {
+                            WorkflowError::DeserializationError { message, .. } => {
                                 println!("   💡 Tip: Verify query data structure");
                                 println!("   🔍 Deserialization error: {}", message);
                             }

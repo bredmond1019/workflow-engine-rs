@@ -379,6 +379,7 @@ pub fn validate_with_rules(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ai::templates::types::VariableType;
     
     #[test]
     fn test_basic_validation() {

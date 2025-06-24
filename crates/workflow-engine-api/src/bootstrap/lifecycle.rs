@@ -121,7 +121,7 @@ impl ServiceLifecycleManager {
         let mut services = self.services.write().await;
         
         if services.contains_key(&config.name) {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 format!("Service {} is already registered", config.name)
             ));
         }
@@ -156,7 +156,7 @@ impl ServiceLifecycleManager {
         let mut services = self.services.write().await;
         
         let service = services.get_mut(service_name)
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 format!("Service {} not registered", service_name)
             ))?;
             
@@ -226,7 +226,7 @@ impl ServiceLifecycleManager {
         let mut services = self.services.write().await;
         
         let service = services.get_mut(service_name)
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 format!("Service {} not registered", service_name)
             ))?;
             
@@ -283,7 +283,7 @@ impl ServiceLifecycleManager {
         
         services.get(service_name)
             .map(|s| s.state)
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 format!("Service {} not registered", service_name)
             ))
     }
@@ -344,7 +344,7 @@ impl ServiceLifecycleManager {
         
         // Check for cycles
         if result.len() != services.len() {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 "Circular dependency detected in service configuration".to_string()
             ));
         }
@@ -359,7 +359,7 @@ impl ServiceLifecycleManager {
                 // Check if dependency is running
                 let state = self.get_service_state(&dep.service_name).await?;
                 if state != ServiceState::Running {
-                    return Err(WorkflowError::ConfigurationError(
+                    return Err(WorkflowError::configuration_error_simple(
                         format!("Dependency {} is not running", dep.service_name)
                     ));
                 }
@@ -367,7 +367,7 @@ impl ServiceLifecycleManager {
                 // Check if dependency provides required capabilities
                 let instances = self.discovery.discover_service(&dep.service_name).await?;
                 if instances.is_empty() {
-                    return Err(WorkflowError::ConfigurationError(
+                    return Err(WorkflowError::configuration_error_simple(
                         format!("No instances found for dependency {}", dep.service_name)
                     ));
                 }
@@ -377,7 +377,7 @@ impl ServiceLifecycleManager {
                     let has_capability = instances.iter()
                         .any(|i| i.capabilities.contains(required_cap));
                     if !has_capability {
-                        return Err(WorkflowError::ConfigurationError(
+                        return Err(WorkflowError::configuration_error_simple(
                             format!(
                                 "Dependency {} does not provide required capability {}",
                                 dep.service_name, required_cap
@@ -466,7 +466,7 @@ impl ServiceLifecycleHooks for DefaultLifecycleHooks {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
+    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
     use super::super::discovery::RegistryDiscovery;
     
     #[tokio::test]

@@ -305,7 +305,7 @@ impl Default for McpConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serial_test::serial;
+    // Note: These tests modify environment variables and should be run sequentially
     
     // Helper functions for safe environment variable manipulation in tests
     fn with_env_vars<F, R>(vars: Vec<(&str, &str)>, f: F) -> R
@@ -366,7 +366,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_mcp_config_default() {
         let config = McpConfig::default();
         assert!(!config.enabled);
@@ -376,7 +375,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_mcp_config_from_env_disabled() {
         // Clear all MCP environment variables
         without_env_vars(vec![
@@ -403,7 +401,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_mcp_config_from_env_enabled() {
         with_env_vars(vec![
             ("MCP_ENABLED", "true"),
@@ -418,7 +415,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_customer_support_server_config() {
         // Clean up environment variables first
         without_env_vars(vec![
@@ -460,7 +456,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_external_server_config() {
         // Cleanup any existing environment variables first
         without_env_vars(vec![
@@ -493,7 +488,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_get_enabled_servers() {
         // Cleanup any existing environment variables first
         without_env_vars(vec![

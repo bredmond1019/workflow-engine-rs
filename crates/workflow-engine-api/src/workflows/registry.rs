@@ -261,7 +261,7 @@ impl WorkflowTemplateRegistry {
         
         // Check for ID conflicts
         if self.templates.contains_key(&template.name) {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 format!("Template with ID '{}' already exists", template.name)
             ));
         }
@@ -399,13 +399,13 @@ impl WorkflowTemplateRegistry {
     fn validate_template(&self, template: &WorkflowDefinition) -> Result<(), WorkflowError> {
         // Basic validation
         if template.name.is_empty() {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 "Template name cannot be empty".to_string()
             ));
         }
         
         if template.steps.is_empty() {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 "Template must have at least one step".to_string()
             ));
         }
@@ -414,7 +414,7 @@ impl WorkflowTemplateRegistry {
         let mut step_ids = std::collections::HashSet::new();
         for step in &template.steps {
             if !step_ids.insert(&step.id) {
-                return Err(WorkflowError::ConfigurationError(
+                return Err(WorkflowError::configuration_error_simple(
                     format!("Duplicate step ID: {}", step.id)
                 ));
             }
@@ -424,7 +424,7 @@ impl WorkflowTemplateRegistry {
         for step in &template.steps {
             for dep in &step.depends_on {
                 if !step_ids.contains(&dep) {
-                    return Err(WorkflowError::ConfigurationError(
+                    return Err(WorkflowError::configuration_error_simple(
                         format!("Step '{}' depends on non-existent step '{}'", step.id, dep)
                     ));
                 }
@@ -437,7 +437,7 @@ impl WorkflowTemplateRegistry {
     /// Remove a template from the registry
     pub fn remove_template(&mut self, template_id: &str) -> Result<(), WorkflowError> {
         if !self.templates.contains_key(template_id) {
-            return Err(WorkflowError::ConfigurationError(
+            return Err(WorkflowError::configuration_error_simple(
                 format!("Template '{}' not found", template_id)
             ));
         }

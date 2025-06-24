@@ -200,7 +200,7 @@ impl WorkflowService {
             .parser()
             .get_workflow(&request.workflow_name)
             .ok_or_else(|| {
-                WorkflowError::InvalidInput(format!(
+                WorkflowError::invalid_input_simple(format!(
                     "Workflow '{}' not found",
                     request.workflow_name
                 ))
@@ -290,7 +290,7 @@ impl WorkflowService {
     ) -> Result<WorkflowStatusResponse, WorkflowError> {
         let instances = self.running_instances.read().await;
         let instance = instances.get(&instance_id).ok_or_else(|| {
-            WorkflowError::InvalidInput(format!("Workflow instance '{}' not found", instance_id))
+            WorkflowError::invalid_input_simple(format!("Workflow instance '{}' not found", instance_id))
         })?;
 
         // Convert step executions to API format
@@ -439,7 +439,7 @@ impl WorkflowService {
         let workflow = template_registry
             .get_template(template_id)
             .ok_or_else(|| {
-                WorkflowError::InvalidInput(format!("Template '{}' not found", template_id))
+                WorkflowError::invalid_input_simple(format!("Template '{}' not found", template_id))
             })?
             .clone();
         drop(template_registry);
@@ -571,11 +571,11 @@ pub async fn get_workflow_status(
             );
             Ok(HttpResponse::Ok().json(response))
         }
-        Err(WorkflowError::InvalidInput(msg)) => {
-            log::warn!("Workflow instance not found: {}", msg);
+        Err(WorkflowError::InvalidInput { message, .. }) => {
+            log::warn!("Workflow instance not found: {}", message);
             Ok(HttpResponse::NotFound().json(serde_json::json!({
                 "error": "workflow_not_found",
-                "message": msg
+                "message": message
             })))
         }
         Err(e) => {

@@ -842,18 +842,22 @@ mod tests {
     
     #[test]
     fn test_transport_error_display() {
-        let io_error = TransportError::IoError(std::io::Error::new(
-            std::io::ErrorKind::ConnectionRefused,
-            "Connection refused",
-        ));
+        let io_error = TransportError::IoError {
+            message: "Connection refused".to_string(),
+            operation: "connect".to_string(),
+            source: std::io::Error::new(
+                std::io::ErrorKind::ConnectionRefused,
+                "Connection refused",
+            ),
+        };
         assert!(format!("{}", io_error).contains("IO error"));
 
-        let serialization_error = TransportError::SerializationError(
-            serde_json::Error::from(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invalid JSON",
-            ))
-        );
+        let serialization_error = TransportError::SerializationError {
+            message: "Invalid JSON".to_string(),
+            data_type: "McpMessage".to_string(),
+            operation: "deserialize".to_string(),
+            source: serde_json::from_str::<serde_json::Value>("invalid json").unwrap_err(),
+        };
         assert!(format!("{}", serialization_error).contains("Serialization error"));
 
         let connection_error = TransportError::connection_error(
@@ -879,7 +883,7 @@ mod tests {
         let transport_error: TransportError = io_error.into();
         
         match transport_error {
-            TransportError::IoError(_) => {},
+            TransportError::IoError { .. } => {},
             _ => panic!("Expected IoError variant"),
         }
     }
@@ -890,7 +894,7 @@ mod tests {
         let transport_error: TransportError = json_error.into();
         
         match transport_error {
-            TransportError::SerializationError(_) => {},
+            TransportError::SerializationError { .. } => {},
             _ => panic!("Expected SerializationError variant"),
         }
     }

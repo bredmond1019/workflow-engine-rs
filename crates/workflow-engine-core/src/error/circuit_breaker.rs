@@ -380,17 +380,13 @@ mod tests {
         
         // First failure
         let _ = cb.call(|| async {
-            Err::<(), _>(WorkflowError::ApiError {
-                message: "Test error".to_string(),
-            })
+            Err::<(), _>(WorkflowError::api_error_simple("Test error"))
         }).await;
         assert_eq!(cb.state().await, CircuitState::Closed);
         
         // Second failure - should open
         let _ = cb.call(|| async {
-            Err::<(), _>(WorkflowError::ApiError {
-                message: "Test error".to_string(),
-            })
+            Err::<(), _>(WorkflowError::api_error_simple("Test error"))
         }).await;
         assert_eq!(cb.state().await, CircuitState::Open);
         
@@ -412,9 +408,7 @@ mod tests {
         
         // Open the circuit
         let _ = cb.call(|| async {
-            Err::<(), _>(WorkflowError::ApiError {
-                message: "Test error".to_string(),
-            })
+            Err::<(), _>(WorkflowError::api_error_simple("Test error"))
         }).await;
         
         // Should block calls
@@ -437,9 +431,7 @@ mod tests {
         // Some failed calls
         for _ in 0..2 {
             let _ = cb.call(|| async {
-                Err::<(), _>(WorkflowError::ApiError {
-                    message: "Test error".to_string(),
-                })
+                Err::<(), _>(WorkflowError::api_error_simple("Test error"))
             }).await;
         }
         

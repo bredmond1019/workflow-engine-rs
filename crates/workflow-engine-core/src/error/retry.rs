@@ -356,9 +356,7 @@ mod tests {
             async move {
                 let current = attempt_clone.fetch_add(1, Ordering::SeqCst) + 1;
                 if current < 3 {
-                    Err(WorkflowError::ApiError {
-                        message: "Temporary failure".to_string(),
-                    })
+                    Err(WorkflowError::api_error_simple("Temporary failure"))
                 } else {
                     Ok(42)
                 }
@@ -380,9 +378,7 @@ mod tests {
             let attempt_clone = attempt_clone.clone();
             async move {
                 attempt_clone.fetch_add(1, Ordering::SeqCst);
-                Err(WorkflowError::ValidationError {
-                    message: "Invalid input".to_string(),
-                })
+                Err(WorkflowError::validation_error_simple("Invalid input"))
             }
         })
         .await;

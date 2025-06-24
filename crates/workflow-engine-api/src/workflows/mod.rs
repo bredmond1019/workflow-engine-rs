@@ -408,9 +408,11 @@ impl WorkflowRunner {
         );
         
         // Store the event
-        event.store(conn).map_err(|e| WorkflowError::DatabaseError {
-            message: format!("Failed to store event: {}", e),
-        })?;
+        event.store(conn).map_err(|e| WorkflowError::database_error(
+            format!("Failed to store event: {}", e),
+            "event_store",
+            None
+        ))?;
 
         // Process it
         self.process_event(&event, conn)

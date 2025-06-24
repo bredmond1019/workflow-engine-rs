@@ -1,11 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use workflow_engine_core::mcp::ToolDefinition;
-    use workflow_engine_core::mcp::clients::{McpClient, McpConnection, StdioMcpClient, WebSocketMcpClient};
-    use workflow_engine_core::mcp::protocol::{
-        CallToolResult, ListToolsResult, McpRequest, McpResponse, ResponseResult, ToolContent,
+    use crate::protocol::{
+        ToolDefinition, CallToolResult, ListToolsResult, McpRequest, McpResponse, ResponseResult, ToolContent,
     };
-    use workflow_engine_core::mcp::transport::{McpTransport, TransportError};
+    use crate::clients::{McpClient, McpConnection, StdioMcpClient, WebSocketMcpClient};
+    use crate::transport::{McpTransport, TransportError};
     use async_trait::async_trait;
 
     struct MockTransport {
@@ -33,20 +32,33 @@ mod tests {
 
         async fn send(&mut self, _message: McpRequest) -> Result<(), TransportError> {
             if !self.connected {
-                return Err(TransportError::ConnectionError("Not connected".to_string()));
+                return Err(TransportError::ConnectionError {
+                    message: "Not connected".to_string(),
+                    endpoint: None,
+                    transport_type: None,
+                    retry_count: None,
+                });
             }
             Ok(())
         }
 
         async fn receive(&mut self) -> Result<McpResponse, TransportError> {
             if !self.connected {
-                return Err(TransportError::ConnectionError("Not connected".to_string()));
+                return Err(TransportError::ConnectionError {
+                    message: "Not connected".to_string(),
+                    endpoint: None,
+                    transport_type: None,
+                    retry_count: None,
+                });
             }
 
             if self.response_index >= self.responses.len() {
-                return Err(TransportError::ConnectionError(
-                    "No more responses".to_string(),
-                ));
+                return Err(TransportError::ConnectionError {
+                    message: "No more responses".to_string(),
+                    endpoint: None,
+                    transport_type: None,
+                    retry_count: None,
+                });
             }
 
             let response = self.responses[self.response_index].clone();

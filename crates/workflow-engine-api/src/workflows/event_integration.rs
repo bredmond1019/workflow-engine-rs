@@ -88,7 +88,7 @@ impl WorkflowMcpExt for Workflow {
     async fn expose_as_mcp_server(&self, _name: &str, _version: &str) -> Result<(), WorkflowError> {
         // MCP server exposure not implemented - requires workflow-to-MCP server bridge
         // Returns proper error indicating feature unavailable
-        Err(WorkflowError::ConfigurationError(
+        Err(WorkflowError::configuration_error_simple(
             "MCP server exposure not yet implemented".to_string()
         ))
     }
@@ -96,7 +96,7 @@ impl WorkflowMcpExt for Workflow {
     async fn register_mcp_server(&self, _url: &str, _transport_type: &str) -> Result<(), WorkflowError> {
         // MCP server registration not implemented - requires workflow-to-MCP client integration
         // Returns proper error indicating feature unavailable
-        Err(WorkflowError::ConfigurationError(
+        Err(WorkflowError::configuration_error_simple(
             "MCP server registration not yet implemented".to_string()
         ))
     }
@@ -270,9 +270,9 @@ impl WorkflowEventPublisher {
             aggregate_type: "workflow".to_string(),
             event_type: "workflow_event".to_string(),
             aggregate_version: 1, // Will be properly set by event store
-            event_data: event.serialize().map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize workflow event: {}", e),
-            })?,
+            event_data: event.serialize().map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize workflow event: {}", e)
+            ))?,
             metadata: EventMetadata::new()
                 .with_source(self.source_name.clone())
                 .with_correlation_id(correlation_id.unwrap_or_else(Uuid::new_v4)),
@@ -285,9 +285,9 @@ impl WorkflowEventPublisher {
         };
         
         self.dispatcher.dispatch(&event_envelope).await.map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to dispatch workflow event: {}", e),
-            }
+            WorkflowError::serialization_error_simple(
+                format!("Failed to dispatch workflow event: {}", e)
+            )
         })
     }
     
@@ -304,9 +304,9 @@ impl WorkflowEventPublisher {
             aggregate_type: "ai_interaction".to_string(),
             event_type: "ai_interaction_event".to_string(),
             aggregate_version: 1,
-            event_data: event.serialize().map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize AI event: {}", e),
-            })?,
+            event_data: event.serialize().map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize AI event: {}", e)
+            ))?,
             metadata: EventMetadata::new()
                 .with_source(self.source_name.clone())
                 .with_correlation_id(correlation_id.unwrap_or_else(Uuid::new_v4)),
@@ -319,9 +319,9 @@ impl WorkflowEventPublisher {
         };
         
         self.dispatcher.dispatch(&event_envelope).await.map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to dispatch AI event: {}", e),
-            }
+            WorkflowError::serialization_error_simple(
+                format!("Failed to dispatch AI event: {}", e)
+            )
         })
     }
     
@@ -338,9 +338,9 @@ impl WorkflowEventPublisher {
             aggregate_type: "service_call".to_string(),
             event_type: "service_call_event".to_string(),
             aggregate_version: 1,
-            event_data: event.serialize().map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize service event: {}", e),
-            })?,
+            event_data: event.serialize().map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize service event: {}", e)
+            ))?,
             metadata: EventMetadata::new()
                 .with_source(self.source_name.clone())
                 .with_correlation_id(correlation_id.unwrap_or_else(Uuid::new_v4)),
@@ -353,9 +353,9 @@ impl WorkflowEventPublisher {
         };
         
         self.dispatcher.dispatch(&event_envelope).await.map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to dispatch service event: {}", e),
-            }
+            WorkflowError::serialization_error_simple(
+                format!("Failed to dispatch service event: {}", e)
+            )
         })
     }
     
@@ -371,9 +371,9 @@ impl WorkflowEventPublisher {
             aggregate_type: "system".to_string(),
             event_type: "system_event".to_string(),
             aggregate_version: 1,
-            event_data: event.serialize().map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize system event: {}", e),
-            })?,
+            event_data: event.serialize().map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize system event: {}", e)
+            ))?,
             metadata: EventMetadata::new()
                 .with_source(self.source_name.clone())
                 .with_correlation_id(correlation_id.unwrap_or_else(Uuid::new_v4)),
@@ -386,9 +386,9 @@ impl WorkflowEventPublisher {
         };
         
         self.dispatcher.dispatch(&event_envelope).await.map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to dispatch system event: {}", e),
-            }
+            WorkflowError::serialization_error_simple(
+                format!("Failed to dispatch system event: {}", e)
+            )
         })
     }
 }

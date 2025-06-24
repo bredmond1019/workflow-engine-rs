@@ -103,7 +103,7 @@ impl ServiceConnectionPool {
         
         let pool = builder
             .build(manager)
-            .map_err(|e| WorkflowError::DatabaseError { message: format!("Failed to create pool: {}", e) })?;
+            .map_err(|e| WorkflowError::database_error(e.to_string(), "pool_creation", None))?;
         
         Ok(Self {
             pool: Arc::new(pool),
@@ -135,10 +135,11 @@ impl ServiceConnectionPool {
                     metrics.error_count += 1;
                 }
                 
-                Err(WorkflowError::DatabaseError { message: format!(
-                    "Failed to get connection for service '{}': {}",
-                    self.config.service_name, e
-                ) })
+                Err(WorkflowError::database_error(
+                    format!("Failed to get connection for service '{}': {}", self.config.service_name, e),
+                    "connection_get",
+                    None
+                ))
             }
         }
     }
@@ -167,7 +168,7 @@ impl ServiceConnectionPool {
         // Run a simple query to test the connection
         diesel::sql_query("SELECT 1")
             .execute(&mut conn)
-            .map_err(|e| WorkflowError::DatabaseError { message: format!("Connectivity test failed: {}", e) })?;
+            .map_err(|e| WorkflowError::database_error(format!("Connectivity test failed: {}", e), "connectivity_test", None))?;
         
         Ok(())
     }
@@ -225,10 +226,10 @@ impl ConnectionPoolManager {
         if let Some(pool) = pools.get(service_name) {
             pool.get_connection().await
         } else {
-            Err(WorkflowError::ValidationError { message: format!(
+            Err(WorkflowError::validation_error_simple(format!(
                 "No connection pool registered for service '{}'",
                 service_name
-            ) })
+            )))
         }
     }
 
@@ -245,9 +246,9 @@ impl ConnectionPoolManager {
             "schema" => super::tenant::TenantIsolationMode::Schema,
             "row_level" => super::tenant::TenantIsolationMode::RowLevel,
             "hybrid" => super::tenant::TenantIsolationMode::Hybrid,
-            _ => return Err(WorkflowError::ValidationError { message:
+            _ => return Err(WorkflowError::validation_error_simple(
                 format!("Invalid isolation mode: {}", tenant.isolation_mode)
-            }),
+            )),
         };
         
         let context = TenantContext {
@@ -304,10 +305,10 @@ impl ConnectionPoolManager {
         if removed.is_some() {
             Ok(())
         } else {
-            Err(WorkflowError::ValidationError { message: format!(
+            Err(WorkflowError::validation_error_simple(format!(
                 "No pool found for service '{}'",
                 service_name
-            ) })
+            )))
         }
     }
 
@@ -358,7 +359,7 @@ impl IsolatedConnectionPool for ServiceConnectionPool {
                     let schema = format!("tenant_{}", tenant_id.to_string().replace("-", "_"));
                     diesel::sql_query(format!("SET search_path TO {}, public", schema))
                         .execute(&mut *conn)
-                        .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                        .map_err(|e| WorkflowError::database_error(e.to_string(), "schema_setup", None))?;
                 }
             }
             IsolationLevel::Table => {
@@ -371,7 +372,7 @@ impl IsolatedConnectionPool for ServiceConnectionPool {
                         tenant_id
                     ))
                     .execute(&mut *conn)
-                    .map_err(|e| WorkflowError::DatabaseError { message: e.to_string() })?;
+                    .map_err(|e| WorkflowError::database_error(e.to_string(), "rls_setup", None))?;
                 }
             }
         }

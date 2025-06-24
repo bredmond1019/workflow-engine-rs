@@ -2,20 +2,20 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use workflow_engine_core::error::WorkflowError;
 use crate::clients::McpClient;
 use crate::protocol::{
     CallToolResult, ClientCapabilities, ClientInfo, InitializeParams, McpRequest, McpResponse,
     ResponseResult, ToolCallParams, ToolDefinition,
 };
 use crate::transport::HttpTransport;
+use workflow_engine_core::error::WorkflowError;
 
 /// HTTP-based MCP client for cross-system communication
-/// 
+///
 /// This client enables communication with MCP servers via HTTP requests,
 /// making it suitable for cross-system communication where services
 /// need to interact with remote MCP servers over HTTP APIs.
-/// 
+///
 /// Unlike WebSocket or Stdio transports, HTTP transport is stateless
 /// and each operation is a separate request-response cycle.
 #[derive(Debug)]
@@ -65,13 +65,14 @@ impl HttpMcpClient {
 
     /// Send a request and get response using HTTP transport
     async fn send_http_request(&self, request: McpRequest) -> Result<McpResponse, WorkflowError> {
-        self.transport.send_request(request).await
-            .map_err(|e| WorkflowError::mcp_transport_error(
+        self.transport.send_request(request).await.map_err(|e| {
+            WorkflowError::mcp_transport_error(
                 format!("HTTP request failed: {:?}", e),
                 "http_client",
                 "HTTP",
-                "send_request"
-            ))
+                "send_request",
+            )
+        })
     }
 
     /// Check if client is properly initialized
@@ -80,7 +81,7 @@ impl HttpMcpClient {
             return Err(WorkflowError::mcp_error(
                 "Client not initialized. Call initialize() first.",
                 "http_client",
-                "ensure_initialized"
+                "ensure_initialized",
             ));
         }
         Ok(())
@@ -93,7 +94,7 @@ impl McpClient for HttpMcpClient {
         // HTTP transport doesn't need explicit connection establishment
         // We consider it "connected" if the base URL is valid
         // The actual connectivity test happens during the first request
-        
+
         log::debug!("HTTP MCP Client connected to: {}", self.base_url);
         Ok(())
     }
@@ -119,7 +120,7 @@ impl McpClient for HttpMcpClient {
         };
 
         let response = self.send_http_request(request).await?;
-        
+
         match response {
             McpResponse::Result {
                 result: ResponseResult::Initialize(_),
@@ -138,14 +139,14 @@ impl McpClient for HttpMcpClient {
             McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
                 format!("Initialize failed: {}", error.message),
                 "http_client",
-                "initialize"
+                "initialize",
             )),
             _ => Err(WorkflowError::mcp_protocol_error(
                 "Unexpected response to initialize",
                 "http_client",
                 "initialize_response",
                 "unexpected_type",
-                "initialize"
+                "initialize",
             )),
         }
     }
@@ -158,13 +159,16 @@ impl McpClient for HttpMcpClient {
         };
 
         let response = self.send_http_request(request).await?;
-        
+
         match response {
             McpResponse::Result {
                 result: ResponseResult::ListTools(tools_result),
                 ..
             } => {
-                log::debug!("Listed {} tools from HTTP MCP server", tools_result.tools.len());
+                log::debug!(
+                    "Listed {} tools from HTTP MCP server",
+                    tools_result.tools.len()
+                );
                 Ok(tools_result.tools)
             }
             McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
@@ -201,7 +205,7 @@ impl McpClient for HttpMcpClient {
 
         log::debug!("Calling tool '{}' via HTTP MCP", name);
         let response = self.send_http_request(request).await?;
-        
+
         match response {
             McpResponse::Result {
                 result: ResponseResult::CallTool(call_result),
@@ -258,7 +262,7 @@ mod tests {
     fn test_http_mcp_client_with_auth() {
         let client = HttpMcpClient::with_auth_token(
             "http://localhost:8080".to_string(),
-            "test-token".to_string()
+            "test-token".to_string(),
         );
         assert_eq!(client.base_url, "http://localhost:8080");
         assert!(!client.is_initialized);
@@ -277,8 +281,8 @@ mod tests {
         let client = HttpMcpClient::new("http://localhost:8080".to_string());
         let result = client.ensure_initialized();
         assert!(result.is_err());
-        
-        if let Err(WorkflowError::MCPError { message }) = result {
+
+        if let Err(WorkflowError::MCPError { message, .. }) = result {
             assert!(message.contains("not initialized"));
         } else {
             panic!("Expected MCPError");

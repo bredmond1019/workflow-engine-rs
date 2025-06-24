@@ -279,7 +279,7 @@ impl ServiceBootstrapManagerBuilder {
     /// Build the manager
     pub async fn build(self) -> Result<ServiceBootstrapManager, WorkflowError> {
         let registry = self.agent_registry
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 "Agent registry is required".to_string()
             ))?;
             
@@ -295,7 +295,7 @@ impl ServiceBootstrapManagerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
+    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
     
     #[tokio::test]
     async fn test_bootstrap_manager_creation() {

@@ -92,14 +92,10 @@ where
                                     req.extensions_mut().insert(claims);
                                     service.call(req).await
                                 }
-                                Err(e) => {
-                                    Err(ErrorUnauthorized(format!("Invalid token: {}", e)))
-                                }
+                                Err(e) => Err(ErrorUnauthorized(format!("Invalid token: {}", e))),
                             }
                         }
-                        None => {
-                            Err(ErrorUnauthorized("Invalid authorization header format"))
-                        }
+                        None => Err(ErrorUnauthorized("Invalid authorization header format")),
                     }
                 }
                 None => Err(ErrorUnauthorized("Missing authorization header")),
@@ -148,12 +144,14 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .wrap(JwtMiddleware::new("test_secret".to_string()))
-                .route("/health", web::get().to(|| async { HttpResponse::Ok().body("OK") }))
-        ).await;
+                .route(
+                    "/health",
+                    web::get().to(|| async { HttpResponse::Ok().body("OK") }),
+                ),
+        )
+        .await;
 
-        let req = test::TestRequest::get()
-            .uri("/health")
-            .to_request();
+        let req = test::TestRequest::get().uri("/health").to_request();
 
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
@@ -164,12 +162,14 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .wrap(JwtMiddleware::new("test_secret".to_string()))
-                .route("/auth/token", web::post().to(|| async { HttpResponse::Ok().body("token") }))
-        ).await;
+                .route(
+                    "/auth/token",
+                    web::post().to(|| async { HttpResponse::Ok().body("token") }),
+                ),
+        )
+        .await;
 
-        let req = test::TestRequest::post()
-            .uri("/auth/token")
-            .to_request();
+        let req = test::TestRequest::post().uri("/auth/token").to_request();
 
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
@@ -183,16 +183,19 @@ mod tests {
     async fn test_middleware_allows_with_valid_token() {
         let jwt_secret = "test_secret".to_string();
         let jwt_auth = JwtAuth::new(jwt_secret.clone());
-        
+
         let app = test::init_service(
             App::new()
                 .wrap(JwtMiddleware::new(jwt_secret))
-                .route("/api/protected", web::get().to(protected_endpoint))
-        ).await;
+                .route("/api/protected", web::get().to(protected_endpoint)),
+        )
+        .await;
 
         // Generate a valid token
         let claims = Claims::new("test_user".to_string(), "admin".to_string());
-        let token = jwt_auth.generate_token(&claims).expect("Failed to generate token");
+        let token = jwt_auth
+            .generate_token(&claims)
+            .expect("Failed to generate token");
 
         let req = test::TestRequest::get()
             .uri("/api/protected")
@@ -203,20 +206,22 @@ mod tests {
         assert!(resp.status().is_success());
     }
 
-
     #[actix_web::test]
     async fn test_claims_extraction() {
         let jwt_secret = "test_secret".to_string();
         let jwt_auth = JwtAuth::new(jwt_secret.clone());
-        
+
         let app = test::init_service(
             App::new()
                 .wrap(JwtMiddleware::new(jwt_secret))
-                .route("/api/protected", web::get().to(protected_endpoint))
-        ).await;
+                .route("/api/protected", web::get().to(protected_endpoint)),
+        )
+        .await;
 
         let claims = Claims::new("john_doe".to_string(), "developer".to_string());
-        let token = jwt_auth.generate_token(&claims).expect("Failed to generate token");
+        let token = jwt_auth
+            .generate_token(&claims)
+            .expect("Failed to generate token");
 
         let req = test::TestRequest::get()
             .uri("/api/protected")
@@ -230,13 +235,13 @@ mod tests {
         assert_eq!(body["message"], "Hello, john_doe");
         assert_eq!(body["role"], "developer");
     }
-    
+
     #[test]
     fn test_new_with_valid_secret() {
         let middleware = JwtMiddleware::new("valid_secret".to_string());
         assert_eq!(middleware.secret, "valid_secret");
     }
-    
+
     #[test]
     #[should_panic(expected = "JWT secret cannot be empty")]
     fn test_new_with_empty_secret_panics() {

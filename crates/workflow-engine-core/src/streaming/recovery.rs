@@ -482,9 +482,7 @@ mod tests {
                 if count < 2 {
                     // Fail first two attempts
                     let error_stream = stream::once(async {
-                        Err(WorkflowError::ApiError {
-                            message: "Mock failure".to_string(),
-                        })
+                        Err(WorkflowError::api_error_simple("Mock failure"))
                     });
                     return Box::pin(error_stream);
                 }

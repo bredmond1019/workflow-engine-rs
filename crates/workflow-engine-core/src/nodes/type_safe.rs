@@ -15,7 +15,7 @@ use crate::error::WorkflowError;
 /// 
 /// This replaces the use of TypeId with a more type-safe approach
 /// that provides better compile-time guarantees.
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Hash, Serialize, Deserialize)]
 pub struct NodeId<T> {
     id: Uuid,
     #[serde(skip)]
@@ -32,6 +32,14 @@ impl<T> Clone for NodeId<T> {
 }
 
 impl<T> Copy for NodeId<T> {}
+
+impl<T> PartialEq for NodeId<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl<T> Eq for NodeId<T> {}
 
 impl<T> NodeId<T> {
     /// Create a new type-safe node ID
@@ -388,8 +396,10 @@ impl TypedWorkflowBuilder {
 mod tests {
     use super::*;
     use crate::nodes::Node;
+    use crate::task::TaskContext;
+    use crate::error::WorkflowError;
     
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq, Eq)]
     struct TestNode;
     
     impl Node for TestNode {

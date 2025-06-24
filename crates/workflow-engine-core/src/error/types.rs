@@ -1207,6 +1207,84 @@ impl WorkflowError {
             source: None,
         }
     }
+
+    /// Create an invalid input error with minimal information (backward compatibility)
+    pub fn invalid_input_simple(message: impl Into<String>) -> Self {
+        Self::InvalidInput {
+            message: message.into(),
+            workflow_id: "unknown".to_string(),
+            expected_schema: "valid input".to_string(),
+            received_fields: Vec::new(),
+            missing_fields: Vec::new(),
+        }
+    }
+
+    /// Create an invalid input error with workflow context
+    pub fn invalid_input(
+        message: impl Into<String>,
+        workflow_id: impl Into<String>,
+    ) -> Self {
+        Self::InvalidInput {
+            message: message.into(),
+            workflow_id: workflow_id.into(),
+            expected_schema: "valid input".to_string(),
+            received_fields: Vec::new(),
+            missing_fields: Vec::new(),
+        }
+    }
+
+    /// Create a registry error with minimal information (backward compatibility)
+    pub fn registry_error_simple(message: impl Into<String>) -> Self {
+        Self::RegistryError {
+            message: message.into(),
+            operation: "unknown".to_string(),
+            resource_type: "unknown".to_string(),
+            resource_id: None,
+            source: None,
+        }
+    }
+
+
+    /// Create an invalid step type error with minimal information (backward compatibility)
+    pub fn invalid_step_type_simple(
+        step_type: impl Into<String>,
+        workflow_id: impl Into<String>,
+    ) -> Self {
+        Self::InvalidStepType {
+            step_type: step_type.into(),
+            workflow_id: workflow_id.into(),
+            step_index: 0,
+            available_types: Vec::new(),
+        }
+    }
+
+    /// Create an invalid step type error with full context
+    pub fn invalid_step_type(
+        step_type: impl Into<String>,
+        workflow_id: impl Into<String>,
+        step_index: usize,
+        available_types: Vec<String>,
+    ) -> Self {
+        Self::InvalidStepType {
+            step_type: step_type.into(),
+            workflow_id: workflow_id.into(),
+            step_index,
+            available_types,
+        }
+    }
+
+    /// Create a cross-system error with minimal information (backward compatibility)
+    pub fn cross_system_error_simple(message: impl Into<String>) -> Self {
+        Self::CrossSystemError {
+            message: message.into(),
+            source_service: "unknown".to_string(),
+            target_service: "unknown".to_string(),
+            operation: "unknown".to_string(),
+            retry_count: 0,
+            source: None,
+        }
+    }
+
 }
 
 impl super::ErrorExt for WorkflowError {

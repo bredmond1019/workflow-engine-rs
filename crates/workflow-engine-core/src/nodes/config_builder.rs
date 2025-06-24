@@ -162,7 +162,13 @@ impl<T: Node + 'static> NodeConfigBuilder<T> {
                     "Retry attempts must be greater than 0"
                 ));
             }
-            if self.retry_delay.is_none() {
+            if let Some(delay) = self.retry_delay {
+                if delay.as_millis() == 0 {
+                    return Err(WorkflowError::configuration_error_simple(
+                        "Retry delay must be greater than 0"
+                    ));
+                }
+            } else {
                 return Err(WorkflowError::configuration_error_simple(
                     "Retry delay must be specified when retry attempts are set"
                 ));

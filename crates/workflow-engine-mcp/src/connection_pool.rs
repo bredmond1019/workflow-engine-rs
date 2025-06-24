@@ -1101,7 +1101,7 @@ pub struct DetailedHealthInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use workflow_engine_core::mcp::transport::TransportType;
+    use crate::transport::TransportType;
 
     #[tokio::test]
     async fn test_connection_pool_creation() {

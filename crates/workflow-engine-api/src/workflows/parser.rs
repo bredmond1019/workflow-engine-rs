@@ -43,9 +43,9 @@ impl WorkflowParser {
     /// Load workflow definition from YAML string
     pub fn load_from_yaml(&mut self, yaml_content: &str) -> Result<WorkflowDefinition, WorkflowError> {
         let workflow: WorkflowDefinition = serde_yaml::from_str(yaml_content)
-            .map_err(|e| WorkflowError::DeserializationError {
-                message: format!("Failed to parse YAML workflow: {}", e)
-            })?;
+            .map_err(|e| WorkflowError::deserialization_error_simple(
+                format!("Failed to parse YAML workflow: {}", e)
+            ))?;
         
         // Validate the workflow
         self.validate_workflow(&workflow)?;
@@ -61,9 +61,9 @@ impl WorkflowParser {
     /// Load workflow definition from JSON
     pub fn load_from_json(&mut self, json_content: &str) -> Result<WorkflowDefinition, WorkflowError> {
         let workflow: WorkflowDefinition = serde_json::from_str(json_content)
-            .map_err(|e| WorkflowError::DeserializationError {
-                message: format!("Failed to parse JSON workflow: {}", e)
-            })?;
+            .map_err(|e| WorkflowError::deserialization_error_simple(
+                format!("Failed to parse JSON workflow: {}", e)
+            ))?;
         
         // Validate the workflow
         self.validate_workflow(&workflow)?;
@@ -86,7 +86,7 @@ impl WorkflowParser {
                 crate::workflows::schema::templates::research_to_slack()
             }
             _ => {
-                return Err(WorkflowError::InvalidInput(
+                return Err(WorkflowError::invalid_input_simple(
                     format!("Unknown template: {}", template_name)
                 ));
             }
@@ -117,7 +117,7 @@ impl WorkflowParser {
         inputs: Value,
     ) -> Result<WorkflowInstance, WorkflowError> {
         let workflow = self.get_workflow(workflow_name)
-            .ok_or_else(|| WorkflowError::InvalidInput(
+            .ok_or_else(|| WorkflowError::invalid_input_simple(
                 format!("Workflow '{}' not found", workflow_name)
             ))?;
         
@@ -128,15 +128,15 @@ impl WorkflowParser {
     fn validate_workflow(&self, workflow: &WorkflowDefinition) -> Result<(), WorkflowError> {
         // Basic validation
         if workflow.name.is_empty() {
-            return Err(WorkflowError::ValidationError {
-                message: "Workflow name cannot be empty".to_string()
-            });
+            return Err(WorkflowError::validation_error_simple(
+                "Workflow name cannot be empty".to_string()
+            ));
         }
         
         if workflow.steps.is_empty() {
-            return Err(WorkflowError::ValidationError {
-                message: "Workflow must have at least one step".to_string()
-            });
+            return Err(WorkflowError::validation_error_simple(
+                "Workflow must have at least one step".to_string()
+            ));
         }
         
         // Validate step dependencies
@@ -151,17 +151,17 @@ impl WorkflowParser {
                 .count();
             
             if step_count > 1 {
-                return Err(WorkflowError::ValidationError {
-                    message: format!("Duplicate step ID: {}", step.id)
-                });
+                return Err(WorkflowError::validation_error_simple(
+                    format!("Duplicate step ID: {}", step.id)
+                ));
             }
             
             // Check dependencies exist
             for dep in &step.depends_on {
                 if !step_ids.contains(dep) {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}' depends on unknown step '{}'", step.id, dep)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}' depends on unknown step '{}'", step.id, dep)
+                    ));
                 }
             }
             
@@ -180,57 +180,57 @@ impl WorkflowParser {
         match &step.step_type {
             StepType::CrossSystem { system, operation, .. } => {
                 if system.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': system cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': system cannot be empty", step.id)
+                    ));
                 }
                 if operation.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': operation cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': operation cannot be empty", step.id)
+                    ));
                 }
             }
             StepType::Node { node } => {
                 if node.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': node type cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': node type cannot be empty", step.id)
+                    ));
                 }
             }
             StepType::Transform { engine, template } => {
                 if engine.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': template engine cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': template engine cannot be empty", step.id)
+                    ));
                 }
                 if template.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': template cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': template cannot be empty", step.id)
+                    ));
                 }
             }
             StepType::Condition { condition, then_steps, .. } => {
                 if condition.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': condition cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': condition cannot be empty", step.id)
+                    ));
                 }
                 if then_steps.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': condition must have at least one then_step", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': condition must have at least one then_step", step.id)
+                    ));
                 }
             }
             StepType::Loop { items, steps } => {
                 if items.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': loop items cannot be empty", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': loop items cannot be empty", step.id)
+                    ));
                 }
                 if steps.is_empty() {
-                    return Err(WorkflowError::ValidationError {
-                        message: format!("Step '{}': loop must have at least one step", step.id)
-                    });
+                    return Err(WorkflowError::validation_error_simple(
+                        format!("Step '{}': loop must have at least one step", step.id)
+                    ));
                 }
             }
         }

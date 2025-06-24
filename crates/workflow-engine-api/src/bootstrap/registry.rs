@@ -183,16 +183,16 @@ impl ServiceRegistry {
             endpoint: config.endpoint.clone(),
             capabilities: config.capabilities.clone(),
             metadata: serde_json::to_value(&metadata)
-                .map_err(|e| WorkflowError::SerializationError {
-                    message: format!("Failed to serialize service metadata: {}", e)
-                })?,
+                .map_err(|e| WorkflowError::serialization_error_simple(
+                    format!("Failed to serialize service metadata: {}", e)
+                ))?,
         };
         
         // Register with underlying agent registry
         let agent = self.agent_registry.register(agent_reg).await
-            .map_err(|e| WorkflowError::RegistryError { 
-                message: format!("Failed to register service: {}", e) 
-            })?;
+            .map_err(|e| WorkflowError::registry_error_simple(
+                format!("Failed to register service: {}", e)
+            ))?;
             
         // Create service instance
         let instance = ServiceInstance {
@@ -225,9 +225,9 @@ impl ServiceRegistry {
     pub async fn unregister_instance(&self, instance_id: Uuid) -> Result<(), WorkflowError> {
         // Remove from underlying registry
         self.agent_registry.unregister(&instance_id).await
-            .map_err(|e| WorkflowError::RegistryError { 
-                message: format!("Failed to unregister service: {}", e) 
-            })?;
+            .map_err(|e| WorkflowError::registry_error_simple(
+                format!("Failed to unregister service: {}", e)
+            ))?;
             
         // Remove from local cache
         let mut instances = self.instances.write().await;
@@ -268,15 +268,15 @@ impl ServiceRegistry {
             
             // Send heartbeat to underlying registry
             self.agent_registry.heartbeat(&instance_id).await
-                .map_err(|e| WorkflowError::RegistryError { 
-                    message: format!("Failed to send heartbeat: {}", e) 
-                })?;
+                .map_err(|e| WorkflowError::registry_error_simple(
+                    format!("Failed to send heartbeat: {}", e)
+                ))?;
                 
             Ok(())
         } else {
-            Err(WorkflowError::RegistryError {
-                message: format!("Service instance not found: {}", instance_id)
-            })
+            Err(WorkflowError::registry_error_simple(
+                format!("Service instance not found: {}", instance_id)
+            ))
         }
     }
     
@@ -301,9 +301,9 @@ impl ServiceRegistry {
             
             Ok(())
         } else {
-            Err(WorkflowError::RegistryError {
-                message: format!("Service instance not found: {}", instance_id)
-            })
+            Err(WorkflowError::registry_error_simple(
+                format!("Service instance not found: {}", instance_id)
+            ))
         }
     }
     
@@ -341,9 +341,9 @@ impl ServiceRegistry {
         instances_by_id
             .get(&instance_id)
             .cloned()
-            .ok_or_else(|| WorkflowError::RegistryError {
-                message: format!("Service instance not found: {}", instance_id)
-            })
+            .ok_or_else(|| WorkflowError::registry_error_simple(
+                format!("Service instance not found: {}", instance_id)
+            ))
     }
     
     /// Select a service instance using load balancing
@@ -356,9 +356,9 @@ impl ServiceRegistry {
         
         let service_instances = instances
             .get(service_name)
-            .ok_or_else(|| WorkflowError::RegistryError {
-                message: format!("Service not found: {}", service_name)
-            })?;
+            .ok_or_else(|| WorkflowError::registry_error_simple(
+                format!("Service not found: {}", service_name)
+            ))?;
             
         let healthy_instances: Vec<&ServiceInstance> = service_instances
             .iter()
@@ -366,9 +366,9 @@ impl ServiceRegistry {
             .collect();
             
         if healthy_instances.is_empty() {
-            return Err(WorkflowError::RegistryError {
-                message: format!("No healthy instances for service: {}", service_name)
-            });
+            return Err(WorkflowError::registry_error_simple(
+                format!("No healthy instances for service: {}", service_name)
+            ));
         }
         
         let selected = match strategy {
@@ -432,9 +432,9 @@ impl ServiceRegistry {
         
         let service_instances = instances
             .get(service_name)
-            .ok_or_else(|| WorkflowError::RegistryError {
-                message: format!("Service not found: {}", service_name)
-            })?;
+            .ok_or_else(|| WorkflowError::registry_error_simple(
+                format!("Service not found: {}", service_name)
+            ))?;
             
         let healthy_count = service_instances
             .iter()
@@ -478,7 +478,7 @@ pub struct ServiceStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
+    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
     
     #[tokio::test]
     async fn test_service_registration() {

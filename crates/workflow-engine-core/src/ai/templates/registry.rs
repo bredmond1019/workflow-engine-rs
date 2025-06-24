@@ -607,7 +607,7 @@ mod tests {
         registry.register(t1).unwrap();
         registry.register(t3).unwrap();
         
-        let stats = registry.stats();
+        let stats = registry.stats().unwrap();
         assert_eq!(stats.total_templates, 3);
         assert_eq!(stats.total_includes, 1);
         assert_eq!(stats.contexts, 1);

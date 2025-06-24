@@ -200,12 +200,12 @@ impl ConfigurationManager {
     pub async fn load_from_file(&self, path: &str) -> Result<(), WorkflowError> {
         let content = tokio::fs::read_to_string(path)
             .await
-            .map_err(|e| WorkflowError::ConfigurationError(
+            .map_err(|e| WorkflowError::configuration_error_simple(
                 format!("Failed to read config file {}: {}", path, e)
             ))?;
             
         let configs: Vec<ServiceConfiguration> = serde_json::from_str(&content)
-            .map_err(|e| WorkflowError::ConfigurationError(
+            .map_err(|e| WorkflowError::configuration_error_simple(
                 format!("Failed to parse config JSON: {}", e)
             ))?;
             
@@ -232,7 +232,7 @@ impl ConfigurationManager {
         configurations
             .get(service_name)
             .cloned()
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 format!("Configuration not found for service: {}", service_name)
             ))
     }
@@ -249,7 +249,7 @@ impl ConfigurationManager {
         
         let config = configurations
             .get(service_name)
-            .ok_or_else(|| WorkflowError::ConfigurationError(
+            .ok_or_else(|| WorkflowError::configuration_error_simple(
                 format!("Service configuration not found: {}", service_name)
             ))?;
             

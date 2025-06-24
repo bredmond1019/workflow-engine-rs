@@ -159,7 +159,7 @@ impl McpToolServer {
             McpRequest::CallTool { id, params } => {
                 let tools = self.tools.read().await;
 
-                if let Some((metadata, node)) = tools.get(&params.name) {
+                if let Some((_metadata, node)) = tools.get(&params.name) {
                     // Convert MCP arguments to TaskContext
                     let task_context = self.arguments_to_task_context(params.arguments)?;
 

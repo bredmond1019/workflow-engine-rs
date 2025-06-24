@@ -223,9 +223,7 @@ mod tests {
     #[test]
     fn test_default_error_handler() {
         let handler = DefaultErrorHandler;
-        let error = WorkflowError::ProcessingError { 
-            message: "Test error".to_string() 
-        };
+        let error = WorkflowError::processing_error_simple("Test error");
         let metadata = ErrorMetadata::new(
             ErrorCategory::Transient,
             ErrorSeverity::Error,

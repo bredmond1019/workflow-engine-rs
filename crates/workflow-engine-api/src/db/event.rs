@@ -34,17 +34,17 @@ impl Event {
 
     pub fn update_task_context(&mut self, task_context: &TaskContext) -> Result<(), WorkflowError> {
         self.task_context =
-            serde_json::to_value(task_context).map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize task context: {}", e),
-            })?;
+            serde_json::to_value(task_context).map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize task context: {}", e)
+            ))?;
         self.updated_at = Utc::now();
         Ok(())
     }
 
     pub fn get_typed_data<T: for<'de> Deserialize<'de>>(&self) -> Result<T, WorkflowError> {
-        serde_json::from_value(self.data.clone()).map_err(|e| WorkflowError::DeserializationError {
-            message: format!("Failed to deserialize event data: {}", e),
-        })
+        serde_json::from_value(self.data.clone()).map_err(|e| WorkflowError::deserialization_error_simple(
+            format!("Failed to deserialize event data: {}", e)
+        ))
     }
 }
 

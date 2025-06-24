@@ -6,6 +6,7 @@ mod tests {
     use rust_decimal::Decimal;
     use crate::ai::tokens::{Model, Provider, TokenUsage, PricingEngine, VolumeTier};
     use crate::config::pricing::PricingEngineConfig;
+    #[cfg(feature = "streaming")]
     use crate::streaming::types::StreamMetadata;
 
     fn create_test_pricing_engine() -> PricingEngine {
@@ -26,6 +27,7 @@ mod tests {
         assert_eq!(cost.total_cost, cost.input_cost + cost.output_cost);
     }
 
+    #[cfg(feature = "streaming")]
     #[test]
     fn test_streaming_cost_calculation() {
         let engine = create_test_pricing_engine();
@@ -44,6 +46,7 @@ mod tests {
         assert!(cost.total_cost > Decimal::ZERO);
     }
 
+    #[cfg(feature = "streaming")]
     #[test]
     fn test_cumulative_streaming_cost() {
         let engine = create_test_pricing_engine();
@@ -116,6 +119,7 @@ mod tests {
         assert_eq!(comp.cheaper_model, Model::Gpt35Turbo);
     }
 
+    #[cfg(feature = "streaming")]
     #[test]
     fn test_invalid_model_string() {
         let engine = create_test_pricing_engine();
@@ -131,6 +135,7 @@ mod tests {
         assert!(result.is_err());
     }
 
+    #[cfg(feature = "streaming")]
     #[test]
     fn test_missing_token_count() {
         let engine = create_test_pricing_engine();

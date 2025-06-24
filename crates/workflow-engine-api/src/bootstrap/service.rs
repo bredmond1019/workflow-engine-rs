@@ -1,4 +1,5 @@
-use workflow_engine_core::registry::agent_registry::{AgentRegistry, AgentRegistration};
+use workflow_engine_core::registry::agent_registry::{AgentRegistry, AgentRegistration, Agent, AgentRegistryError};
+use async_trait::async_trait;
 use chrono::Utc;
 use serde_json::Value;
 use std::time::Duration;
@@ -274,8 +275,6 @@ pub async fn bootstrap_service_with_db(
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use crate::db::agent::Agent;
-    use workflow_engine_core::registry::agent_registry::AgentRegistryError;
 
     #[tokio::test]
     async fn test_service_config_creation() {

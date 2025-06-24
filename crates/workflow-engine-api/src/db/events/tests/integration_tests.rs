@@ -230,8 +230,11 @@ async fn test_comprehensive_system_load() {
     
     for i in 0..100 {
         let dlq_clone = dlq.clone();
-        let ordering_clone = ordering_manager.get_processor("default").await
-            .unwrap_or_else(|| ordering_manager.register_processor("default", None).await);
+        let ordering_clone = if let Some(processor) = ordering_manager.get_processor("default").await {
+            processor
+        } else {
+            ordering_manager.register_processor("default", None).await.unwrap()
+        };
         
         let handle = tokio::spawn(async move {
             let event = create_test_event("load_test_event", &format!("Load test {}", i));
@@ -325,13 +328,6 @@ impl EventStore for MockEventStore {
         Ok(())
     }
     
-    async fn get_events_for_aggregate(
-        &self,
-        _aggregate_id: Uuid,
-        _from_version: Option<i64>,
-    ) -> EventResult<Vec<EventEnvelope>> {
-        Ok(vec![])
-    }
     
     async fn get_events_from_position(
         &self,

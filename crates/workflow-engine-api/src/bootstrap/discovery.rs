@@ -175,9 +175,9 @@ impl ServiceDiscovery for CompositeDiscovery {
             if let Some(error) = last_error {
                 return Err(error);
             }
-            return Err(WorkflowError::RegistryError {
-                message: format!("Service not found: {}", service_name)
-            });
+            return Err(WorkflowError::registry_error_simple(
+                format!("Service not found: {}", service_name)
+            ));
         }
         
         Ok(all_instances)
@@ -198,9 +198,9 @@ impl ServiceDiscovery for CompositeDiscovery {
             if let Some(error) = last_error {
                 return Err(error);
             }
-            return Err(WorkflowError::RegistryError {
-                message: format!("No services found with capability: {}", capability)
-            });
+            return Err(WorkflowError::registry_error_simple(
+                format!("No services found with capability: {}", capability)
+            ));
         }
         
         Ok(all_instances)
@@ -221,9 +221,9 @@ impl ServiceDiscovery for CompositeDiscovery {
             if let Some(error) = last_error {
                 return Err(error);
             }
-            return Err(WorkflowError::RegistryError {
-                message: "Failed to register service with any discovery mechanism".to_string()
-            });
+            return Err(WorkflowError::registry_error_simple(
+                "Failed to register service with any discovery mechanism".to_string()
+            ));
         }
         
         Ok(())
@@ -250,7 +250,7 @@ impl ServiceDiscovery for CompositeDiscovery {
         if let Some(discovery) = self.discoveries.first() {
             discovery.watch_services().await
         } else {
-            Err(WorkflowError::ConfigurationError(
+            Err(WorkflowError::configuration_error_simple(
                 "No discovery mechanisms configured".to_string()
             ))
         }
@@ -351,9 +351,9 @@ impl DiscoveryClient {
             .collect();
             
         if healthy_instances.is_empty() {
-            return Err(WorkflowError::RegistryError {
-                message: format!("No healthy instances for service: {}", service_name)
-            });
+            return Err(WorkflowError::registry_error_simple(
+                format!("No healthy instances for service: {}", service_name)
+            ));
         }
         
         // Simple selection based on strategy
@@ -380,7 +380,7 @@ impl DiscoveryClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use workflow_engine_core::registry::MockAgentRegistry;
+    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
     
     #[tokio::test]
     async fn test_registry_discovery() {

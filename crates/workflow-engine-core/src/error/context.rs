@@ -333,9 +333,7 @@ mod tests {
     
     #[test]
     fn test_error_context_builder() {
-        let error = WorkflowError::ProcessingError {
-            message: "Test error".to_string(),
-        };
+        let error = WorkflowError::processing_error_simple("Test error");
         
         let context = ErrorContextBuilder::new(error)
             .context("user_id", "12345")
@@ -351,9 +349,7 @@ mod tests {
     
     #[test]
     fn test_error_categorization() {
-        let transient_error = WorkflowError::ApiError {
-            message: "Service unavailable".to_string(),
-        };
+        let transient_error = WorkflowError::api_error_simple("Service unavailable");
         let (category, _, _) = categorize_error(&transient_error);
         assert_eq!(category, ErrorCategory::Transient);
         

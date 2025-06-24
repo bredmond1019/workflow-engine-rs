@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use super::super::server::CustomerSupportMcpServer;
-    use workflow_engine_core::mcp::protocol::MCPRequest;
+    use crate::protocol::McpRequest;
 
     #[tokio::test]
     async fn test_customer_support_server_creation() {
@@ -34,15 +34,15 @@ mod tests {
     async fn test_list_tools_request() {
         let server = CustomerSupportMcpServer::new().await.unwrap();
         
-        let request = MCPRequest::ListTools {
+        let request = McpRequest::ListTools {
             id: "test-123".to_string(),
         };
 
         let response = server.get_server().handle_request(request).await.unwrap();
         
         match response {
-            crate::core::mcp::protocol::MCPResponse::Result { 
-                result: crate::core::mcp::protocol::ResponseResult::ListTools(tools_result), 
+            crate::protocol::McpResponse::Result { 
+                result: crate::protocol::ResponseResult::ListTools(tools_result), 
                 .. 
             } => {
                 assert_eq!(tools_result.tools.len(), 8);
