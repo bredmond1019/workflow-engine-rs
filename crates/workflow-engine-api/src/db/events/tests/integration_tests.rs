@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 use crate::db::events::*;
 
@@ -233,7 +234,7 @@ async fn test_comprehensive_system_load() {
         let ordering_clone = if let Some(processor) = ordering_manager.get_processor("default").await {
             processor
         } else {
-            ordering_manager.register_processor("default", None).await.unwrap()
+            ordering_manager.register_processor("default", None).await
         };
         
         let handle = tokio::spawn(async move {
@@ -335,6 +336,82 @@ impl EventStore for MockEventStore {
         _limit: usize,
     ) -> EventResult<Vec<EventEnvelope>> {
         Ok(vec![])
+    }
+    
+    async fn get_events(&self, _aggregate_id: Uuid) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn get_events_from_version(
+        &self,
+        _aggregate_id: Uuid,
+        _from_version: i64,
+    ) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn get_events_by_type(
+        &self,
+        _event_type: &str,
+        _from: Option<DateTime<Utc>>,
+        _to: Option<DateTime<Utc>>,
+        _limit: Option<usize>,
+    ) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn get_events_by_correlation_id(&self, _correlation_id: Uuid) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn get_aggregate_version(&self, _aggregate_id: Uuid) -> EventResult<i64> {
+        Ok(0)
+    }
+    
+    async fn aggregate_exists(&self, _aggregate_id: Uuid) -> EventResult<bool> {
+        Ok(false)
+    }
+    
+    async fn save_snapshot(&self, _snapshot: &AggregateSnapshot) -> EventResult<()> {
+        Ok(())
+    }
+    
+    async fn get_snapshot(&self, _aggregate_id: Uuid) -> EventResult<Option<AggregateSnapshot>> {
+        Ok(None)
+    }
+    
+    async fn get_current_position(&self) -> EventResult<i64> {
+        Ok(0)
+    }
+    
+    async fn replay_events(
+        &self,
+        _from_position: i64,
+        _event_types: Option<Vec<String>>,
+        _batch_size: usize,
+    ) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn get_events_for_aggregates(&self, _aggregate_ids: &[Uuid]) -> EventResult<Vec<EventEnvelope>> {
+        Ok(vec![])
+    }
+    
+    async fn cleanup_old_snapshots(&self, _keep_latest: usize) -> EventResult<usize> {
+        Ok(0)
+    }
+    
+    async fn get_aggregate_ids_by_type(
+        &self,
+        _aggregate_type: &str,
+        _offset: i64,
+        _limit: usize,
+    ) -> EventResult<Vec<Uuid>> {
+        Ok(vec![])
+    }
+    
+    async fn optimize_storage(&self) -> EventResult<()> {
+        Ok(())
     }
 }
 

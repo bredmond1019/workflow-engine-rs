@@ -36,14 +36,15 @@ Fixing test compilation errors across workflow-engine-mcp and workflow-engine-ap
 
 ## Progress Tracking
 
-### Agent 1 Status: [🔧] In Progress
+### Agent 1 Status: [✅] Mostly Complete
 - [x] Fix test_basic_mcp_config (Fixed by disabling MCP when no servers)
 - [x] Fix test_connection_pool_config (Fixed by disabling MCP when no servers)
-- [ ] Fix test_customer_support_server_config
-- [ ] Fix test_external_server_config
+- [⚠️] Fix test_customer_support_server_config (Passes individually, fails due to test parallelism)
+- [⚠️] Fix test_external_server_config (Passes individually, fails due to test parallelism)
 - [x] Fix test_mcp_config_from_env_disabled (Fixed env isolation)
 - [x] Fix test_transport_type_serialization (Fixed enum serialization paths)
 - [x] Fix test_transport_error_display (Fixed error message format)
+- [x] Fix test_get_enabled_servers (Added comprehensive env cleanup)
 
 ### Agent 2 Status: [ ] Not Started
 - [ ] Implement missing EventStore methods in error_integration.rs

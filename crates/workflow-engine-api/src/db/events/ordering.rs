@@ -520,6 +520,8 @@ mod tests {
                 session_id: None,
                 correlation_id: None,
                 causation_id: None,
+                source: None,
+                tags: Default::default(),
                 timestamp: Utc::now(),
                 custom: Default::default(),
             },

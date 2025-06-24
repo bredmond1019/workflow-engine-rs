@@ -533,6 +533,10 @@ mod tests {
         async fn get_events_from_position(&self, _position: i64, _limit: usize) -> EventResult<Vec<EventEnvelope>> { Ok(vec![]) }
         async fn get_current_position(&self) -> EventResult<i64> { Ok(0) }
         async fn replay_events(&self, _from_position: i64, _event_types: Option<Vec<String>>, _batch_size: usize) -> EventResult<Vec<EventEnvelope>> { Ok(vec![]) }
+        async fn get_events_for_aggregates(&self, _aggregate_ids: &[Uuid]) -> EventResult<Vec<EventEnvelope>> { Ok(vec![]) }
+        async fn cleanup_old_snapshots(&self, _keep_latest: usize) -> EventResult<usize> { Ok(0) }
+        async fn get_aggregate_ids_by_type(&self, _aggregate_type: &str, _offset: i64, _limit: usize) -> EventResult<Vec<Uuid>> { Ok(vec![]) }
+        async fn optimize_storage(&self) -> EventResult<()> { Ok(()) }
     }
 
     #[tokio::test]
