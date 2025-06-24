@@ -18,10 +18,14 @@ impl EnvLoader {
         T::Err: std::fmt::Display,
     {
         let value = env::var(key)
-            .map_err(|_| ConfigError::EnvVarNotFound(key.to_string()))?;
+            .map_err(|_| ConfigError::env_var_not_found(key, None))?;
         
         value.parse()
-            .map_err(|e| ConfigError::ParseError(format!("{}: {}", key, e)))
+            .map_err(|e| ConfigError::parse_error(
+                format!("{}: {}", key, e),
+                "environment variable",
+                key
+            ))
     }
     
     /// Load an optional environment variable with a default value
@@ -32,7 +36,11 @@ impl EnvLoader {
     {
         match env::var(key) {
             Ok(value) => value.parse()
-                .map_err(|e| ConfigError::ParseError(format!("{}: {}", key, e))),
+                .map_err(|e| ConfigError::parse_error(
+                    format!("{}: {}", key, e),
+                    "environment variable",
+                    key
+                )),
             Err(_) => Ok(default),
         }
     }
@@ -46,7 +54,11 @@ impl EnvLoader {
         match env::var(key) {
             Ok(value) => {
                 let parsed = value.parse()
-                    .map_err(|e| ConfigError::ParseError(format!("{}: {}", key, e)))?;
+                    .map_err(|e| ConfigError::parse_error(
+                        format!("{}: {}", key, e),
+                        "environment variable",
+                        key
+                    ))?;
                 Ok(Some(parsed))
             },
             Err(_) => Ok(None),
@@ -76,7 +88,11 @@ impl EnvLoader {
                 
                 value.split(',')
                     .map(|s| s.trim().parse()
-                        .map_err(|e| ConfigError::ParseError(format!("{}: {}", key, e))))
+                        .map_err(|e| ConfigError::parse_error(
+                            format!("{}: {}", key, e),
+                            "environment variable",
+                            key
+                        )))
                     .collect()
             },
             Err(_) => Ok(Vec::new()),
@@ -93,7 +109,7 @@ impl EnvLoader {
     pub fn validate_present(key: &str) -> ConfigResult<()> {
         env::var(key)
             .map(|_| ())
-            .map_err(|_| ConfigError::EnvVarNotFound(key.to_string()))
+            .map_err(|_| ConfigError::env_var_not_found(key, None))
     }
     
     /// Validate an environment variable against a set of allowed values
@@ -103,10 +119,12 @@ impl EnvLoader {
                 if allowed_values.contains(&value.as_str()) {
                     Ok(())
                 } else {
-                    Err(ConfigError::InvalidValue {
-                        key: key.to_string(),
-                        value: format!("{}. Allowed values: {}", value, allowed_values.join(", ")),
-                    })
+                    Err(ConfigError::invalid_value(
+                        key,
+                        &value,
+                        &format!("one of: {}", allowed_values.join(", ")),
+                        "environment variable"
+                    ))
                 }
             },
             Err(_) => Ok(()), // Optional validation - OK if not present
@@ -129,8 +147,11 @@ impl EnvLoader {
         if validator(&value) {
             Ok(value)
         } else {
-            Err(ConfigError::ValidationFailed(
-                format!("Value for {} failed validation", key)
+            Err(ConfigError::validation_failed(
+                format!("Value for {} failed validation", key),
+                "environment variable",
+                "Ensure the value meets the required validation constraints",
+                vec![(key.to_string(), "validation failed".to_string())]
             ))
         }
     }
@@ -178,10 +199,12 @@ impl EnvValidator {
         if let Ok(value) = env::var(key) {
             match value.to_lowercase().as_str() {
                 "true" | "false" | "1" | "0" | "yes" | "no" | "on" | "off" => Ok(()),
-                _ => Err(ConfigError::InvalidValue {
-                    key: key.to_string(),
-                    value: format!("{}. Must be true/false, 1/0, yes/no, or on/off", value),
-                }),
+                _ => Err(ConfigError::invalid_value(
+                    key,
+                    &value,
+                    "true/false, 1/0, yes/no, or on/off",
+                    "environment variable"
+                )),
             }
         } else {
             Ok(()) // Optional variable - OK if not present
@@ -197,7 +220,11 @@ impl EnvValidator {
         if let Ok(value) = env::var(key) {
             value.parse::<T>()
                 .map(|_| ())
-                .map_err(|e| ConfigError::ParseError(format!("{}: {}", key, e)))
+                .map_err(|e| ConfigError::parse_error(
+                    format!("{}: {}", key, e),
+                    "environment variable",
+                    key
+                ))
         } else {
             Ok(()) // Optional variable - OK if not present
         }
@@ -209,10 +236,12 @@ impl EnvValidator {
             if url.starts_with("http://") || url.starts_with("https://") {
                 Ok(())
             } else {
-                Err(ConfigError::InvalidValue {
-                    key: key.to_string(),
-                    value: format!("{}. Must start with http:// or https://", url),
-                })
+                Err(ConfigError::invalid_value(
+                    key,
+                    &url,
+                    "URL starting with http:// or https://",
+                    "environment variable"
+                ))
             }
         } else {
             Ok(()) // Optional variable - OK if not present
@@ -229,10 +258,12 @@ impl EnvValidator {
             for email in emails.split(',') {
                 let email = email.trim();
                 if !email.contains('@') || !email.contains('.') {
-                    return Err(ConfigError::InvalidValue {
-                        key: key.to_string(),
-                        value: format!("{} contains invalid email: {}", emails, email),
-                    });
+                    return Err(ConfigError::invalid_value(
+                        key,
+                        &emails,
+                        "comma-separated list of valid email addresses",
+                        "environment variable"
+                    ));
                 }
             }
         }

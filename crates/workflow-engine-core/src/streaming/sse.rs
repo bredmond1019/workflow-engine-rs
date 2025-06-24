@@ -27,9 +27,12 @@ impl SSEParser {
         let model = self.model.clone();
         
         let stream = byte_stream
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Stream error: {}", e),
-            })
+            .map_err(|e| WorkflowError::api_error(
+                format!("Stream error: {}", e),
+                "streaming_service",
+                "sse_stream",
+                None
+            ))
             .flat_map(|bytes_result| {
                 match bytes_result {
                     Ok(bytes) => {
@@ -78,9 +81,12 @@ impl SSEParser {
                                             Err(e) => Some(Err(e)),
                                         }
                                     }
-                                    Err(e) => Some(Err(WorkflowError::DeserializationError {
-                                        message: format!("Failed to parse SSE JSON: {}", e),
-                                    })),
+                                    Err(e) => Some(Err(WorkflowError::deserialization_error(
+                                        format!("Failed to parse SSE JSON: {}", e),
+                                        "JSON",
+                                        "SSE stream parsing",
+                                        None
+                                    ))),
                                 }
                             }
                         }
@@ -122,8 +128,12 @@ impl SSEParser {
                 }
                 Ok(None)
             }
-            _ => Err(WorkflowError::ConfigurationError(
+            _ => Err(WorkflowError::configuration_error(
                 format!("Unsupported provider for SSE parsing: {}", provider),
+                "provider",
+                "SSE parser",
+                "openai or anthropic",
+                Some(provider.to_string())
             )),
         }
     }

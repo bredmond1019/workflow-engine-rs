@@ -391,9 +391,10 @@ Suggestions:
 {{/if}}
 
 Please try again or contact support if the issue persists."#
-    ).map_err(|e| WorkflowError::ProcessingError {
-        message: format!("Failed to create error response template: {}", e),
-    })?
+    ).map_err(|e| WorkflowError::processing_error(
+        format!("Failed to create error response template: {}", e),
+        "template_agent"
+    ))?
     .with_context("error");
     
     template_manager.register(error_response)?;

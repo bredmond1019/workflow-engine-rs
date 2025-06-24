@@ -24,7 +24,12 @@ pub enum AgentRegistryError {
 
 impl From<AgentRegistryError> for WorkflowError {
     fn from(err: AgentRegistryError) -> Self {
-        WorkflowError::RegistryError { message: err.to_string() }
+        WorkflowError::registry_error(
+            err.to_string(),
+            "agent_operation",
+            "agent",
+            None
+        )
     }
 }
 

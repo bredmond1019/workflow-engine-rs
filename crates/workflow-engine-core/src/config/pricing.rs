@@ -204,12 +204,20 @@ impl PricingEngineConfig {
             update_interval_hours: env::var("PRICING_UPDATE_INTERVAL_HOURS")
                 .unwrap_or_else(|_| "6".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_UPDATE_INTERVAL_HOURS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_UPDATE_INTERVAL_HOURS: {}", e),
+                    "environment variable",
+                    "PRICING_UPDATE_INTERVAL_HOURS"
+                ))?,
             
             cache_duration_hours: env::var("PRICING_CACHE_DURATION_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_CACHE_DURATION_HOURS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_CACHE_DURATION_HOURS: {}", e),
+                    "environment variable",
+                    "PRICING_CACHE_DURATION_HOURS"
+                ))?,
             
             fallback_enabled: env::var("PRICING_FALLBACK_ENABLED")
                 .unwrap_or_else(|_| "true".to_string())
@@ -219,17 +227,29 @@ impl PricingEngineConfig {
             api_timeout_seconds: env::var("PRICING_API_TIMEOUT_SECONDS")
                 .unwrap_or_else(|_| "30".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_API_TIMEOUT_SECONDS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_API_TIMEOUT_SECONDS: {}", e),
+                    "environment variable",
+                    "PRICING_API_TIMEOUT_SECONDS"
+                ))?,
             
             retry_attempts: env::var("PRICING_RETRY_ATTEMPTS")
                 .unwrap_or_else(|_| "3".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_RETRY_ATTEMPTS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_RETRY_ATTEMPTS: {}", e),
+                    "environment variable",
+                    "PRICING_RETRY_ATTEMPTS"
+                ))?,
             
             retry_delay_seconds: env::var("PRICING_RETRY_DELAY_SECONDS")
                 .unwrap_or_else(|_| "5".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_RETRY_DELAY_SECONDS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_RETRY_DELAY_SECONDS: {}", e),
+                    "environment variable",
+                    "PRICING_RETRY_DELAY_SECONDS"
+                ))?,
             
             openai: OpenAIConfig::from_env()?,
             anthropic: AnthropicConfig::from_env()?,
@@ -242,26 +262,38 @@ impl PricingEngineConfig {
     /// Validate pricing configuration
     pub fn validate(&self) -> ConfigResult<()> {
         if self.update_interval_hours == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "update_interval_hours must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "update_interval_hours must be greater than 0",
+                "pricing config",
+                "Set PRICING_UPDATE_INTERVAL_HOURS to a value greater than 0",
+                vec![("update_interval_hours".to_string(), "0".to_string())]
             ));
         }
         
         if self.cache_duration_hours == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "cache_duration_hours must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "cache_duration_hours must be greater than 0",
+                "pricing config",
+                "Set PRICING_CACHE_DURATION_HOURS to a value greater than 0",
+                vec![("cache_duration_hours".to_string(), "0".to_string())]
             ));
         }
         
         if self.api_timeout_seconds == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "api_timeout_seconds must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "api_timeout_seconds must be greater than 0",
+                "pricing config",
+                "Set PRICING_API_TIMEOUT_SECONDS to a value greater than 0",
+                vec![("api_timeout_seconds".to_string(), "0".to_string())]
             ));
         }
         
         if self.retry_delay_seconds == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "retry_delay_seconds must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "retry_delay_seconds must be greater than 0",
+                "pricing config",
+                "Set PRICING_RETRY_DELAY_SECONDS to a value greater than 0",
+                vec![("retry_delay_seconds".to_string(), "0".to_string())]
             ));
         }
         
@@ -310,8 +342,11 @@ impl OpenAIConfig {
     
     fn validate(&self) -> ConfigResult<()> {
         if self.enabled && self.api_key.is_none() {
-            return Err(ConfigError::ValidationFailed(
-                "OpenAI pricing is enabled but OPENAI_API_KEY is not set".to_string()
+            return Err(ConfigError::validation_failed(
+                "OpenAI pricing is enabled but OPENAI_API_KEY is not set",
+                "OpenAI config",
+                "Set OPENAI_API_KEY environment variable or disable with OPENAI_PRICING_ENABLED=false",
+                vec![("api_key".to_string(), "missing".to_string())]
             ));
         }
         Ok(())
@@ -334,8 +369,11 @@ impl AnthropicConfig {
     
     fn validate(&self) -> ConfigResult<()> {
         if self.enabled && self.api_key.is_none() {
-            return Err(ConfigError::ValidationFailed(
-                "Anthropic pricing is enabled but ANTHROPIC_API_KEY is not set".to_string()
+            return Err(ConfigError::validation_failed(
+                "Anthropic pricing is enabled but ANTHROPIC_API_KEY is not set",
+                "Anthropic config",
+                "Set ANTHROPIC_API_KEY environment variable or disable with ANTHROPIC_PRICING_ENABLED=false",
+                vec![("api_key".to_string(), "missing".to_string())]
             ));
         }
         Ok(())
@@ -359,13 +397,19 @@ impl AWSConfig {
     fn validate(&self) -> ConfigResult<()> {
         if self.enabled {
             if self.access_key_id.is_none() {
-                return Err(ConfigError::ValidationFailed(
-                    "AWS pricing is enabled but AWS_ACCESS_KEY_ID is not set".to_string()
+                return Err(ConfigError::validation_failed(
+                    "AWS pricing is enabled but AWS_ACCESS_KEY_ID is not set",
+                    "AWS config",
+                    "Set AWS_ACCESS_KEY_ID environment variable or disable with AWS_PRICING_ENABLED=false",
+                    vec![("access_key_id".to_string(), "missing".to_string())]
                 ));
             }
             if self.secret_access_key.is_none() {
-                return Err(ConfigError::ValidationFailed(
-                    "AWS pricing is enabled but AWS_SECRET_ACCESS_KEY is not set".to_string()
+                return Err(ConfigError::validation_failed(
+                    "AWS pricing is enabled but AWS_SECRET_ACCESS_KEY is not set",
+                    "AWS config",
+                    "Set AWS_SECRET_ACCESS_KEY environment variable or disable with AWS_PRICING_ENABLED=false",
+                    vec![("secret_access_key".to_string(), "missing".to_string())]
                 ));
             }
         }
@@ -450,11 +494,19 @@ impl CacheConfig {
             max_size_mb: env::var("PRICING_CACHE_MAX_SIZE_MB")
                 .unwrap_or_else(|_| "50".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_CACHE_MAX_SIZE_MB: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_CACHE_MAX_SIZE_MB: {}", e),
+                    "environment variable",
+                    "PRICING_CACHE_MAX_SIZE_MB"
+                ))?,
             ttl_hours: env::var("PRICING_CACHE_TTL_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PRICING_CACHE_TTL_HOURS: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PRICING_CACHE_TTL_HOURS: {}", e),
+                    "environment variable",
+                    "PRICING_CACHE_TTL_HOURS"
+                ))?,
             persist_to_disk: env::var("PRICING_CACHE_PERSIST")
                 .unwrap_or_else(|_| "true".to_string())
                 .parse()
@@ -465,14 +517,20 @@ impl CacheConfig {
     
     fn validate(&self) -> ConfigResult<()> {
         if self.max_size_mb == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "Cache max_size_mb must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "Cache max_size_mb must be greater than 0",
+                "cache config",
+                "Set PRICING_CACHE_MAX_SIZE_MB to a value greater than 0",
+                vec![("max_size_mb".to_string(), "0".to_string())]
             ));
         }
         
         if self.ttl_hours == 0 {
-            return Err(ConfigError::ValidationFailed(
-                "Cache TTL must be greater than 0".to_string()
+            return Err(ConfigError::validation_failed(
+                "Cache TTL must be greater than 0",
+                "cache config",
+                "Set PRICING_CACHE_TTL_HOURS to a value greater than 0",
+                vec![("ttl_hours".to_string(), "0".to_string())]
             ));
         }
         

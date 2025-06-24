@@ -293,8 +293,12 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
         if let Some(max_parallel) = self.metadata.get("max_parallel_executions") {
             if let Some(max_value) = max_parallel.as_u64() {
                 if max_value == 0 {
-                    return Err(WorkflowError::ConfigurationError(
-                        "Max parallel executions must be greater than 0".to_string()
+                    return Err(WorkflowError::configuration_error(
+                        "Max parallel executions must be greater than 0",
+                        "max_parallel_executions",
+                        "workflow metadata",
+                        "positive integer",
+                        Some("0".to_string())
                     ));
                 }
             }
@@ -304,8 +308,12 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
         if let Some(version) = self.metadata.get("version") {
             if let Some(version_str) = version.as_str() {
                 if version_str.is_empty() {
-                    return Err(WorkflowError::ConfigurationError(
-                        "Version cannot be empty".to_string()
+                    return Err(WorkflowError::configuration_error(
+                        "Version cannot be empty",
+                        "version",
+                        "workflow metadata",
+                        "non-empty string",
+                        Some("empty string".to_string())
                     ));
                 }
             }
@@ -578,8 +586,12 @@ impl WorkflowTemplates {
                     .filter(|c| c.node_type == TypeId::of::<Mapper>())
                     .count();
                 if mapper_nodes == 0 {
-                    return Err(WorkflowError::ConfigurationError(
-                        "Map-reduce workflow must have at least one mapper node".to_string()
+                    return Err(WorkflowError::configuration_error(
+                        "Map-reduce workflow must have at least one mapper node",
+                        "mapper_nodes",
+                        "workflow schema",
+                        "at least one mapper node",
+                        Some("0 mapper nodes".to_string())
                     ));
                 }
                 Ok(())

@@ -373,9 +373,10 @@ pub enum TemplateError {
 
 impl From<TemplateError> for crate::error::WorkflowError {
     fn from(error: TemplateError) -> Self {
-        crate::error::WorkflowError::ProcessingError {
-            message: format!("Template error: {}", error),
-        }
+        crate::error::WorkflowError::processing_error(
+            format!("Template error: {}", error),
+            "template_engine"
+        )
     }
 }
 

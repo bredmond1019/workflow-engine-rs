@@ -658,14 +658,22 @@ pub fn create_streaming_provider(
 ) -> Result<Box<dyn StreamingProvider + Send + Sync>, WorkflowError> {
     match provider_name.to_lowercase().as_str() {
         "openai" | "azureopenai" => {
-            let client = client.ok_or_else(|| WorkflowError::ConfigurationError(
-                "HTTP client required for OpenAI streaming".to_string(),
+            let client = client.ok_or_else(|| WorkflowError::configuration_error(
+                "HTTP client required for OpenAI streaming",
+                "http_client",
+                "streaming provider",
+                "HTTP client instance",
+                None
             ))?;
             Ok(Box::new(OpenAIStreamingProvider::new(client, model_name, system_prompt)))
         }
         "anthropic" => {
-            let client = client.ok_or_else(|| WorkflowError::ConfigurationError(
-                "HTTP client required for Anthropic streaming".to_string(),
+            let client = client.ok_or_else(|| WorkflowError::configuration_error(
+                "HTTP client required for Anthropic streaming",
+                "http_client",
+                "streaming provider",
+                "HTTP client instance",
+                None
             ))?;
             Ok(Box::new(AnthropicStreamingProvider::new(client, model_name, system_prompt)))
         }
@@ -679,8 +687,12 @@ pub fn create_streaming_provider(
                 "Bedrock provider requires 'aws' feature to be enabled".to_string(),
             ))
         }
-        _ => Err(WorkflowError::ConfigurationError(
+        _ => Err(WorkflowError::configuration_error(
             format!("Unsupported streaming provider: {}", provider_name),
+            "provider_name",
+            "streaming configuration",
+            "openai, anthropic, or bedrock",
+            Some(provider_name.to_string())
         )),
     }
 }

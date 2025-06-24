@@ -188,9 +188,10 @@ where
         match self.inner.poll_next_unpin(cx) {
             Poll::Ready(Some(Ok(chunk))) => {
                 if let Err(e) = self.handler.add_chunk(chunk) {
-                    return Poll::Ready(Some(Err(WorkflowError::ProcessingError {
-                        message: e.to_string(),
-                    })));
+                    return Poll::Ready(Some(Err(WorkflowError::processing_error(
+                        e.to_string(),
+                        "backpressure_handler"
+                    ))));
                 }
                 Poll::Pending
             }
@@ -370,9 +371,10 @@ where
                             continue;
                         }
                         Err(e) => {
-                            return std::task::Poll::Ready(Some(Err(WorkflowError::ProcessingError {
-                                message: e.to_string(),
-                            })));
+                            return std::task::Poll::Ready(Some(Err(WorkflowError::processing_error(
+                                e.to_string(),
+                                "backpressure_stream"
+                            ))));
                         }
                     }
                 }

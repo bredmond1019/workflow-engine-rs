@@ -815,8 +815,9 @@ impl<N: Node + Clone + 'static> AsyncNode for AsyncNodeAdapter<N> {
         let inner = self.inner.clone();
         tokio::task::spawn_blocking(move || inner.process(task_context))
             .await
-            .map_err(|e| WorkflowError::ProcessingError {
-                message: format!("Async adapter task failed: {}", e)
-            })?
+            .map_err(|e| WorkflowError::processing_error(
+                format!("Async adapter task failed: {}", e),
+                "async_adapter"
+            ))?
     }
 }

@@ -69,13 +69,21 @@ impl ApiConfig {
             port: env::var("PORT")
                 .unwrap_or_else(|_| "8080".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("PORT: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("PORT: {}", e),
+                    "environment variable",
+                    "PORT"
+                ))?,
             jwt_secret: env::var("JWT_SECRET")
-                .map_err(|_| ConfigError::EnvVarNotFound("JWT_SECRET".to_string()))?,
+                .map_err(|_| ConfigError::env_var_not_found("JWT_SECRET", Some("Required for JWT authentication".to_string())))?,
             rate_limit_per_minute: env::var("RATE_LIMIT_PER_MINUTE")
                 .unwrap_or_else(|_| "60".to_string())
                 .parse()
-                .map_err(|e| ConfigError::ParseError(format!("RATE_LIMIT_PER_MINUTE: {}", e)))?,
+                .map_err(|e| ConfigError::parse_error(
+                    format!("RATE_LIMIT_PER_MINUTE: {}", e),
+                    "environment variable",
+                    "RATE_LIMIT_PER_MINUTE"
+                ))?,
             rate_limit_burst: env::var("RATE_LIMIT_BURST")
                 .unwrap_or_else(|_| "10".to_string())
                 .parse()
