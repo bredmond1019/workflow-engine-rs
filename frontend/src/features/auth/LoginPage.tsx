@@ -9,7 +9,7 @@ const { Option } = Select;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginDemo, isLoading, error } = authStore();
+  const { login, isLoading, error } = authStore();
   const [form] = Form.useForm();
   
   const handleLogin = async (values: { username: string; role: string }) => {
@@ -18,15 +18,6 @@ const LoginPage: React.FC = () => {
       navigate('/dashboard');
     } catch (error) {
       // Error is handled in the store
-    }
-  };
-  
-  const quickDemoLogin = (username: string, role: string) => {
-    try {
-      loginDemo(username, role);
-      navigate('/dashboard');
-    } catch (error) {
-      // Error handling is done in the store
     }
   };
   
@@ -102,41 +93,9 @@ const LoginPage: React.FC = () => {
           </Form.Item>
         </Form>
         
-        <div className="mt-6 pt-6 border-t">
-          <Text type="secondary" className="block text-center mb-4">
-            Quick Demo Access
-          </Text>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => quickDemoLogin('demo_admin', 'admin')}
-              className="text-xs"
-            >
-              Admin Demo
-            </Button>
-            <Button
-              onClick={() => quickDemoLogin('demo_developer', 'developer')}
-              className="text-xs"
-            >
-              Developer Demo
-            </Button>
-            <Button
-              onClick={() => quickDemoLogin('demo_analyst', 'analyst')}
-              className="text-xs"
-            >
-              Analyst Demo
-            </Button>
-            <Button
-              onClick={() => quickDemoLogin('demo_viewer', 'viewer')}
-              className="text-xs"
-            >
-              Viewer Demo
-            </Button>
-          </div>
-        </div>
-        
         <div className="mt-6 text-center">
           <Text type="secondary" className="text-xs">
-            Demo Mode - No backend required. All features work with mock data.
+            Production AI Workflow Orchestration System
           </Text>
         </div>
       </Card>

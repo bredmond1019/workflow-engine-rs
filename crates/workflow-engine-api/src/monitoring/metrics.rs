@@ -625,10 +625,13 @@ pub fn start_system_metrics_collection() {
             // Update memory usage (simplified example)
             #[cfg(target_os = "linux")]
             {
-                if let Ok(info) = sys_info::mem_info() {
-                    SystemMetrics::update_memory_usage("total", info.total as i64 * 1024);
-                    SystemMetrics::update_memory_usage("available", info.avail as i64 * 1024);
-                    SystemMetrics::update_memory_usage("used", (info.total - info.avail) as i64 * 1024);
+                {
+                    use sysinfo::System;
+                    let mut sys = System::new_all();
+                    sys.refresh_memory();
+                    SystemMetrics::update_memory_usage("total", sys.total_memory() as i64 * 1024);
+                    SystemMetrics::update_memory_usage("available", sys.available_memory() as i64 * 1024);
+                    SystemMetrics::update_memory_usage("used", sys.used_memory() as i64 * 1024);
                 }
             }
             

@@ -1,0 +1,39 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user early
+RUN useradd -m -u 1000 appuser
+
+# Create app directory
+WORKDIR /app
+
+# Copy Python scripts
+COPY multi_service_mcp_server.py .
+COPY customer_support_server.py .
+COPY test_mcp_server.py .
+
+# Install uv and move to global location
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
+    chmod 755 /usr/local/bin/uv
+
+# Initialize Python environment and install dependencies
+RUN uv venv /app/venv && \
+    uv pip install --python /app/venv mcp aiohttp asyncio typing
+
+# Change ownership of app directory
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Service name will be passed as environment variable
+ENV SERVICE_NAME=notion
+ENV SERVICE_PORT=8001
+
+# Activate virtual environment and run the server
+CMD ["sh", "-c", "/app/venv/bin/python multi_service_mcp_server.py --service ${SERVICE_NAME}"]

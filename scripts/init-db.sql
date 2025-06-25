@@ -1,6 +1,15 @@
 -- AI Workflow System Database Initialization Script
 -- This script sets up the initial database schema for development
 
+-- Create role if it doesn't exist (for development)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'aiworkflow') THEN
+        CREATE ROLE aiworkflow WITH LOGIN PASSWORD 'aiworkflow_dev';
+    END IF;
+END
+$$;
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -57,7 +66,7 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(64) NOT NULL,
+    password_hash VARCHAR(128) NOT NULL,
     salt VARCHAR(255) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     role VARCHAR(50) NOT NULL DEFAULT 'user',

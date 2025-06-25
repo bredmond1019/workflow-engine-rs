@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Progress, Space, Typography, Spin, Tag, Timeline } from 'antd';
+import { Row, Col, Card, Statistic, Progress, Space, Typography, Spin, Tag, Timeline, Button } from 'antd';
 import {
   CheckCircleOutlined,
   SyncOutlined,
@@ -7,16 +7,17 @@ import {
   RocketOutlined,
   ApiOutlined,
   CloudServerOutlined,
-  DollarOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
-import { Line, Pie } from '@ant-design/charts';
+import { useNavigate } from 'react-router-dom';
 import { workflowStore } from '../../stores/workflowStore';
 import { WorkflowStatus } from '../../types';
 
 const { Title, Text } = Typography;
 
 const DashboardPage: React.FC = () => {
-  const { instances, fetchAllInstances } = workflowStore();
+  const navigate = useNavigate();
+  const { instances, fetchAllInstances, startPolling, stopPolling } = workflowStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -28,6 +29,11 @@ const DashboardPage: React.FC = () => {
   
   useEffect(() => {
     loadDashboardData();
+    startPolling();
+    
+    return () => {
+      stopPolling();
+    };
   }, []);
   
   useEffect(() => {
@@ -54,49 +60,25 @@ const DashboardPage: React.FC = () => {
     setStats({ total, completed, running, failed, successRate });
   };
   
-  // Mock data for charts
-  const executionTrendData = [
-    { date: '2024-01-01', executions: 45 },
-    { date: '2024-01-02', executions: 52 },
-    { date: '2024-01-03', executions: 61 },
-    { date: '2024-01-04', executions: 58 },
-    { date: '2024-01-05', executions: 73 },
-    { date: '2024-01-06', executions: 68 },
-    { date: '2024-01-07', executions: 82 },
-  ];
-  
-  const workflowDistributionData = [
-    { type: 'Customer Support', value: 35 },
-    { type: 'Data Analysis', value: 25 },
-    { type: 'Content Generation', value: 20 },
-    { type: 'Research', value: 15 },
-    { type: 'Other', value: 5 },
-  ];
-  
-  const lineConfig = {
-    data: executionTrendData,
-    xField: 'date',
-    yField: 'executions',
-    smooth: true,
-    point: { size: 4 },
-    label: {},
-    xAxis: {
-      label: {
-        autoRotate: false,
-      },
-    },
-  };
-  
-  const pieConfig = {
-    data: workflowDistributionData,
-    angleField: 'value',
-    colorField: 'type',
-    radius: 0.8,
-    label: {
-      type: 'outer',
-      content: '{name} {percentage}',
-    },
-    interactions: [{ type: 'element-active' }],
+  const getRecentActivity = () => {
+    const recentInstances = Array.from(instances.values())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+      
+    return recentInstances.map((instance) => ({
+      color: instance.status === WorkflowStatus.Completed ? 'green' :
+             instance.status === WorkflowStatus.Running ? 'blue' :
+             instance.status === WorkflowStatus.Failed ? 'red' : 'gray',
+      children: (
+        <div>
+          <Text strong>{instance.workflow_name.replace(/_/g, ' ')}</Text>
+          <br />
+          <Text type="secondary" className="text-xs">
+            {instance.status} • {new Date(instance.created_at).toLocaleTimeString()}
+          </Text>
+        </div>
+      ),
+    }));
   };
   
   if (loading) {
@@ -109,180 +91,143 @@ const DashboardPage: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <div>
-        <Title level={2}>Dashboard Overview</Title>
-        <Text type="secondary">Monitor your AI workflow orchestration system</Text>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <Title level={2} className="mb-2">AI Workflow Dashboard</Title>
+          <Text type="secondary">Real-time monitoring of your workflow orchestration system</Text>
+        </div>
+        <Space>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/workflows')}
+          >
+            New Workflow
+          </Button>
+        </Space>
       </div>
       
       {/* Key Metrics */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[24, 24]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <Statistic
               title="Total Workflows"
               value={stats.total}
-              prefix={<RocketOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              prefix={<RocketOutlined className="text-blue-500" />}
+              valueStyle={{ color: '#1890ff', fontSize: '32px' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <Statistic
               title="Completed"
               value={stats.completed}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              prefix={<CheckCircleOutlined className="text-green-500" />}
+              valueStyle={{ color: '#52c41a', fontSize: '32px' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <Statistic
               title="Running"
               value={stats.running}
-              prefix={<SyncOutlined spin />}
-              valueStyle={{ color: '#1890ff' }}
+              prefix={<SyncOutlined spin className="text-orange-500" />}
+              valueStyle={{ color: '#fa8c16', fontSize: '32px' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <Statistic
               title="Failed"
               value={stats.failed}
-              prefix={<CloseCircleOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
+              prefix={<CloseCircleOutlined className="text-red-500" />}
+              valueStyle={{ color: '#ff4d4f', fontSize: '32px' }}
             />
           </Card>
         </Col>
       </Row>
       
-      {/* Performance Metrics */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={8}>
+      {/* Performance & Activity */}
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={12}>
           <Card
             title="Success Rate"
             extra={<Tag color="success">Live</Tag>}
+            className="h-full"
           >
-            <Progress
-              type="dashboard"
-              percent={Math.round(stats.successRate)}
-              strokeColor={{
-                '0%': '#108ee9',
-                '100%': '#87d068',
-              }}
-            />
-            <div className="text-center mt-4">
-              <Text type="secondary">
-                {stats.completed} successful out of {stats.total} total
-              </Text>
+            <div className="text-center">
+              <Progress
+                type="dashboard"
+                percent={Math.round(stats.successRate)}
+                strokeColor={{
+                  '0%': '#108ee9',
+                  '100%': '#87d068',
+                }}
+                size={160}
+              />
+              <div className="mt-4">
+                <Text type="secondary">
+                  {stats.completed} successful out of {stats.total} total executions
+                </Text>
+              </div>
             </div>
           </Card>
         </Col>
         
-        <Col xs={24} lg={8}>
-          <Card
-            title="System Health"
-            extra={<Tag color="success">Healthy</Tag>}
-          >
-            <Space direction="vertical" className="w-full">
-              <div className="flex justify-between items-center">
-                <Space>
-                  <ApiOutlined />
-                  <Text>API Server</Text>
-                </Space>
+        <Col xs={24} lg={12}>
+          <Card title="Recent Activity" className="h-full">
+            {getRecentActivity().length > 0 ? (
+              <Timeline items={getRecentActivity()} />
+            ) : (
+              <div className="text-center py-8">
+                <Text type="secondary">No recent activity</Text>
+                <br />
+                <Button 
+                  type="link" 
+                  onClick={() => navigate('/workflows')}
+                >
+                  Create your first workflow
+                </Button>
+              </div>
+            )}
+          </Card>
+        </Col>
+      </Row>
+      
+      {/* System Status */}
+      <Card title="System Status" extra={<Tag color="success">All Systems Operational</Tag>}>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={8}>
+            <div className="text-center p-4">
+              <ApiOutlined className="text-3xl text-blue-500 mb-2" />
+              <div>
+                <Text strong className="block">API Server</Text>
                 <Tag color="success">Online</Tag>
               </div>
-              <div className="flex justify-between items-center">
-                <Space>
-                  <CloudServerOutlined />
-                  <Text>MCP Servers</Text>
-                </Space>
-                <Tag color="success">3/3 Connected</Tag>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <div className="text-center p-4">
+              <CloudServerOutlined className="text-3xl text-green-500 mb-2" />
+              <div>
+                <Text strong className="block">MCP Services</Text>
+                <Tag color="success">Connected</Tag>
               </div>
-              <div className="flex justify-between items-center">
-                <Space>
-                  <DollarOutlined />
-                  <Text>AI Credits</Text>
-                </Space>
-                <Tag color="warning">$423.50 Used</Tag>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <div className="text-center p-4">
+              <RocketOutlined className="text-3xl text-purple-500 mb-2" />
+              <div>
+                <Text strong className="block">AI Providers</Text>
+                <Tag color="success">Available</Tag>
               </div>
-            </Space>
-          </Card>
-        </Col>
-        
-        <Col xs={24} lg={8}>
-          <Card title="Recent Activity">
-            <Timeline
-              items={[
-                {
-                  color: 'green',
-                  children: 'Customer support workflow completed',
-                },
-                {
-                  color: 'blue',
-                  children: 'Research workflow started',
-                },
-                {
-                  color: 'red',
-                  children: 'Data analysis workflow failed',
-                },
-                {
-                  color: 'green',
-                  children: 'Content generation completed',
-                },
-              ]}
-            />
-          </Card>
-        </Col>
-      </Row>
-      
-      {/* Charts */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card title="Execution Trend (Last 7 Days)">
-            <Line {...lineConfig} />
-          </Card>
-        </Col>
-        
-        <Col xs={24} lg={12}>
-          <Card title="Workflow Distribution">
-            <Pie {...pieConfig} />
-          </Card>
-        </Col>
-      </Row>
-      
-      {/* Key Features Showcase */}
-      <Card title="System Capabilities">
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <RocketOutlined className="text-4xl text-blue-500 mb-4" />
-              <Title level={5}>AI Integration</Title>
-              <Text type="secondary">OpenAI, Anthropic, AWS Bedrock</Text>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <ApiOutlined className="text-4xl text-green-500 mb-4" />
-              <Title level={5}>MCP Protocol</Title>
-              <Text type="secondary">External tool integration</Text>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <SyncOutlined className="text-4xl text-purple-500 mb-4" />
-              <Title level={5}>Event Sourcing</Title>
-              <Text type="secondary">Complete audit trail</Text>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <CloudServerOutlined className="text-4xl text-orange-500 mb-4" />
-              <Title level={5}>Microservices</Title>
-              <Text type="secondary">Scalable architecture</Text>
-            </Card>
+            </div>
           </Col>
         </Row>
       </Card>

@@ -46,11 +46,14 @@ pub async fn health_detailed() -> ActixResult<HttpResponse> {
     // Memory information (simplified example)
     #[cfg(target_os = "linux")]
     {
-        if let Ok(info) = sys_info::mem_info() {
+        {
+            use sysinfo::System;
+            let mut sys = System::new_all();
+            sys.refresh_memory();
             let mut memory_info = HashMap::new();
-            memory_info.insert("total_kb", Value::Number(serde_json::Number::from(info.total)));
-            memory_info.insert("available_kb", Value::Number(serde_json::Number::from(info.avail)));
-            memory_info.insert("used_kb", Value::Number(serde_json::Number::from(info.total - info.avail)));
+            memory_info.insert("total_kb", Value::Number(serde_json::Number::from(sys.total_memory())));
+            memory_info.insert("available_kb", Value::Number(serde_json::Number::from(sys.available_memory())));
+            memory_info.insert("used_kb", Value::Number(serde_json::Number::from(sys.used_memory())));
             system_info.insert("memory", Value::Object(memory_info.into_iter().map(|(k, v)| (k.to_string(), v)).collect()));
         }
     }
@@ -58,11 +61,14 @@ pub async fn health_detailed() -> ActixResult<HttpResponse> {
     // CPU information
     #[cfg(target_os = "linux")]
     {
-        if let Ok(loadavg) = sys_info::loadavg() {
+        {
+            use sysinfo::System;
+            let mut sys = System::new_all();
+            let load_avg = System::load_average();
             let mut cpu_info = HashMap::new();
-            cpu_info.insert("load_1m", Value::Number(serde_json::Number::from_f64(loadavg.one).unwrap_or(serde_json::Number::from(0))));
-            cpu_info.insert("load_5m", Value::Number(serde_json::Number::from_f64(loadavg.five).unwrap_or(serde_json::Number::from(0))));
-            cpu_info.insert("load_15m", Value::Number(serde_json::Number::from_f64(loadavg.fifteen).unwrap_or(serde_json::Number::from(0))));
+            cpu_info.insert("load_1m", Value::Number(serde_json::Number::from_f64(load_avg.one).unwrap_or(serde_json::Number::from(0))));
+            cpu_info.insert("load_5m", Value::Number(serde_json::Number::from_f64(load_avg.five).unwrap_or(serde_json::Number::from(0))));
+            cpu_info.insert("load_15m", Value::Number(serde_json::Number::from_f64(load_avg.fifteen).unwrap_or(serde_json::Number::from(0))));
             system_info.insert("cpu", Value::Object(cpu_info.into_iter().map(|(k, v)| (k.to_string(), v)).collect()));
         }
     }

@@ -1,0 +1,140 @@
+# Git
+.git/
+.gitignore
+
+# Rust build artifacts (CRITICAL - excludes 14GB+ target directory)
+target/
+**/target/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test files (exclude test directories, but not src/*/tests modules)
+tests/
+# **/tests/ - commented out to allow src/*/tests modules
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/coverage/
+
+# Python virtual environments
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+
+# Logs
+logs/
+*.log
+
+# Environment files (copy separately if needed)
+.env
+.env.*
+
+# Scripts directory (large virtual environments)
+scripts/.venv/
+scripts/venv/
+scripts/__pycache__/
+
+# Services build artifacts
+services/**/target/
+services/**/node_modules/
+
+# Docker files we don't need in context
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Other large directories
+pids/
+logs/
+monitoring/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage/
+*.lcov
+
+# IDE specific files
+.metals/
+.bloop/
+project/metals.sbt
+
+# macOS specific
+**/.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows specific
+Desktop.ini
+ehthumbs.db
+
+# Linux specific
+.directory
+
+# Node modules anywhere in the project
+**/node_modules/
+
+# Cargo registry cache
+.cargo/registry/
+.cargo/git/
+
+# Any SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Large data files
+*.csv
+*.json
+!**/Cargo.json
+!**/package.json
+!**/tsconfig.json
+!**/sqlx-data.json
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+
+# Binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Keep only necessary files for build
+# The Dockerfile will explicitly COPY what it needs

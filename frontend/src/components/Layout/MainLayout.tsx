@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space } from 'antd';
 import {
   DashboardOutlined,
   AppstoreOutlined,
-  FileTextOutlined,
-  RocketOutlined,
-  MonitorOutlined,
   UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -32,21 +29,6 @@ const MainLayout: React.FC = () => {
       key: '/workflows',
       icon: <AppstoreOutlined />,
       label: 'Workflows',
-    },
-    {
-      key: '/templates',
-      icon: <FileTextOutlined />,
-      label: 'Templates',
-    },
-    {
-      key: '/demos',
-      icon: <RocketOutlined />,
-      label: 'Live Demos',
-    },
-    {
-      key: '/monitoring',
-      icon: <MonitorOutlined />,
-      label: 'Monitoring',
     },
   ];
   
@@ -101,13 +83,7 @@ const MainLayout: React.FC = () => {
             className="text-lg"
           />
           
-          <Space size="middle">
-            <Badge count={5} size="small">
-              <Button type="text" icon={<Badge status="processing" />}>
-                Active Workflows
-              </Button>
-            </Badge>
-            
+          <Space size="middle" className="hidden sm:flex">
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
@@ -115,14 +91,26 @@ const MainLayout: React.FC = () => {
             >
               <Space className="cursor-pointer">
                 <Avatar icon={<UserOutlined />} />
-                <span className="text-sm font-medium">{user?.sub}</span>
+                <span className="text-sm font-medium hidden md:inline">{user?.sub}</span>
+                <span className="text-xs text-gray-500 hidden lg:inline">({user?.role})</span>
               </Space>
             </Dropdown>
           </Space>
+          
+          {/* Mobile menu */}
+          <div className="sm:hidden">
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              arrow
+            >
+              <Avatar icon={<UserOutlined />} className="cursor-pointer" />
+            </Dropdown>
+          </div>
         </Header>
         
-        <Content className="m-6">
-          <div className="p-6 bg-white rounded-lg shadow-sm min-h-full">
+        <Content className="m-2 sm:m-4 lg:m-6">
+          <div className="p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm min-h-full">
             <Outlet />
           </div>
         </Content>

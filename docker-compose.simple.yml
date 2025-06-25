@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-workflow-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_workflow_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-workflow-net
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ai-workflow-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-workflow-net
+
+  # MCP Server - HelpScout
+  mcp-helpscout:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-helpscout
+    ports:
+      - "8001:8001"
+    environment:
+      SERVICE_NAME: helpscout
+      SERVICE_PORT: 8001
+      HELPSCOUT_API_KEY: ${HELPSCOUT_API_KEY:-mock-key}
+    networks:
+      - ai-workflow-net
+
+  # MCP Server - Notion
+  mcp-notion:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-notion
+    ports:
+      - "8002:8002"
+    environment:
+      SERVICE_NAME: notion
+      SERVICE_PORT: 8002
+      NOTION_API_KEY: ${NOTION_API_KEY:-mock-key}
+    networks:
+      - ai-workflow-net
+
+  # MCP Server - Slack
+  mcp-slack:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-slack
+    ports:
+      - "8003:8003"
+    environment:
+      SERVICE_NAME: slack
+      SERVICE_PORT: 8003
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-mock-token}
+    networks:
+      - ai-workflow-net
+
+  # AI Workflow System (Rust)
+  ai-workflow-system:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-workflow-system
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mcp-helpscout:
+        condition: service_started
+      mcp-notion:
+        condition: service_started
+      mcp-slack:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_workflow_db}
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: 8080
+      RUST_LOG: ${RUST_LOG:-info,workflow_engine=debug}
+      JWT_SECRET: ${JWT_SECRET:-your-secure-jwt-secret-key-change-in-production}
+      # AI Provider Keys (optional)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # MCP Server URLs
+      MCP_HELPSCOUT_URL: http://mcp-helpscout:8001
+      MCP_NOTION_URL: http://mcp-notion:8002
+      MCP_SLACK_URL: http://mcp-slack:8003
+    ports:
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-workflow-net
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    container_name: ai-workflow-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - ai-workflow-system
+    networks:
+      - ai-workflow-net
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-workflow-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - ai-workflow-net
+
+  # Grafana (Dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-workflow-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - ai-workflow-net
+
+networks:
+  ai-workflow-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

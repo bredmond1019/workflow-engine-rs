@@ -18,8 +18,8 @@ async fn main() -> std::io::Result<()> {
     // Initialize process start time first
     workflow_engine_api::api::startup::init_startup_time();
 
-    // Initialize logging
-    env_logger::init();
+    // Initialize structured logging with correlation ID support (this includes env_logger setup)
+    workflow_engine_api::monitoring::logging::init_structured_logging();
 
     // Get host and port from environment variables or use defaults
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -82,6 +82,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             // Enable CORS
             .wrap(cors)
+            // Enable rate limiting
+            .wrap(RateLimitMiddleware::new(rate_limit_config.clone()))
+            // Enable JWT authentication
+            .wrap(JwtMiddleware::new(jwt_secret.clone()))
             // Configure routes
             .configure(api::init_routes)
     })

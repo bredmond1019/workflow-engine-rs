@@ -35,6 +35,12 @@ apiClient.interceptors.response.use(
       // Token expired or invalid
       authStore.getState().logout();
       window.location.href = '/login';
+    } else if (error.response?.status >= 500) {
+      // Server error
+      console.error('Server error:', error.response.data);
+    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+      // Network error or no response
+      console.error('Network error - check if backend is running');
     }
     return Promise.reject(error);
   }

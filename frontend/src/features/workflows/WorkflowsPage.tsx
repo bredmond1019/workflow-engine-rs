@@ -45,6 +45,8 @@ const WorkflowsPage: React.FC = () => {
     fetchAvailableWorkflows,
     triggerWorkflow,
     isLoading,
+    startPolling,
+    stopPolling,
   } = workflowStore();
   
   const [form] = Form.useForm();
@@ -55,6 +57,11 @@ const WorkflowsPage: React.FC = () => {
   
   useEffect(() => {
     loadData();
+    startPolling();
+    
+    return () => {
+      stopPolling();
+    };
   }, []);
   
   const loadData = async () => {
@@ -124,80 +131,84 @@ const WorkflowsPage: React.FC = () => {
   
   const columns = [
     {
-      title: 'Instance ID',
-      dataIndex: 'instance_id',
-      key: 'instance_id',
-      width: 120,
-      render: (id: string) => (
-        <Text code className="text-xs">{id.slice(0, 8)}...</Text>
-      ),
-    },
-    {
       title: 'Workflow',
       dataIndex: 'workflow_name',
       key: 'workflow_name',
-      render: (name: string) => <Text strong>{name}</Text>,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: WorkflowStatus) => (
-        <Tag color={getStatusColor(status)} icon={getStatusIcon(status)}>
-          {status}
-        </Tag>
+      render: (name: string, record: WorkflowInstance) => (
+        <div>
+          <Text strong className="block">
+            {name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </Text>
+          <Text code className="text-xs">{record.instance_id.slice(0, 12)}...</Text>
+        </div>
       ),
     },
     {
-      title: 'Progress',
-      dataIndex: 'progress',
-      key: 'progress',
-      width: 120,
-      render: (progress: any) => (
-        <Progress
-          percent={progress?.percentage || 0}
-          size="small"
-          status={progress?.percentage === 100 ? 'success' : 'active'}
-          format={(percent) => `${percent}%`}
-        />
+      title: 'Status & Progress',
+      key: 'status_progress',
+      render: (record: WorkflowInstance) => (
+        <div>
+          <div className="mb-2">
+            <Tag color={getStatusColor(record.status)} icon={getStatusIcon(record.status)}>
+              {record.status}
+            </Tag>
+          </div>
+          <Progress
+            percent={record.progress?.percentage || 0}
+            size="small"
+            status={
+              record.status === WorkflowStatus.Failed ? 'exception' :
+              record.progress?.percentage === 100 ? 'success' : 'active'
+            }
+            format={(percent) => `${percent}%`}
+          />
+          {record.progress && (
+            <Text className="text-xs text-gray-500">
+              {record.progress.completed_steps}/{record.progress.total_steps} steps
+            </Text>
+          )}
+        </div>
       ),
     },
     {
-      title: 'Created',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (date: string) => (
-        <Text type="secondary">{dayjs(date).fromNow()}</Text>
-      ),
-    },
-    {
-      title: 'Duration',
-      key: 'duration',
+      title: 'Timing',
+      key: 'timing',
       render: (record: WorkflowInstance) => {
-        if (record.completed_at && record.started_at) {
-          const duration = dayjs(record.completed_at).diff(dayjs(record.started_at), 'second');
-          return <Text>{duration}s</Text>;
-        }
-        if (record.started_at) {
-          const duration = dayjs().diff(dayjs(record.started_at), 'second');
-          return <Text type="secondary">{duration}s (running)</Text>;
-        }
-        return <Text type="secondary">-</Text>;
+        const duration = (() => {
+          if (record.completed_at && record.started_at) {
+            const dur = dayjs(record.completed_at).diff(dayjs(record.started_at), 'second');
+            return `${dur}s`;
+          }
+          if (record.started_at) {
+            const dur = dayjs().diff(dayjs(record.started_at), 'second');
+            return `${dur}s (running)`;
+          }
+          return '-';
+        })();
+        
+        return (
+          <div>
+            <Text className="block">{duration}</Text>
+            <Text type="secondary" className="text-xs">
+              {dayjs(record.created_at).fromNow()}
+            </Text>
+          </div>
+        );
       },
     },
     {
       title: 'Actions',
       key: 'actions',
+      width: 100,
       render: (record: WorkflowInstance) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/workflows/${record.instance_id}`)}
-          >
-            View
-          </Button>
-        </Space>
+        <Button
+          type="primary"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => navigate(`/workflows/${record.instance_id}`)}
+        >
+          View
+        </Button>
       ),
     },
   ];
@@ -231,58 +242,63 @@ const WorkflowsPage: React.FC = () => {
       
       {/* Quick Stats */}
       <Row gutter={[16, 16]}>
-        <Col span={6}>
-          <Card>
-            <Text type="secondary">Total Instances</Text>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <div className="text-2xl font-bold text-blue-600">
               {instances.size}
             </div>
+            <Text type="secondary">Total</Text>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
-            <Text type="secondary">Running</Text>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <div className="text-2xl font-bold text-orange-600">
               {filteredInstances.filter(i => i.status === WorkflowStatus.Running).length}
             </div>
+            <Text type="secondary">Running</Text>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
-            <Text type="secondary">Completed</Text>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <div className="text-2xl font-bold text-green-600">
               {filteredInstances.filter(i => i.status === WorkflowStatus.Completed).length}
             </div>
+            <Text type="secondary">Completed</Text>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
-            <Text type="secondary">Failed</Text>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <div className="text-2xl font-bold text-red-600">
               {filteredInstances.filter(i => i.status === WorkflowStatus.Failed).length}
             </div>
+            <Text type="secondary">Failed</Text>
           </Card>
         </Col>
       </Row>
       
       {/* Filters */}
       <Card>
-        <Space>
-          <FilterOutlined />
-          <Text>Filter by status:</Text>
-          <Select
-            value={filterStatus}
-            onChange={setFilterStatus}
-            style={{ width: 120 }}
-          >
-            <Option value="all">All</Option>
-            <Option value={WorkflowStatus.Created}>Created</Option>
-            <Option value={WorkflowStatus.Running}>Running</Option>
-            <Option value={WorkflowStatus.Completed}>Completed</Option>
-            <Option value={WorkflowStatus.Failed}>Failed</Option>
-            <Option value={WorkflowStatus.Cancelled}>Cancelled</Option>
-          </Select>
-        </Space>
+        <div className="flex items-center justify-between">
+          <Space>
+            <FilterOutlined />
+            <Text>Filter by status:</Text>
+            <Select
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: 120 }}
+            >
+              <Option value="all">All</Option>
+              <Option value={WorkflowStatus.Created}>Created</Option>
+              <Option value={WorkflowStatus.Running}>Running</Option>
+              <Option value={WorkflowStatus.Completed}>Completed</Option>
+              <Option value={WorkflowStatus.Failed}>Failed</Option>
+              <Option value={WorkflowStatus.Cancelled}>Cancelled</Option>
+            </Select>
+          </Space>
+          <Text type="secondary">
+            {filteredInstances.length} of {instances.size} workflows
+          </Text>
+        </div>
       </Card>
       
       {/* Workflow Instances Table */}
@@ -326,6 +342,12 @@ const WorkflowsPage: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleTriggerWorkflow}
+          initialValues={{
+            inputs: JSON.stringify({
+              "query": "Analyze customer feedback",
+              "priority": "high"
+            }, null, 2)
+          }}
         >
           <Form.Item
             name="workflow"
@@ -336,10 +358,15 @@ const WorkflowsPage: React.FC = () => {
               placeholder="Choose a workflow to execute"
               onChange={setSelectedWorkflow}
               showSearch
+              size="large"
             >
               {availableWorkflows.map(workflow => (
                 <Option key={workflow} value={workflow}>
-                  {workflow}
+                  <div>
+                    <Text strong>{workflow.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Text>
+                    <br />
+                    <Text type="secondary" className="text-xs">{workflow}</Text>
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -347,7 +374,8 @@ const WorkflowsPage: React.FC = () => {
           
           <Form.Item
             name="inputs"
-            label="Input Data (JSON)"
+            label="Input Data"
+            help="Provide workflow input as JSON"
             rules={[
               { required: true, message: 'Please provide input data' },
               {
@@ -364,39 +392,28 @@ const WorkflowsPage: React.FC = () => {
             ]}
           >
             <TextArea
-              rows={6}
+              rows={8}
               placeholder={JSON.stringify({
-                "query": "Example query",
-                "model": "gpt-4",
-                "max_tokens": 1000
+                "query": "Customer inquiry about delayed order",
+                "priority": "high",
+                "customer_id": "12345"
               }, null, 2)}
+              className="font-mono text-sm"
             />
           </Form.Item>
           
           <Form.Item
             name="config"
-            label="Configuration Overrides (JSON, Optional)"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  try {
-                    JSON.parse(value);
-                    return Promise.resolve();
-                  } catch {
-                    return Promise.reject('Invalid JSON format');
-                  }
-                },
-              },
-            ]}
+            label="Advanced Configuration (Optional)"
+            help="Override default workflow settings"
           >
             <TextArea
               rows={4}
               placeholder={JSON.stringify({
                 "timeout": 300,
-                "retries": 3,
-                "continue_on_error": false
+                "retries": 3
               }, null, 2)}
+              className="font-mono text-sm"
             />
           </Form.Item>
         </Form>

@@ -12,9 +12,6 @@ import LoginPage from './features/auth/LoginPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import WorkflowsPage from './features/workflows/WorkflowsPage';
 import WorkflowDetailPage from './features/workflows/WorkflowDetailPage';
-import TemplatesPage from './features/templates/TemplatesPage';
-import DemosPage from './features/demos/DemosPage';
-import MonitoringPage from './features/monitoring/MonitoringPage';
 
 
 const App: React.FC = () => {
@@ -53,9 +50,6 @@ const App: React.FC = () => {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="workflows" element={<WorkflowsPage />} />
             <Route path="workflows/:instanceId" element={<WorkflowDetailPage />} />
-            <Route path="templates" element={<TemplatesPage />} />
-            <Route path="demos" element={<DemosPage />} />
-            <Route path="monitoring" element={<MonitoringPage />} />
           </Route>
           
           {/* Catch all */}

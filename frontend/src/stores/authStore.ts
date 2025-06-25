@@ -12,7 +12,6 @@ interface AuthState {
   
   // Actions
   login: (sub: string, role: string) => Promise<void>;
-  loginDemo: (sub: string, role: string) => void;
   logout: () => void;
   verifyToken: () => Promise<boolean>;
   setError: (error: string | null) => void;
@@ -57,38 +56,14 @@ export const authStore = create<AuthState>()(
             });
           }
         } catch (error: any) {
-          // Fallback to demo mode if API is not available
-          console.warn('API not available, using demo mode');
-          get().loginDemo(sub, role);
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || 'Authentication failed',
+          });
+          throw error;
         }
       },
       
-      loginDemo: (sub: string, role: string) => {
-        // Create a mock JWT token for demo purposes
-        const mockPayload = {
-          sub,
-          role,
-          exp: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
-          iat: Math.floor(Date.now() / 1000)
-        };
-        
-        const mockToken = `demo.${btoa(JSON.stringify(mockPayload))}.signature`;
-        
-        const user: User = {
-          sub,
-          role,
-          exp: mockPayload.exp,
-          iat: mockPayload.iat,
-        };
-        
-        set({
-          token: mockToken,
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-      },
       
       logout: () => {
         set({
@@ -104,12 +79,28 @@ export const authStore = create<AuthState>()(
         if (!token) return false;
         
         try {
-          const response = await apiClient.get(API_ENDPOINTS.auth.verify, {
-            params: { token },
+          const response = await apiClient.post(API_ENDPOINTS.auth.verify, {
+            token,
           });
           
-          return response.data.valid;
+          if (response.data.valid && response.data.claims) {
+            // Update user info from verified claims
+            const claims = response.data.claims;
+            const user: User = {
+              sub: claims.sub,
+              role: claims.role,
+              exp: claims.exp,
+              iat: claims.iat,
+            };
+            
+            set({ user, isAuthenticated: true });
+            return true;
+          } else {
+            set({ token: null, user: null, isAuthenticated: false });
+            return false;
+          }
         } catch {
+          set({ token: null, user: null, isAuthenticated: false });
           return false;
         }
       },

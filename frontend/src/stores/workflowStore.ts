@@ -11,6 +11,7 @@ interface WorkflowState {
   tags: string[];
   isLoading: boolean;
   error: string | null;
+  pollingInterval: number | null;
   
   // Actions
   fetchTemplates: () => Promise<void>;
@@ -24,67 +25,20 @@ interface WorkflowState {
   fetchAllInstances: () => Promise<void>;
   updateInstance: (instanceId: string, instance: WorkflowInstance) => void;
   setError: (error: string | null) => void;
+  startPolling: () => void;
+  stopPolling: () => void;
 }
 
-// Create some initial demo instances for showcase
-const createDemoInstances = (): Map<string, WorkflowInstance> => {
-  const instances = new Map<string, WorkflowInstance>();
-  
-  const demoData = [
-    {
-      id: 'demo-completed-1',
-      name: 'customer_care_workflow',
-      status: 'Completed' as any,
-      created: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      completed: new Date(Date.now() - 3590000).toISOString(), // 59 minutes ago
-    },
-    {
-      id: 'demo-completed-2', 
-      name: 'research_to_documentation',
-      status: 'Completed' as any,
-      created: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-      completed: new Date(Date.now() - 7080000).toISOString(), // 1h 58m ago
-    },
-    {
-      id: 'demo-running-1',
-      name: 'knowledge_base_workflow',
-      status: 'Running' as any,
-      created: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-      started: new Date(Date.now() - 290000).toISOString(), // 4m 50s ago
-    }
-  ];
-  
-  demoData.forEach(demo => {
-    instances.set(demo.id, {
-      instance_id: demo.id,
-      workflow_name: demo.name,
-      status: demo.status,
-      created_at: demo.created,
-      started_at: demo.started || demo.created,
-      completed_at: demo.completed,
-      inputs: { demo: true },
-      progress: {
-        total_steps: 3,
-        completed_steps: demo.status === 'Completed' ? 3 : 2,
-        failed_steps: 0,
-        running_steps: demo.status === 'Running' ? 1 : 0,
-        percentage: demo.status === 'Completed' ? 100 : 67,
-      },
-      steps: {},
-    });
-  });
-  
-  return instances;
-};
 
 export const workflowStore = create<WorkflowState>((set, get) => ({
   templates: [],
-  instances: createDemoInstances(),
+  instances: new Map<string, WorkflowInstance>(),
   availableWorkflows: [],
   categories: [],
   tags: [],
   isLoading: false,
   error: null,
+  pollingInterval: null,
   
   fetchTemplates: async () => {
     set({ isLoading: true, error: null });
@@ -131,16 +85,11 @@ export const workflowStore = create<WorkflowState>((set, get) => ({
     try {
       const response = await apiClient.get(API_ENDPOINTS.workflows.available);
       set({ availableWorkflows: response.data.workflows });
-    } catch (error) {
-      console.warn('API not available, using demo workflows');
-      // Set demo workflows
-      set({ 
-        availableWorkflows: [
-          'customer_care_workflow',
-          'research_to_documentation', 
-          'knowledge_base_workflow'
-        ]
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || 'Failed to fetch available workflows',
       });
+      throw error;
     }
   },
   
@@ -155,10 +104,10 @@ export const workflowStore = create<WorkflowState>((set, get) => ({
       
       const { instance_id, ...instanceData } = response.data;
       
-      // Create initial instance
+      // Create initial instance from response
       const instance: WorkflowInstance = {
         instance_id,
-        workflow_name: instanceData.workflow_name,
+        workflow_name: instanceData.workflow_name || workflowName,
         status: instanceData.status,
         created_at: instanceData.created_at,
         inputs,
@@ -177,31 +126,11 @@ export const workflowStore = create<WorkflowState>((set, get) => ({
       
       return instance_id;
     } catch (error: any) {
-      // Fallback to demo mode if API is not available
-      console.warn('API not available, using demo workflow execution');
-      
-      const instance_id = `demo-${Date.now()}`;
-      const instance: WorkflowInstance = {
-        instance_id,
-        workflow_name: workflowName,
-        status: 'Created' as any,
-        created_at: new Date().toISOString(),
-        started_at: new Date().toISOString(),
-        inputs,
-        progress: {
-          total_steps: 3,
-          completed_steps: 0,
-          failed_steps: 0,
-          running_steps: 1,
-          percentage: 0,
-        },
-        steps: {},
-      };
-      
-      get().updateInstance(instance_id, instance);
-      set({ isLoading: false });
-      
-      return instance_id;
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to trigger workflow',
+      });
+      throw error;
     }
   },
   
@@ -298,5 +227,36 @@ export const workflowStore = create<WorkflowState>((set, get) => ({
   
   setError: (error: string | null) => {
     set({ error });
+  },
+  
+  startPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval) return; // Already polling
+    
+    const interval = setInterval(async () => {
+      const { instances } = get();
+      const runningInstances = Array.from(instances.values()).filter(
+        instance => instance.status === 'Running' || instance.status === 'Created'
+      );
+      
+      // Poll status for all running workflows
+      for (const instance of runningInstances) {
+        try {
+          await get().fetchWorkflowStatus(instance.instance_id);
+        } catch (error) {
+          console.error(`Failed to poll status for ${instance.instance_id}:`, error);
+        }
+      }
+    }, 2000); // Poll every 2 seconds
+    
+    set({ pollingInterval: interval as unknown as number });
+  },
+  
+  stopPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      set({ pollingInterval: null });
+    }
   },
 }));
