@@ -1,0 +1,54 @@
+[package]
+name = "workflow-engine-gateway"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# GraphQL
+async-graphql = { version = "7.0", features = ["apollo_tracing", "apollo_persisted_queries"] }
+async-graphql-axum = "7.0"
+
+# Web framework
+axum = { version = "0.8", features = ["macros"] }
+tower = { version = "0.5" }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP client for subgraph communication
+reqwest = { workspace = true, features = ["json"] }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Other crates
+workflow-engine-core = { path = "../workflow-engine-core" }
+
+# For async streams
+futures-util = { workspace = true }
+futures = "0.3"
+
+# For async traits
+async-trait = "0.1"
+
+[[bin]]
+name = "graphql-gateway"
+path = "src/main.rs"

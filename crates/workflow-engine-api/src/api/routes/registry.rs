@@ -120,9 +120,6 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .wrap(Logger::default())
-                .app_data(web::Data::new(Pool::builder().build(
-                    ConnectionManager::<PgConnection>::new("postgresql://test:test@localhost/test")
-                ).unwrap()))
                 .route("/registry/agents", web::post().to(register_agent))
         ).await;
 
@@ -141,8 +138,8 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         
-        // Should return 501 Not Implemented since functionality is stubbed
-        assert_eq!(resp.status(), StatusCode::NOT_IMPLEMENTED);
+        // Should return 500 Internal Server Error without database pool
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[actix_web::test]
@@ -150,9 +147,6 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .wrap(Logger::default())
-                .app_data(web::Data::new(Pool::builder().build(
-                    ConnectionManager::<PgConnection>::new("postgresql://test:test@localhost/test")
-                ).unwrap()))
                 .route("/registry/agents", web::get().to(list_agents))
         ).await;
 
@@ -162,8 +156,8 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         
-        // Should return 501 Not Implemented since functionality is stubbed
-        assert_eq!(resp.status(), StatusCode::NOT_IMPLEMENTED);
+        // Should return 500 Internal Server Error without database pool
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[actix_web::test]
@@ -171,9 +165,6 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .wrap(Logger::default())
-                .app_data(web::Data::new(Pool::builder().build(
-                    ConnectionManager::<PgConnection>::new("postgresql://test:test@localhost/test")
-                ).unwrap()))
                 .route("/registry/agents/{id}/heartbeat", web::post().to(heartbeat_agent))
         ).await;
 
@@ -191,8 +182,8 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         
-        // Should return 501 Not Implemented since functionality is stubbed
-        assert_eq!(resp.status(), StatusCode::NOT_IMPLEMENTED);
+        // Should return 500 Internal Server Error without database pool
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 }
 

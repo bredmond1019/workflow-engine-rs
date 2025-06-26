@@ -39,6 +39,9 @@ pub mod uptime;
 // Workflow API endpoints for triggering and monitoring workflows
 pub mod workflows;
 
+#[cfg(feature = "graphql")]
+pub mod graphql;
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(events::create_event);
     
@@ -69,4 +72,14 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     
     // Configure OpenAPI/Swagger documentation
     openapi::configure(cfg);
+    
+    // Configure GraphQL endpoint
+    #[cfg(feature = "graphql")]
+    {
+        use actix_web::web;
+        let schema = graphql::create_schema();
+        cfg.app_data(web::Data::new(schema))
+            .route("/api/v1/graphql", web::post().to(graphql::graphql_handler))
+            .route("/api/v1/graphql", web::get().to(graphql::graphql_playground));
+    }
 }

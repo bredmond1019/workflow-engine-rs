@@ -464,7 +464,7 @@ mod tests {
             id: Uuid::new_v4(),
             name: "test-service".to_string(),
             version: "1.0.0".to_string(),
-            endpoint: "http://localhost:8080".to_string(),
+            endpoint: "http://localhost:12345".to_string(), // Use a port that's unlikely to be in use
             capabilities: vec![],
             metadata: super::super::registry::ServiceMetadata {
                 tags: vec![],
@@ -480,9 +480,10 @@ mod tests {
             last_seen: Utc::now(),
         };
         
-        // This will fail since no server is running, but we're testing the structure
+        // This will fail since no server is running, but we're testing the error handling
         let result = health_check.check_health(&instance).await.unwrap();
         assert_eq!(result.instance_id, instance.id);
+        assert_eq!(result.status, HealthStatus::Unhealthy);
         assert!(result.error.is_some()); // Expected to fail
     }
     

@@ -13,11 +13,12 @@ keywords.workspace = true
 categories.workspace = true
 
 [features]
-default = ["openapi", "auth", "monitoring", "database"]
+default = ["openapi", "auth", "monitoring", "database", "graphql"]
 openapi = ["dep:utoipa", "dep:utoipa-swagger-ui"]
 auth = ["dep:jsonwebtoken"]
 monitoring = ["dep:prometheus", "dep:lazy_static"]
 database = ["workflow-engine-core/database", "dep:diesel"]
+graphql = ["dep:async-graphql", "dep:async-graphql-actix-web"]
 
 [dependencies]
 # Core dependencies
@@ -44,6 +45,11 @@ jsonwebtoken = { workspace = true, optional = true }
 prometheus = { workspace = true, optional = true }
 lazy_static = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
+
+# GraphQL support
+async-graphql = { version = "7.0", optional = true, features = ["apollo_tracing"] }
+async-graphql-actix-web = { version = "7.0", optional = true }
+async-graphql-axum = { version = "7.0", optional = true }
 
 # Utility libraries
 once_cell = { workspace = true }

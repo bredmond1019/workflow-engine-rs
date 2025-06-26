@@ -1,0 +1,66 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@extends", "@external"])
+
+type Query {
+  workflow(id: ID!): Workflow
+  workflows(limit: Int, offset: Int, status: WorkflowStatus): WorkflowConnection!
+  workflowExecution(id: ID!): WorkflowExecution
+}
+
+type Mutation {
+  createWorkflow(input: CreateWorkflowInput!): Workflow!
+  executeWorkflow(workflowId: ID!, inputs: JSON): WorkflowExecution!
+}
+
+"""
+Workflow entity that can be referenced by other subgraphs
+"""
+type Workflow @key(fields: "id") {
+  id: ID!
+  name: String!
+  status: WorkflowStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Workflow execution entity
+"""
+type WorkflowExecution @key(fields: "id") {
+  id: ID!
+  workflowId: ID!
+  status: ExecutionStatus!
+  startedAt: DateTime!
+  completedAt: DateTime
+  error: String
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+input CreateWorkflowInput {
+  name: String!
+  description: String
+  templateId: ID
+}
+
+type WorkflowConnection {
+  items: [Workflow!]!
+  totalCount: Int!
+  hasNextPage: Boolean!
+}
+
+scalar DateTime
+scalar JSON
