@@ -381,8 +381,10 @@ mod tests {
         let result = parser.parse(content).await.unwrap();
         
         assert_eq!(result.structure.links.len(), 2);
-        assert_eq!(result.structure.links[0].link_type, LinkType::External);
-        assert_eq!(result.structure.links[1].link_type, LinkType::Email);
+        // Links may be in any order since JSON object order is not guaranteed
+        let link_types: Vec<_> = result.structure.links.iter().map(|l| &l.link_type).collect();
+        assert!(link_types.contains(&&LinkType::External));
+        assert!(link_types.contains(&&LinkType::Email));
     }
     
     #[test]

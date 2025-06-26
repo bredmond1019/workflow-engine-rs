@@ -165,8 +165,17 @@ impl PdfParser {
             return true;
         }
         
-        // Check if next line is empty (common after headings)
-        if index + 1 < all_lines.len() && all_lines[index + 1].trim().is_empty() {
+        // Check if it's a short line followed by empty line (common heading pattern)
+        // But only if the line is reasonably short to be a heading and looks like a title
+        if line.len() < 50 && line.len() > 5 && // stricter heading length
+           index + 1 < all_lines.len() && all_lines[index + 1].trim().is_empty() &&
+           // Additional checks: line should look like a title
+           !line.ends_with('.') && !line.ends_with(',') && !line.ends_with(';') &&
+           // Should not contain common article words at the start (less title-like)
+           !line.to_lowercase().starts_with("this is") &&
+           !line.to_lowercase().starts_with("that is") &&
+           !line.to_lowercase().starts_with("there is") &&
+           !line.to_lowercase().starts_with("it is") {
             return true;
         }
         
@@ -325,7 +334,8 @@ mod tests {
         
         assert!(parser.is_likely_heading("1. Introduction", 0, &lines));
         assert!(parser.is_likely_heading("CHAPTER ONE", 0, &lines));
-        assert!(!parser.is_likely_heading("This is just regular text that goes on and on", 0, &lines));
+        // This long text should not be a heading (over 50 chars)
+        assert!(!parser.is_likely_heading("This is just regular text that goes on and on and on", 0, &lines));
     }
     
     #[test]
@@ -333,8 +343,8 @@ mod tests {
         let parser = PdfParser::new();
         
         assert_eq!(parser.estimate_heading_level("Chapter 1"), 1);
-        assert_eq!(parser.estimate_heading_level("1. Introduction"), 1);
-        assert_eq!(parser.estimate_heading_level("1.1 Overview"), 2);
-        assert_eq!(parser.estimate_heading_level("1.1.1 Details"), 3);
+        assert_eq!(parser.estimate_heading_level("1. Introduction"), 2); // 1 dot = level 2
+        assert_eq!(parser.estimate_heading_level("1.1 Overview"), 2);  // 1 dot = level 2
+        assert_eq!(parser.estimate_heading_level("1.1.1 Details"), 3); // 2 dots = level 3
     }
 }

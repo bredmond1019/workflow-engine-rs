@@ -174,7 +174,7 @@ mod tests {
         matches!(success_result, ProcessingResult::Success(_));
         
         // Test Error variant
-        let error = ProcessingError::InvalidInput("test error".to_string());
+        let error = ProcessingError::InvalidInput { message: "test error".to_string() };
         let error_result = ProcessingResult::Error(error.clone());
         matches!(error_result, ProcessingResult::Error(_));
         
@@ -230,6 +230,11 @@ pub struct ProcessingContext {
     pub webhook_url: Option<String>,
     pub priority: ProcessingPriority,
     pub metadata: HashMap<String, String>,
+    pub session_id: Option<String>,
+    pub processing_started_at: Option<DateTime<Utc>>,
+    pub max_memory_mb: Option<u32>,
+    pub retry_count: u32,
+    pub custom_data: Option<serde_json::Value>,
 }
 
 impl ProcessingContext {
@@ -241,6 +246,11 @@ impl ProcessingContext {
             webhook_url: None,
             priority: ProcessingPriority::Normal,
             metadata: HashMap::new(),
+            session_id: None,
+            processing_started_at: None,
+            max_memory_mb: None,
+            retry_count: 0,
+            custom_data: None,
         }
     }
 }
@@ -440,6 +450,9 @@ pub enum ProcessingError {
         message: String,
         trace: Option<String>,
     },
+    InvalidInput {
+        message: String,
+    },
 }
 
 impl fmt::Display for ProcessingError {
@@ -476,6 +489,9 @@ impl fmt::Display for ProcessingError {
             }
             ProcessingError::InternalError { message, .. } => {
                 write!(f, "Internal error: {}", message)
+            }
+            ProcessingError::InvalidInput { message } => {
+                write!(f, "Invalid input: {}", message)
             }
         }
     }
@@ -533,7 +549,7 @@ pub struct Link {
 }
 
 /// Types of links
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LinkType {
     External,
     Internal,

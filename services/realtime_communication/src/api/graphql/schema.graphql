@@ -1,0 +1,257 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external", "@requires", "@provides"])
+
+# Entities
+
+type Message @key(fields: "id") {
+  id: ID!
+  conversationId: ID!
+  senderId: ID!
+  content: String!
+  timestamp: String!
+  status: MessageStatus!
+  metadata: JSON
+  user: User @provides(fields: "id")
+}
+
+type Conversation @key(fields: "id") {
+  id: ID!
+  name: String
+  type: ConversationType!
+  participantIds: [ID!]!
+  createdAt: String!
+  lastActivityAt: String!
+  metadata: JSON
+  messages(limit: Int, offset: Int): [Message!]!
+  participants: [User!]! @provides(fields: "id")
+}
+
+type User @key(fields: "id", resolvable: false) {
+  id: ID! @external
+  # Extended to include real-time communication fields
+  status: UserStatus
+  lastSeenAt: String
+  conversations: [Conversation!]!
+  unreadMessageCount: Int!
+}
+
+type Session @key(fields: "id") {
+  id: ID!
+  userId: ID!
+  deviceId: String!
+  connectionType: ConnectionType!
+  connectedAt: String!
+  lastPingAt: String!
+  metadata: JSON
+  user: User @provides(fields: "id")
+}
+
+# Enums
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  CHANNEL
+  BROADCAST
+}
+
+enum UserStatus {
+  ONLINE
+  AWAY
+  BUSY
+  OFFLINE
+}
+
+enum ConnectionType {
+  WEBSOCKET
+  LONG_POLLING
+  SSE
+}
+
+enum NotificationType {
+  MESSAGE
+  MENTION
+  REACTION
+  TYPING
+  PRESENCE
+  SYSTEM
+}
+
+# Types
+
+type Notification {
+  id: ID!
+  type: NotificationType!
+  userId: ID!
+  title: String!
+  body: String!
+  data: JSON
+  createdAt: String!
+  readAt: String
+}
+
+type PresenceUpdate {
+  userId: ID!
+  status: UserStatus!
+  lastSeenAt: String!
+  devices: [DevicePresence!]!
+}
+
+type DevicePresence {
+  deviceId: String!
+  connectionType: ConnectionType!
+  lastActivity: String!
+}
+
+type TypingIndicator {
+  conversationId: ID!
+  userId: ID!
+  isTyping: Boolean!
+}
+
+type MessageReaction {
+  messageId: ID!
+  userId: ID!
+  emoji: String!
+  timestamp: String!
+}
+
+# Input Types
+
+input SendMessageInput {
+  conversationId: ID!
+  content: String!
+  replyToId: ID
+  metadata: JSON
+}
+
+input CreateConversationInput {
+  name: String
+  type: ConversationType!
+  participantIds: [ID!]!
+  metadata: JSON
+}
+
+input UpdatePresenceInput {
+  status: UserStatus!
+  customMessage: String
+}
+
+input MarkMessagesReadInput {
+  conversationId: ID!
+  messageIds: [ID!]!
+}
+
+# Query
+
+type Query {
+  # Get user's conversations
+  conversations(
+    limit: Int = 20
+    offset: Int = 0
+    type: ConversationType
+  ): [Conversation!]!
+  
+  # Get a specific conversation
+  conversation(id: ID!): Conversation
+  
+  # Get messages in a conversation
+  messages(
+    conversationId: ID!
+    limit: Int = 50
+    before: String
+    after: String
+  ): [Message!]!
+  
+  # Get user's notifications
+  notifications(
+    limit: Int = 20
+    offset: Int = 0
+    unreadOnly: Boolean = false
+  ): [Notification!]!
+  
+  # Get presence information
+  presence(userIds: [ID!]!): [PresenceUpdate!]!
+  
+  # Get active sessions
+  sessions(userId: ID): [Session!]!
+  
+  # Search messages
+  searchMessages(
+    query: String!
+    conversationIds: [ID!]
+    limit: Int = 20
+  ): [Message!]!
+}
+
+# Mutations
+
+type Mutation {
+  # Send a message
+  sendMessage(input: SendMessageInput!): Message!
+  
+  # Create a conversation
+  createConversation(input: CreateConversationInput!): Conversation!
+  
+  # Add participants to a conversation
+  addParticipants(conversationId: ID!, userIds: [ID!]!): Conversation!
+  
+  # Remove participants from a conversation
+  removeParticipants(conversationId: ID!, userIds: [ID!]!): Conversation!
+  
+  # Update user presence
+  updatePresence(input: UpdatePresenceInput!): PresenceUpdate!
+  
+  # Mark messages as read
+  markMessagesRead(input: MarkMessagesReadInput!): [Message!]!
+  
+  # Send typing indicator
+  sendTypingIndicator(conversationId: ID!, isTyping: Boolean!): TypingIndicator!
+  
+  # React to a message
+  addReaction(messageId: ID!, emoji: String!): MessageReaction!
+  
+  # Remove reaction
+  removeReaction(messageId: ID!, emoji: String!): Boolean!
+  
+  # Delete a message
+  deleteMessage(messageId: ID!): Boolean!
+  
+  # Leave a conversation
+  leaveConversation(conversationId: ID!): Boolean!
+}
+
+# Subscriptions
+
+type Subscription {
+  # Subscribe to new messages
+  messageReceived(conversationIds: [ID!]): Message!
+  
+  # Subscribe to typing indicators
+  typingIndicator(conversationIds: [ID!]!): TypingIndicator!
+  
+  # Subscribe to presence updates
+  presenceUpdated(userIds: [ID!]!): PresenceUpdate!
+  
+  # Subscribe to message status updates
+  messageStatusUpdated(conversationIds: [ID!]): Message!
+  
+  # Subscribe to reactions
+  reactionAdded(conversationIds: [ID!]): MessageReaction!
+  
+  # Subscribe to new conversations
+  conversationCreated: Conversation!
+  
+  # Subscribe to conversation updates
+  conversationUpdated(conversationIds: [ID!]): Conversation!
+}
+
+# Custom scalar for JSON data
+scalar JSON

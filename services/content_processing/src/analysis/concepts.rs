@@ -301,14 +301,7 @@ mod tests {
     #[tokio::test]
     async fn test_concept_extraction() {
         let extractor = ConceptExtractor::new();
-        let context = ProcessingContext {
-            job_id: Uuid::new_v4(),
-            correlation_id: Uuid::new_v4(),
-            user_id: None,
-            webhook_url: None,
-            priority: ProcessingPriority::Normal,
-            metadata: HashMap::new(),
-        };
+        let context = ProcessingContext::new(Uuid::new_v4());
 
         let text = "Machine learning algorithms are essential for artificial intelligence. \
                    Deep learning networks use neural networks to process data. \

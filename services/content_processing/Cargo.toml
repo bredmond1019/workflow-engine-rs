@@ -5,6 +5,10 @@ name = "content_processing"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "content-processing-server"
+path = "src/main.rs"
+
 [dependencies]
 # Async runtime
 tokio = { version = "1.36.0", features = ["full"] }
@@ -13,6 +17,8 @@ futures = "0.3"
 
 # Web framework
 actix-web = { version = "4.11.0", features = ["macros"] }
+async-graphql = { version = "7.0", features = ["apollo_tracing", "apollo_persisted_queries"] }
+async-graphql-actix-web = "7.0"
 
 # Database drivers
 sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "json", "uuid", "chrono", "migrate"] }
@@ -25,10 +31,16 @@ serde_json = "1.0.140"
 anyhow = "1.0"
 
 # Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Utilities
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
 chrono = { version = "0.4.41", features = ["serde"] }
+regex = "1.10"
+reqwest = { version = "0.12", features = ["json"] }
+base64 = "0.22"
+md5 = "0.7"
 
 # Document parsing
 scraper = "0.17"              # HTML parsing

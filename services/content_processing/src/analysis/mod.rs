@@ -201,14 +201,7 @@ mod tests {
     #[tokio::test]
     async fn test_basic_text_analysis() {
         let analyzer = ComprehensiveAnalyzer::new();
-        let context = ProcessingContext {
-            job_id: Uuid::new_v4(),
-            correlation_id: Uuid::new_v4(),
-            user_id: None,
-            webhook_url: None,
-            priority: ProcessingPriority::Normal,
-            metadata: HashMap::new(),
-        };
+        let context = ProcessingContext::new(Uuid::new_v4());
 
         let text = "This is a simple test document about machine learning algorithms.";
         

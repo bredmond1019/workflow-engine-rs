@@ -1,8 +1,13 @@
 //! WebSocket API endpoints and server management
 
+pub mod graphql;
+
 use actix_web::{web, HttpResponse, App};
+use async_graphql::{http::GraphiQLSource, Schema};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 
 use crate::server::{WebSocketServer, ServerConfig, websocket_handler, health_handler, metrics_handler};
+use self::graphql::schema::{QueryRoot, MutationRoot, SubscriptionRoot, RealtimeCommunicationSchema};
 
 /// Start the WebSocket server with the given configuration
 pub async fn start_server(config: ServerConfig) -> std::io::Result<()> {
@@ -10,9 +15,25 @@ pub async fn start_server(config: ServerConfig) -> std::io::Result<()> {
     server.start().await
 }
 
+/// GraphQL request handler
+pub async fn graphql_handler(
+    schema: web::Data<RealtimeCommunicationSchema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
+/// GraphiQL playground handler
+pub async fn graphiql() -> actix_web::Result<HttpResponse> {
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(GraphiQLSource::build().endpoint("/graphql").finish()))
+}
+
 /// Create the Actix web application with WebSocket routes
 pub fn create_app(
     server_state: web::Data<crate::server::ServerState>,
+    graphql_schema: web::Data<RealtimeCommunicationSchema>,
 ) -> App<
     impl actix_web::dev::ServiceFactory<
         actix_web::dev::ServiceRequest,
@@ -24,10 +45,14 @@ pub fn create_app(
 > {
     App::new()
         .app_data(server_state)
+        .app_data(graphql_schema)
         .route("/ws", web::get().to(websocket_handler))
         .route("/health", web::get().to(health_handler))
         .route("/metrics", web::get().to(metrics_handler))
         .route("/info", web::get().to(server_info_handler))
+        .route("/graphql", web::post().to(graphql_handler))
+        .route("/graphql", web::get().to(graphql_handler))
+        .route("/graphiql", web::get().to(graphiql))
 }
 
 /// Server information endpoint

@@ -3,7 +3,7 @@
 //! User presence and status tracking with online/offline detection,
 //! typing indicators, last seen timestamps, and subscription management.
 
-use actix::{Actor, Addr, Context, Handler, AsyncContext};
+use actix::{Actor, Addr, Context, Handler, AsyncContext, WrapFuture, ActorFuture};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -191,8 +191,7 @@ impl PresenceTrackingActor {
         
         // Update connection tracking
         presence.active_connections.insert(connection_id);
-        self.connection_users.insert(connection_id, user_id.clone());
-
+        
         // Update device info if provided
         if let Some(device) = device_info {
             // Remove existing device info for this connection
@@ -212,18 +211,27 @@ impl PresenceTrackingActor {
             presence.last_seen = now;
         }
 
+        // Clone the presence for broadcasting
+        let presence_clone = presence.clone();
+        
+        // Release the borrow of user_presence by dropping the presence reference
+        drop(presence);
+        
+        // Now we can use self without borrow conflicts
+        self.connection_users.insert(connection_id, user_id.clone());
         self.metrics.presence_updates += 1;
         self.update_metrics();
 
         // Broadcast presence update if status changed or user came online
-        let should_broadcast = old_status != status || (!was_online && self.is_user_online(&user_id));
+        let is_online_now = self.is_user_online(&user_id);
+        let should_broadcast = old_status != status || (!was_online && is_online_now);
         
         if should_broadcast {
-            self.broadcast_presence_update(&user_id, presence);
+            self.broadcast_presence_update(&user_id, &presence_clone);
         }
 
         info!("Presence updated: user_id={}, status={:?}, connections={}", 
-              user_id, status, presence.active_connections.len());
+              user_id, status, presence_clone.active_connections.len());
     }
 
     /// Handle connection disconnect
@@ -235,6 +243,8 @@ impl PresenceTrackingActor {
                 // Remove device info for this connection
                 presence.device_info.retain(|d| d.connection_id != connection_id);
                 
+                let remaining_connections = presence.active_connections.len();
+                
                 // If no more active connections, mark as offline
                 if presence.active_connections.is_empty() {
                     let old_status = presence.status.clone();
@@ -242,14 +252,18 @@ impl PresenceTrackingActor {
                     presence.last_seen = Utc::now();
                     
                     if old_status != PresenceStatus::Offline {
-                        self.broadcast_presence_update(&user_id, presence);
+                        let presence_clone = presence.clone();
+                        drop(presence);
+                        self.broadcast_presence_update(&user_id, &presence_clone);
                     }
+                } else {
+                    drop(presence);
                 }
                 
                 self.update_metrics();
                 
                 info!("Connection disconnected: user_id={}, remaining_connections={}", 
-                      user_id, presence.active_connections.len());
+                      user_id, remaining_connections);
             }
         }
     }
@@ -415,23 +429,30 @@ impl PresenceTrackingActor {
         
         // Clean up expired typing indicators
         let mut expired_conversations = Vec::new();
+        let mut expired_typing_updates = Vec::new();
+        
         for (conversation_id, session) in &mut self.typing_indicators {
             let mut expired_users = Vec::new();
             
             for (user_id, typing_info) in &session.typing_users {
                 if now.duration_since(typing_info.last_activity) > self.config.typing_timeout {
                     expired_users.push(user_id.clone());
+                    expired_typing_updates.push((conversation_id.clone(), user_id.clone()));
                 }
             }
             
             for user_id in expired_users {
                 session.typing_users.remove(&user_id);
-                self.broadcast_typing_indicator(conversation_id, &user_id, false);
             }
             
             if session.typing_users.is_empty() {
                 expired_conversations.push(conversation_id.clone());
             }
+        }
+        
+        // Broadcast typing updates after dropping mutable borrow
+        for (conversation_id, user_id) in expired_typing_updates {
+            self.broadcast_typing_indicator(&conversation_id, &user_id, false);
         }
         
         for conversation_id in expired_conversations {
@@ -514,7 +535,11 @@ impl PresenceTrackingActor {
                 let value = serde_json::to_string(presence)
                     .map_err(|e| format!("Serialization failed: {}", e))?;
                 
-                let _: () = conn.setex(key, self.config.offline_timeout.as_secs(), value).await
+                let _: () = redis::cmd("SETEX")
+                    .arg(&key)
+                    .arg(self.config.offline_timeout.as_secs())
+                    .arg(&value)
+                    .query_async(&mut conn).await
                     .map_err(|e| format!("Redis set failed: {}", e))?;
             }
             
@@ -552,12 +577,13 @@ impl Actor for PresenceTrackingActor {
 
         // Start periodic Redis sync if enabled
         if self.config.enable_redis_sync {
-            ctx.run_interval(self.config.presence_broadcast_interval, |act, _ctx| {
-                actix::spawn(async move {
-                    if let Err(e) = act.sync_with_redis().await {
+            ctx.run_interval(self.config.presence_broadcast_interval, |act, ctx| {
+                let fut = act.sync_with_redis().into_actor(act).map(|result, _act, _ctx| {
+                    if let Err(e) = result {
                         error!("Redis sync failed: {}", e);
                     }
                 });
+                ctx.spawn(fut);
             });
         }
     }

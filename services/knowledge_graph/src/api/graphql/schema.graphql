@@ -1,0 +1,214 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@extends", "@external", "@requires", "@provides"])
+
+type Query {
+  # Get a concept by ID
+  concept(id: ID!): Concept
+  
+  # Search concepts with filters
+  searchConcepts(
+    query: String!
+    category: String
+    difficulty: DifficultyLevel
+    limit: Int = 20
+    offset: Int = 0
+  ): ConceptSearchResult!
+  
+  # Find learning path between concepts
+  findLearningPath(
+    fromConceptId: ID!
+    toConceptId: ID!
+    maxDepth: Int = 10
+  ): LearningPath
+  
+  # Get related concepts
+  relatedConcepts(
+    conceptId: ID!
+    relationshipTypes: [RelationshipType!]
+    limit: Int = 10
+  ): [Concept!]!
+  
+  # Get user's learning progress
+  userProgress(userId: ID!): UserProgress
+  
+  # Federation support
+  _service: _Service!
+  _entities(representations: [_Any!]!): [_Entity]!
+}
+
+type Mutation {
+  # Create a new concept
+  createConcept(input: CreateConceptInput!): Concept!
+  
+  # Update an existing concept
+  updateConcept(id: ID!, input: UpdateConceptInput!): Concept!
+  
+  # Create relationship between concepts
+  createRelationship(input: CreateRelationshipInput!): ConceptRelationship!
+  
+  # Track user progress
+  updateUserProgress(input: UpdateUserProgressInput!): UserProgress!
+}
+
+# Core types with federation support
+type Concept @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  category: String!
+  difficulty: DifficultyLevel!
+  tags: [String!]!
+  quality: Float!
+  
+  # Relationships
+  prerequisites: [Concept!]!
+  relatedConcepts: [Concept!]!
+  resources: [LearningResource!]!
+  
+  # Metadata
+  createdAt: String!
+  updatedAt: String!
+}
+
+type LearningResource @key(fields: "id") {
+  id: ID!
+  conceptId: ID!
+  concept: Concept!
+  title: String!
+  description: String
+  url: String!
+  resourceType: ResourceType!
+  difficulty: DifficultyLevel!
+  estimatedTime: Int # in minutes
+  rating: Float
+  metadata: JSON
+}
+
+type LearningPath {
+  id: ID!
+  fromConcept: Concept!
+  toConcept: Concept!
+  steps: [LearningStep!]!
+  totalConcepts: Int!
+  estimatedTime: Int! # in minutes
+  difficulty: DifficultyLevel!
+}
+
+type LearningStep {
+  order: Int!
+  concept: Concept!
+  reason: String!
+  resources: [LearningResource!]!
+}
+
+type ConceptRelationship {
+  id: ID!
+  fromConcept: Concept!
+  toConcept: Concept!
+  relationshipType: RelationshipType!
+  strength: Float!
+  metadata: JSON
+}
+
+# Extend User from main API
+type User @key(fields: "id") @extends {
+  id: ID! @external
+  # Add knowledge graph specific fields
+  learningProgress: UserProgress
+  completedConcepts: [Concept!]!
+}
+
+type UserProgress @key(fields: "userId") {
+  userId: ID!
+  user: User!
+  completedConcepts: [ConceptProgress!]!
+  currentLearningPaths: [LearningPath!]!
+  totalConceptsCompleted: Int!
+  averageDifficulty: Float!
+  lastActivityAt: String!
+}
+
+type ConceptProgress {
+  concept: Concept!
+  completedAt: String!
+  score: Float
+  timeSpent: Int # in minutes
+}
+
+type ConceptSearchResult {
+  concepts: [Concept!]!
+  totalCount: Int!
+  hasMore: Boolean!
+}
+
+# Input types
+input CreateConceptInput {
+  name: String!
+  description: String!
+  category: String!
+  difficulty: DifficultyLevel!
+  tags: [String!]
+  prerequisiteIds: [ID!]
+  metadata: JSON
+}
+
+input UpdateConceptInput {
+  name: String
+  description: String
+  category: String
+  difficulty: DifficultyLevel
+  tags: [String!]
+  quality: Float
+  metadata: JSON
+}
+
+input CreateRelationshipInput {
+  fromConceptId: ID!
+  toConceptId: ID!
+  relationshipType: RelationshipType!
+  strength: Float
+  metadata: JSON
+}
+
+input UpdateUserProgressInput {
+  userId: ID!
+  conceptId: ID!
+  completed: Boolean!
+  score: Float
+  timeSpent: Int
+}
+
+# Enums
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum RelationshipType {
+  PREREQUISITE
+  RELATED
+  FOLLOWS
+  ALTERNATIVE
+  SUBTOPIC
+}
+
+enum ResourceType {
+  VIDEO
+  ARTICLE
+  TUTORIAL
+  DOCUMENTATION
+  EXERCISE
+  PROJECT
+}
+
+# Federation types
+scalar _Any
+scalar JSON
+
+type _Service {
+  sdl: String!
+}
+
+union _Entity = Concept | LearningResource | User | UserProgress

@@ -463,17 +463,7 @@ mod tests {
     #[tokio::test]
     async fn test_entity_extraction() {
         let recognizer = EntityRecognizer::new();
-        let context = ProcessingContext {
-            job_id: Uuid::new_v4(),
-            user_id: None,
-            session_id: None,
-            correlation_id: None,
-            processing_started_at: Utc::now(),
-            max_memory_mb: None,
-            priority: ProcessingPriority::Normal,
-            retry_count: 0,
-            custom_data: HashMap::new(),
-        };
+        let context = ProcessingContext::new(Uuid::new_v4());
 
         let text = "John Smith works at Google Inc. in Mountain View, California. \
                    He earned $150,000 last year and specializes in machine learning. \

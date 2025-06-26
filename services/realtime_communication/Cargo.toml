@@ -5,9 +5,14 @@ name = "realtime_communication"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "realtime-communication-server"
+path = "src/main.rs"
+
 [dependencies]
 # Async runtime
 tokio = { version = "1.36.0", features = ["full"] }
+futures = "0.3"
 futures-util = "0.3.28"
 
 # Web framework and WebSocket
@@ -15,6 +20,10 @@ actix-web = { version = "4.11.0", features = ["macros"] }
 actix-ws = "0.2"
 actix-web-actors = "4.3"
 actix = "0.13"
+
+# GraphQL
+async-graphql = { version = "7.0", features = ["apollo_tracing", "apollo_persisted_queries"] }
+async-graphql-actix-web = "7.0"
 
 # Serialization
 serde = { version = "1.0.219", features = ["derive"] }
@@ -31,6 +40,7 @@ thiserror = "2.0.12"
 
 # Logging and tracing
 tracing = "0.1.40"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Authentication and JWT
 jsonwebtoken = "9.0"

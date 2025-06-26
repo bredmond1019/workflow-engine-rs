@@ -434,7 +434,7 @@ impl RouterActor {
             }
         }
         
-        info!("Presence updated: user_id={} status={:?}", user_id, connection_info.presence_status);
+        info!("Presence updated: user_id={} status={:?}", user_id, status);
     }
 }
 

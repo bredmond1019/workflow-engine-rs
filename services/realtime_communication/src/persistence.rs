@@ -224,7 +224,7 @@ impl MessagePersistence {
         .bind(&message.message_type)
         .bind(message.timestamp)
         .bind(delivery_status_to_string(&message.delivery_status))
-        .bind(&message.metadata)
+        .bind(serde_json::to_value(&message.metadata).unwrap_or(serde_json::Value::Object(serde_json::Map::new())))
         .bind(content_size as i32)
         .fetch_one(&self.pool)
         .await
@@ -335,7 +335,10 @@ impl MessagePersistence {
                 message_type: row.get("message_type"),
                 timestamp: row.get("timestamp"),
                 delivery_status,
-                metadata: row.get("metadata"),
+                metadata: {
+                    let json_value: serde_json::Value = row.get("metadata");
+                    serde_json::from_value(json_value).unwrap_or_default()
+                },
             };
             messages.push(message);
         }
@@ -389,7 +392,10 @@ impl MessagePersistence {
                 message_type: row.get("message_type"),
                 timestamp: row.get("timestamp"),
                 delivery_status,
-                metadata: row.get("metadata"),
+                metadata: {
+                    let json_value: serde_json::Value = row.get("metadata");
+                    serde_json::from_value(json_value).unwrap_or_default()
+                },
             };
             messages.push(message);
         }

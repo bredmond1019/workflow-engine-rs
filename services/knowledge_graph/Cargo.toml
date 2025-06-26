@@ -5,12 +5,18 @@ name = "knowledge_graph"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "knowledge-graph-server"
+path = "src/main.rs"
+
 [dependencies]
 # Async runtime
 tokio = { version = "1.36.0", features = ["full"] }
 
 # Web framework
 actix-web = { version = "4.11.0", features = ["macros"] }
+async-graphql = { version = "7.0", features = ["apollo_tracing", "apollo_persisted_queries"] }
+async-graphql-actix-web = "7.0"
 
 # Graph database client
 dgraph-tonic = "0.11"
@@ -26,6 +32,7 @@ thiserror = "2.0.12"
 
 # Logging and tracing
 tracing = "0.1.40"
+tracing-subscriber = "0.3"
 
 # Utilities
 uuid = { version = "1.17.0", features = ["v4", "serde"] }

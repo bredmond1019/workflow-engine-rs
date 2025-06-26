@@ -23,7 +23,7 @@ pub struct AIConfig {
 }
 
 /// Supported AI providers
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AIProvider {
     OpenAI,
     Anthropic,

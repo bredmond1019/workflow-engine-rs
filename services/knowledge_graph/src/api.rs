@@ -1,5 +1,7 @@
 //! REST API endpoints for graph queries
 
+pub mod graphql;
+
 use actix_web::{web, HttpResponse, Result as ActixResult};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

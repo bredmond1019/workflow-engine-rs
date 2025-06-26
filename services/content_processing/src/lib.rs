@@ -13,6 +13,7 @@ pub mod ai_integration;
 // pub mod plugins;
 // pub mod batch;
 pub mod api;
+pub mod api_rest;
 pub mod db;
 
 pub use models::*;

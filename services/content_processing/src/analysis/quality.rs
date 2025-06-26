@@ -424,17 +424,7 @@ mod tests {
     #[tokio::test]
     async fn test_quality_assessment() {
         let assessor = QualityAssessor::new();
-        let context = ProcessingContext {
-            job_id: Uuid::new_v4(),
-            user_id: None,
-            session_id: None,
-            correlation_id: None,
-            processing_started_at: Utc::now(),
-            max_memory_mb: None,
-            priority: ProcessingPriority::Normal,
-            retry_count: 0,
-            custom_data: HashMap::new(),
-        };
+        let context = ProcessingContext::new(Uuid::new_v4());
 
         let good_text = "This is a well-structured document with multiple sentences. \
                         It contains proper punctuation and demonstrates good writing quality. \

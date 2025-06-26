@@ -45,7 +45,7 @@ pub struct SessionManagerActor {
 }
 
 /// User presence information
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct UserPresence {
     user_id: String,
     status: PresenceStatus,
@@ -358,7 +358,11 @@ impl SessionManagerActor {
                 let value = serde_json::to_string(presence)
                     .map_err(|e| format!("Serialization failed: {}", e))?;
                 
-                let _: () = conn.setex(key, self.config.presence_timeout.as_secs(), value).await
+                let _: () = redis::cmd("SETEX")
+                    .arg(&key)
+                    .arg(self.config.presence_timeout.as_secs())
+                    .arg(&value)
+                    .query_async(&mut conn).await
                     .map_err(|e| format!("Redis set failed: {}", e))?;
             }
             

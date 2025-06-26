@@ -1,0 +1,268 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@extends", "@external", "@requires", "@provides"])
+
+type Query {
+  # Get content metadata by ID
+  content(id: ID!): ContentMetadata
+  
+  # Search content with filters
+  searchContent(
+    query: String
+    contentType: ContentType
+    minQuality: Float
+    tags: [String!]
+    limit: Int = 20
+    offset: Int = 0
+  ): ContentSearchResult!
+  
+  # Get processing job status
+  processingJob(id: ID!): ProcessingJob
+  
+  # Get user's processing history
+  userProcessingHistory(userId: ID!, limit: Int = 50): [ProcessingJob!]!
+  
+  # Federation support
+  _service: _Service!
+  _entities(representations: [_Any!]!): [_Entity]!
+}
+
+type Mutation {
+  # Analyze content and extract metadata
+  analyzeContent(input: AnalyzeContentInput!): ProcessingResult!
+  
+  # Create async processing job
+  createProcessingJob(input: CreateProcessingJobInput!): ProcessingJob!
+  
+  # Cancel processing job
+  cancelProcessingJob(jobId: ID!): ProcessingJob!
+  
+  # Update content metadata
+  updateContentMetadata(id: ID!, input: UpdateContentMetadataInput!): ContentMetadata!
+}
+
+# Core types with federation support
+type ContentMetadata @key(fields: "id") {
+  id: ID!
+  title: String!
+  sourceUrl: String
+  contentType: ContentType!
+  format: ContentFormat!
+  sizeBytes: Int
+  hash: String!
+  
+  # Analysis results
+  qualityScore: Float
+  difficultyLevel: DifficultyLevel
+  concepts: [ContentConcept!]!
+  keywords: [String!]!
+  entities: [ExtractedEntity!]!
+  summary: String
+  language: String
+  
+  # Vector embeddings (for similarity search)
+  hasEmbeddings: Boolean!
+  
+  # Timestamps
+  createdAt: String!
+  updatedAt: String!
+  
+  # Relations
+  processingJobs: [ProcessingJob!]!
+  relatedContent(limit: Int = 10): [ContentMetadata!]!
+}
+
+type ProcessingJob @key(fields: "id") {
+  id: ID!
+  contentId: ID
+  content: ContentMetadata
+  jobType: JobType!
+  status: JobStatus!
+  priority: JobPriority!
+  
+  # Job details
+  options: ProcessingOptions!
+  result: ProcessingResult
+  errorMessage: String
+  retryCount: Int!
+  
+  # Worker info
+  workerId: String
+  
+  # Timestamps
+  startedAt: String
+  completedAt: String
+  createdAt: String!
+  
+  # User relation
+  userId: ID
+  user: User
+}
+
+# Extend User from main API
+type User @key(fields: "id") @extends {
+  id: ID! @external
+  # Add content processing specific fields
+  processingJobs: [ProcessingJob!]!
+  processedContent: [ContentMetadata!]!
+}
+
+# Extend Workflow from main API to link processed content
+type Workflow @key(fields: "id") @extends {
+  id: ID! @external
+  # Link to processed content used in workflow
+  processedContent: [ContentMetadata!]!
+}
+
+type ContentConcept {
+  name: String!
+  relevance: Float!
+  category: String
+}
+
+type ExtractedEntity {
+  text: String!
+  type: EntityType!
+  confidence: Float!
+  metadata: JSON
+}
+
+type ProcessingResult {
+  success: Boolean!
+  jobId: ID!
+  content: ContentMetadata
+  processingTime: Int! # milliseconds
+  errors: [ProcessingError!]
+}
+
+type ProcessingError {
+  code: String!
+  message: String!
+  details: JSON
+}
+
+type ContentSearchResult {
+  content: [ContentMetadata!]!
+  totalCount: Int!
+  hasMore: Boolean!
+}
+
+type ProcessingOptions {
+  extractConcepts: Boolean!
+  assessQuality: Boolean!
+  analyzeDifficulty: Boolean!
+  extractObjectives: Boolean!
+  generateSummary: Boolean!
+  extractKeywords: Boolean!
+  detectLanguage: Boolean!
+  plugins: [String!]!
+  timeoutSeconds: Int
+  pluginParams: JSON
+  verboseLogging: Boolean!
+}
+
+# Input types
+input AnalyzeContentInput {
+  content: String!
+  contentType: ContentType!
+  sourceUrl: String
+  options: ProcessingOptionsInput!
+}
+
+input CreateProcessingJobInput {
+  contentUrl: String
+  contentData: String
+  contentType: ContentType!
+  priority: JobPriority = MEDIUM
+  options: ProcessingOptionsInput!
+  webhookUrl: String
+}
+
+input ProcessingOptionsInput {
+  extractConcepts: Boolean = true
+  assessQuality: Boolean = true
+  analyzeDifficulty: Boolean = true
+  extractObjectives: Boolean = false
+  generateSummary: Boolean = true
+  extractKeywords: Boolean = true
+  detectLanguage: Boolean = true
+  plugins: [String!] = []
+  timeoutSeconds: Int = 300
+  pluginParams: JSON
+  verboseLogging: Boolean = false
+}
+
+input UpdateContentMetadataInput {
+  title: String
+  tags: [String!]
+  qualityScore: Float
+  difficultyLevel: DifficultyLevel
+  metadata: JSON
+}
+
+# Enums
+enum ContentType {
+  HTML
+  PDF
+  MARKDOWN
+  VIDEO
+  CODE
+  PLAIN_TEXT
+  JSON
+  XML
+}
+
+enum ContentFormat {
+  TEXT
+  BINARY
+  STRUCTURED
+  MEDIA
+}
+
+enum JobType {
+  ANALYSIS
+  EXTRACTION
+  TRANSFORMATION
+  PLUGIN_EXECUTION
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum EntityType {
+  PERSON
+  ORGANIZATION
+  LOCATION
+  DATE
+  TECHNOLOGY
+  CONCEPT
+  OTHER
+}
+
+# Federation types
+scalar _Any
+scalar JSON
+
+type _Service {
+  sdl: String!
+}
+
+union _Entity = ContentMetadata | ProcessingJob | User | Workflow

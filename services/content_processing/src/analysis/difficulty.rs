@@ -393,17 +393,7 @@ mod tests {
     #[tokio::test]
     async fn test_difficulty_analysis() {
         let analyzer = DifficultyAnalyzer::new();
-        let context = ProcessingContext {
-            job_id: Uuid::new_v4(),
-            user_id: None,
-            session_id: None,
-            correlation_id: None,
-            processing_started_at: Utc::now(),
-            max_memory_mb: None,
-            priority: ProcessingPriority::Normal,
-            retry_count: 0,
-            custom_data: HashMap::new(),
-        };
+        let context = ProcessingContext::new(Uuid::new_v4());
 
         // Test simple text
         let simple_text = "The cat sat on the mat. It was a sunny day.";

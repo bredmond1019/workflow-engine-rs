@@ -80,9 +80,10 @@ impl XmlParser {
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(ref e)) => {
-                    let name_bytes = e.name().as_ref();
-                    if let Ok(name) = std::str::from_utf8(name_bytes) {
-                        current_element = name.to_lowercase();
+                    let name = e.name();
+                    let name_bytes = name.as_ref();
+                    if let Ok(name_str) = std::str::from_utf8(name_bytes) {
+                        current_element = name_str.to_lowercase();
                     } else {
                         current_element = "unknown".to_string();
                     }
@@ -166,7 +167,8 @@ impl XmlParser {
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(ref e)) => {
-                    let name_bytes = e.name().as_ref();
+                    let qname = e.name();
+                    let name_bytes = qname.as_ref();
                     let name = if let Ok(name_str) = std::str::from_utf8(name_bytes) {
                         name_str.to_string()
                     } else {

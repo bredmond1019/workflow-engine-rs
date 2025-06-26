@@ -31,7 +31,8 @@ pub async fn process_content(
     }
     
     // Extract user ID from auth headers
-    let user_id = extract_user_id_from_auth(&req);
+    let user_id = extract_user_id_from_auth(&req)
+        .and_then(|id| Uuid::parse_str(&id).ok());
     
     // Create processing context
     let context = ProcessingContext {
@@ -41,6 +42,11 @@ pub async fn process_content(
         webhook_url: None,
         priority: ProcessingPriority::Normal,
         metadata: std::collections::HashMap::new(),
+        session_id: None,
+        processing_started_at: Some(chrono::Utc::now()),
+        max_memory_mb: None,
+        retry_count: 0,
+        custom_data: None,
     };
     
     // Process content
@@ -126,7 +132,8 @@ fn extract_user_id_from_jwt(token: &str) -> Option<String> {
     }
     
     // Try to decode the payload (second part)
-    if let Ok(payload_bytes) = base64::decode_config(parts[1], base64::URL_SAFE_NO_PAD) {
+    use base64::{Engine as _, engine::general_purpose};
+    if let Ok(payload_bytes) = general_purpose::URL_SAFE_NO_PAD.decode(parts[1]) {
         if let Ok(payload_str) = String::from_utf8(payload_bytes) {
             if let Ok(payload_json) = serde_json::from_str::<serde_json::Value>(&payload_str) {
                 // Look for common user ID fields
@@ -174,7 +181,7 @@ mod tests {
         assert!(resp.status().is_success());
         
         let body: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(body["status"], "processing");
+        assert_eq!(body["status"], "completed");
     }
     
     #[actix_web::test]

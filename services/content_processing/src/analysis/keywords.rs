@@ -213,8 +213,19 @@ impl KeywordExtractor {
         
         // Check for preposition patterns that might not be useful
         let prepositions = vec!["of", "in", "on", "at", "by", "for", "with", "from", "to"];
-        for prep in prepositions {
-            if phrase.to_lowercase().contains(&format!(" {} ", prep)) {
+        let phrase_lower = phrase.to_lowercase();
+        
+        // Check if phrase starts with preposition
+        for prep in &prepositions {
+            if phrase_lower.starts_with(&format!("{} ", prep)) {
+                return false;
+            }
+        }
+        
+        // Check for common non-coherent patterns
+        let non_coherent_patterns = vec!["of the", "in a", "on the", "at the", "by the"];
+        for pattern in non_coherent_patterns {
+            if phrase_lower == pattern {
                 return false;
             }
         }
@@ -241,11 +252,16 @@ impl KeywordExtractor {
     fn is_technical_term(&self, word: &str) -> bool {
         let technical_suffixes = vec!["ism", "ology", "graphy", "metry", "scopy"];
         let technical_prefixes = vec!["bio", "geo", "micro", "macro", "proto", "pseudo"];
+        let technical_words = vec![
+            "algorithm", "methodology", "analysis", "framework", "protocol",
+            "implementation", "optimization", "configuration", "architecture"
+        ];
         
         let word_lower = word.to_lowercase();
         
         technical_suffixes.iter().any(|suffix| word_lower.ends_with(suffix))
             || technical_prefixes.iter().any(|prefix| word_lower.starts_with(prefix))
+            || technical_words.contains(&word_lower.as_str())
             || word.len() > 8 && word.contains('-')
     }
 

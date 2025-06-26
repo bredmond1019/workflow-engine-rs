@@ -14,13 +14,18 @@ async fn main() {
             schema_url: None,
         },
         SubgraphConfig {
-            name: "content".to_string(),
-            url: "http://localhost:8082/graphql".to_string(),
+            name: "knowledge_graph".to_string(),
+            url: "http://localhost:3002/graphql".to_string(),
             schema_url: None,
         },
         SubgraphConfig {
-            name: "knowledge".to_string(),
-            url: "http://localhost:3002/graphql".to_string(),
+            name: "content_processing".to_string(),
+            url: "http://localhost:8001/graphql".to_string(),
+            schema_url: None,
+        },
+        SubgraphConfig {
+            name: "realtime_communication".to_string(),
+            url: "http://localhost:8002/graphql".to_string(),
             schema_url: None,
         },
     ];
