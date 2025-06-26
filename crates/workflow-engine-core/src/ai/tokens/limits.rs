@@ -341,7 +341,7 @@ impl BudgetLimits {
     /// Apply dynamic throttling based on cost trajectory
     pub async fn calculate_dynamic_throttle(
         &self,
-        provider: &Provider,
+        _provider: &Provider,
         current_cost_rate: Decimal, // cost per minute
         budget_limit: Decimal,
         time_remaining_minutes: u32,
@@ -724,7 +724,7 @@ impl BudgetLimits {
     async fn check_user_limits(
         &self,
         limits: &UserLimits,
-        token_usage: &TokenUsage,
+        _token_usage: &TokenUsage,
         cost: &CostBreakdown,
     ) -> TokenResult<bool> {
         let scope = AlertScope::User(limits.user_id.clone());

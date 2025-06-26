@@ -197,7 +197,7 @@ impl BudgetTracker {
     pub async fn check_budget_allowed(
         &self,
         provider: &Provider,
-        model: &Model,
+        _model: &Model,
         cost: &CostBreakdown,
         user_id: Option<&str>,
         project_id: Option<&str>,
@@ -205,28 +205,22 @@ impl BudgetTracker {
         let config = self.config.read().await;
 
         // Check global budget
-        if config.global_budget.enabled {
-            if !self.check_global_budget(&config.global_budget, cost).await? {
-                return Ok(false);
-            }
+        if config.global_budget.enabled && !self.check_global_budget(&config.global_budget, cost).await? {
+            return Ok(false);
         }
 
         // Check provider budget
         if let Some(provider_budget) = config.provider_budgets.get(provider) {
-            if provider_budget.enabled {
-                if !self.check_provider_budget(provider_budget, cost).await? {
-                    return Ok(false);
-                }
+            if provider_budget.enabled && !self.check_provider_budget(provider_budget, cost).await? {
+                return Ok(false);
             }
         }
 
         // Check user budget
         if let Some(user_id) = user_id {
             if let Some(user_budget) = config.user_budgets.get(user_id) {
-                if user_budget.enabled {
-                    if !self.check_user_budget(user_budget, cost).await? {
-                        return Ok(false);
-                    }
+                if user_budget.enabled && !self.check_user_budget(user_budget, cost).await? {
+                    return Ok(false);
                 }
             }
         }
@@ -249,7 +243,7 @@ impl BudgetTracker {
     pub async fn record_spending(
         &self,
         provider: &Provider,
-        model: &Model,
+        _model: &Model,
         cost: &CostBreakdown,
         user_id: Option<&str>,
         project_id: Option<&str>,

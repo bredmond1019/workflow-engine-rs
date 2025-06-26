@@ -81,7 +81,7 @@ impl AWSBedrockPricingClient {
         let base_url = "https://pricing.us-east-1.amazonaws.com";
         
         // Build the request URL with filters for Bedrock
-        let url = format!(
+        let _url = format!(
             "{}/offers/v1.0/aws/AmazonBedrock/current/index.json",
             base_url
         );

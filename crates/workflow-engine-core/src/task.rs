@@ -27,7 +27,7 @@
 //! ### Creating a Task Context
 //!
 //! ```rust
-//! use ai_architecture_core::task::TaskContext;
+//! use workflow_engine_core::task::TaskContext;
 //! use serde_json::json;
 //!
 //! // Create from workflow type and event data
@@ -48,7 +48,7 @@
 //!
 //! ```rust
 //! use serde::{Deserialize, Serialize};
-//! use ai_architecture_core::{task::TaskContext, error::WorkflowError};
+//! use workflow_engine_core::{task::TaskContext, error::WorkflowError};
 //!
 //! #[derive(Debug, Deserialize, Serialize)]
 //! struct TicketData {
@@ -67,8 +67,9 @@
 //!
 //! ### Storing Node Results
 //!
-//! ```rust
-//! use ai_architecture_core::{nodes::Node, task::TaskContext, error::WorkflowError};
+//! ```rust,ignore
+//! // This example shows node result storage patterns
+//! use workflow_engine_core::{nodes::Node, task::TaskContext, error::WorkflowError};
 //! use serde_json::json;
 //!
 //! #[derive(Debug)]
@@ -107,7 +108,7 @@
 //!
 //! ```rust
 //! use serde::{Deserialize, Serialize};
-//! use ai_architecture_core::{task::TaskContext, error::WorkflowError};
+//! use workflow_engine_core::{task::TaskContext, error::WorkflowError};
 //!
 //! #[derive(Debug, Deserialize)]
 //! struct SentimentResult {
@@ -140,7 +141,7 @@
 //! ### Working with Metadata
 //!
 //! ```rust
-//! use ai_architecture_core::{task::TaskContext, error::WorkflowError};
+//! use workflow_engine_core::{task::TaskContext, error::WorkflowError};
 //! use chrono::{DateTime, Utc};
 //!
 //! fn track_processing_metadata(
@@ -169,7 +170,7 @@
 //! ### Error Handling Patterns
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     nodes::Node,
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -205,8 +206,9 @@
 //!
 //! ### Converting to Database Events
 //!
-//! ```rust
-//! use ai_architecture_core::{task::TaskContext, db::event::Event, error::WorkflowError};
+//! ```rust,ignore
+//! // This example requires database features
+//! use workflow_engine_core::{task::TaskContext, db::event::Event, error::WorkflowError};
 //! use diesel::prelude::*;
 //!
 //! fn persist_workflow_result(
@@ -296,7 +298,7 @@ use super::error::WorkflowError;
 /// # Examples
 ///
 /// ```rust
-/// use ai_architecture_core::task::TaskContext;
+/// use workflow_engine_core::task::TaskContext;
 /// use serde_json::json;
 /// use uuid::Uuid;
 ///

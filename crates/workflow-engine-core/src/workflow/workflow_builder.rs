@@ -239,10 +239,8 @@ impl<StartNode: Node + 'static> TypedWorkflowBuilder<StartNode> {
         
         // Check for cycles starting from any node
         for &node_id in self.node_configs.keys() {
-            if !visited.contains(&node_id) {
-                if self.has_cycle_util(node_id, &mut visited, &mut rec_stack) {
-                    return Err(WorkflowError::CycleDetected);
-                }
+            if !visited.contains(&node_id) && self.has_cycle_util(node_id, &mut visited, &mut rec_stack) {
+                return Err(WorkflowError::CycleDetected);
             }
         }
         

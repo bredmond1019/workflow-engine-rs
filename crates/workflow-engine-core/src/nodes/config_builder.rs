@@ -6,7 +6,6 @@
 use std::any::TypeId;
 use std::time::Duration;
 use std::marker::PhantomData;
-use std::collections::HashMap;
 
 use crate::error::WorkflowError;
 use crate::nodes::{Node, config::NodeConfig};

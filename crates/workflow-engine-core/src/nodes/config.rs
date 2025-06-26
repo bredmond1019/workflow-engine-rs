@@ -183,7 +183,7 @@ impl<'de> Deserialize<'de> for NodeConfig {
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de::{Error, MapAccess, Visitor};
+        use serde::de::{MapAccess, Visitor};
         use std::fmt;
         
         struct NodeConfigVisitor;

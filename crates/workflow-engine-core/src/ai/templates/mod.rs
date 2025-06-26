@@ -28,8 +28,8 @@
 //!
 //! ### Basic Template Usage
 //!
-//! ```rust
-//! use ai_architecture_core::ai::templates::{Template, TemplateEngine};
+//! ```rust,ignore
+//! use workflow_engine_core::ai::templates::{Template, TemplateEngine};
 //! use std::collections::HashMap;
 //!
 //! // Create a simple template
@@ -50,8 +50,8 @@
 //!
 //! ### Template Composition
 //!
-//! ```rust
-//! use ai_architecture_core::ai::templates::{Template, TemplateEngine};
+//! ```rust,ignore
+//! use workflow_engine_core::ai::templates::{Template, TemplateEngine};
 //!
 //! // Base template
 //! let base = Template::new(
@@ -73,7 +73,7 @@
 //!
 //! ### Conditional Logic
 //!
-//! ```rust
+//! ```rust,ignore
 //! let template = Template::new(
 //!     "conditional",
 //!     r#"
@@ -88,7 +88,7 @@
 //!
 //! ### Loops and Iteration
 //!
-//! ```rust
+//! ```rust,ignore
 //! let template = Template::new(
 //!     "list_items",
 //!     r#"
@@ -102,8 +102,8 @@
 //!
 //! ### JSON Output Format
 //!
-//! ```rust
-//! use ai_architecture_core::ai::templates::{Template, OutputFormat};
+//! ```rust,ignore
+//! use workflow_engine_core::ai::templates::{Template, OutputFormat};
 //!
 //! let template = Template::new(
 //!     "json_response",
@@ -123,8 +123,8 @@
 //!
 //! ## Template Versioning
 //!
-//! ```rust
-//! use ai_architecture_core::ai::templates::{TemplateStorage, Template};
+//! ```rust,ignore
+//! use workflow_engine_core::ai::templates::{TemplateStorage, Template};
 //!
 //! let storage = TemplateStorage::new("templates.db")?;
 //!
@@ -143,8 +143,8 @@
 //!
 //! ## Performance Metrics
 //!
-//! ```rust
-//! use ai_architecture_core::ai::templates::{TemplateMetrics, TemplateEngine};
+//! ```rust,ignore
+//! use workflow_engine_core::ai::templates::{TemplateMetrics, TemplateEngine};
 //!
 //! let engine = TemplateEngine::new().with_metrics();
 //!

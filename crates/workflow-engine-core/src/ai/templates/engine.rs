@@ -10,7 +10,7 @@ use super::{
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use handlebars::{Handlebars, Helper, Context, Output, HelperResult};
+use handlebars::{Handlebars, Helper, Context, Output, HelperResult, RenderErrorReason};
 use handlebars::RenderContext as HandlebarsRenderContext;
 
 /// Template engine configuration
@@ -346,11 +346,11 @@ fn json_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("json helper requires one parameter")
+        RenderErrorReason::ParamNotFoundForIndex("json", 0)
     })?;
     
     let json_str = serde_json::to_string_pretty(param.value())
-        .map_err(|e| handlebars::RenderError::new(format!("JSON serialization failed: {}", e)))?;
+        .map_err(|e| RenderErrorReason::NestedError(Box::new(e)))?;
     
     out.write(&json_str)?;
     Ok(())
@@ -364,7 +364,7 @@ fn uppercase_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("uppercase helper requires one parameter")
+        RenderErrorReason::ParamNotFoundForIndex("uppercase", 0)
     })?;
     
     if let Some(s) = param.value().as_str() {
@@ -381,7 +381,7 @@ fn lowercase_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("lowercase helper requires one parameter")
+        RenderErrorReason::ParamNotFoundForIndex("lowercase", 0)
     })?;
     
     if let Some(s) = param.value().as_str() {
@@ -398,7 +398,7 @@ fn capitalize_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("capitalize helper requires one parameter")
+        RenderErrorReason::ParamNotFoundForIndex("capitalize", 0)
     })?;
     
     if let Some(s) = param.value().as_str() {
@@ -419,10 +419,10 @@ fn eq_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param1 = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("eq helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("eq", 0)
     })?;
     let param2 = h.param(1).ok_or_else(|| {
-        handlebars::RenderError::new("eq helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("eq", 1)
     })?;
     
     let result = param1.value() == param2.value();
@@ -438,10 +438,10 @@ fn ne_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param1 = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("ne helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("ne", 0)
     })?;
     let param2 = h.param(1).ok_or_else(|| {
-        handlebars::RenderError::new("ne helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("ne", 1)
     })?;
     
     let result = param1.value() != param2.value();
@@ -457,10 +457,10 @@ fn gt_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param1 = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("gt helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("gt", 0)
     })?;
     let param2 = h.param(1).ok_or_else(|| {
-        handlebars::RenderError::new("gt helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("gt", 1)
     })?;
     
     let result = if let (Some(n1), Some(n2)) = (param1.value().as_f64(), param2.value().as_f64()) {
@@ -481,10 +481,10 @@ fn lt_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param1 = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("lt helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("lt", 0)
     })?;
     let param2 = h.param(1).ok_or_else(|| {
-        handlebars::RenderError::new("lt helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("lt", 1)
     })?;
     
     let result = if let (Some(n1), Some(n2)) = (param1.value().as_f64(), param2.value().as_f64()) {
@@ -505,7 +505,7 @@ fn len_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("len helper requires one parameter")
+        RenderErrorReason::ParamNotFoundForIndex("len", 0)
     })?;
     
     let length = if let Some(arr) = param.value().as_array() {
@@ -530,10 +530,10 @@ fn contains_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param1 = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::new("contains helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("contains", 0)
     })?;
     let param2 = h.param(1).ok_or_else(|| {
-        handlebars::RenderError::new("contains helper requires two parameters")
+        RenderErrorReason::ParamNotFoundForIndex("contains", 1)
     })?;
     
     let result = if let Some(arr) = param1.value().as_array() {
@@ -572,7 +572,7 @@ fn format_date_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let param = h.param(0).ok_or_else(|| {
-        handlebars::RenderError::from_error("format_date helper requires at least one parameter", std::io::Error::new(std::io::ErrorKind::InvalidInput, "Missing parameter"))
+        RenderErrorReason::ParamNotFoundForIndex("format_date", 0)
     })?;
     
     let format = h.param(1)

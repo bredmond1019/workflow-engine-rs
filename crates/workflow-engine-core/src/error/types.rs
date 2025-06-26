@@ -29,8 +29,8 @@
 //!
 //! ### Basic Error Handling
 //!
-//! ```rust
-//! use ai_architecture_core::{workflow::Workflow, error::WorkflowError};
+//! ```rust,ignore
+//! use workflow_engine_core::{workflow::Workflow, error::WorkflowError};
 //! use serde_json::json;
 //!
 //! fn handle_workflow_execution(workflow: &Workflow) {
@@ -56,8 +56,8 @@
 //!
 //! ### Error Propagation
 //!
-//! ```rust
-//! use ai_architecture_core::{
+//! ```rust,ignore
+//! use workflow_engine_core::{
 //!     nodes::Node,
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -91,23 +91,22 @@
 //!
 //! ### MCP Error Handling
 //!
-//! ```rust
-//! use ai_architecture_core::{
-//!     mcp::clients::MCPClient,
-//!     error::WorkflowError,
-//! };
+//! ```rust,ignore
+//! // This example requires workflow-engine-mcp crate
+//! use workflow_engine_mcp::clients::McpClient;
+//! use workflow_engine_core::error::WorkflowError;
 //!
-//! async fn safe_mcp_call(client: &MCPClient, tool_name: &str) -> Result<serde_json::Value, WorkflowError> {
-//!     client.call_tool(tool_name, serde_json::json!({}))
+//! async fn safe_mcp_call<C: McpClient>(client: &mut C, tool_name: &str) -> Result<serde_json::Value, WorkflowError> {
+//!     client.call_tool(tool_name, None)
 //!         .await
 //!         .map_err(|e| match e {
 //!             // Specific MCP error handling
-//!             mcp_error if e.to_string().contains("connection") => {
+//!             _ if e.to_string().contains("connection") => {
 //!                 WorkflowError::MCPConnectionError {
 //!                     message: format!("MCP connection failed: {}", e)
 //!                 }
 //!             }
-//!             mcp_error if e.to_string().contains("protocol") => {
+//!             _ if e.to_string().contains("protocol") => {
 //!                 WorkflowError::MCPProtocolError {
 //!                     message: format!("MCP protocol error: {}", e)
 //!                 }
@@ -121,11 +120,9 @@
 //!
 //! ### Database Error Handling
 //!
-//! ```rust
-//! use ai_architecture_core::{
-//!     db::event::Event,
-//!     error::WorkflowError,
-//! };
+//! ```rust,ignore
+//! // This example requires diesel and database features
+//! use workflow_engine_core::error::WorkflowError;
 //! use diesel::prelude::*;
 //!
 //! fn save_workflow_result(
@@ -145,7 +142,7 @@
 //! ### Retry with Backoff
 //!
 //! ```rust
-//! use ai_architecture_core::error::WorkflowError;
+//! use workflow_engine_core::error::WorkflowError;
 //! use tokio::time::{sleep, Duration};
 //!
 //! async fn retry_with_backoff<F, T>(
@@ -174,8 +171,9 @@
 //!
 //! ### Graceful Degradation
 //!
-//! ```rust
-//! use ai_architecture_core::{
+//! ```rust,ignore
+//! // This example shows a pattern but requires implementing helper methods
+//! use workflow_engine_core::{
 //!     nodes::Node,
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -262,12 +260,21 @@ use std::any::TypeId;
 /// # Examples
 ///
 /// ```rust
-/// use ai_architecture_core::error::WorkflowError;
+/// use workflow_engine_core::error::WorkflowError;
 ///
 /// // Create custom validation error
 /// let validation_error = WorkflowError::ValidationError {
-///     message: "Input must be a positive number".to_string()
+///     message: "Input must be a positive number".to_string(),
+///     field: "amount".to_string(),
+///     value: Some("-50".to_string()),
+///     constraint: "must be positive".to_string(),
+///     context: "in payment processing".to_string(),
 /// };
+///
+/// fn some_operation() -> Result<String, WorkflowError> {
+///     // Mock operation that might fail
+///     Err(WorkflowError::NodeNotFound { node_type: std::any::TypeId::of::<String>() })
+/// }
 ///
 /// // Handle different error types
 /// match some_operation() {

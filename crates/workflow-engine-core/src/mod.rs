@@ -45,7 +45,7 @@
 //! Here's a simple example of creating and running a workflow:
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     workflow::{builder::WorkflowBuilder, Workflow},
 //!     nodes::Node,
 //!     task::TaskContext,
@@ -92,7 +92,7 @@
 //! Workflows support parallel node execution for improved performance:
 //!
 //! ```rust
-//! use ai_architecture_core::workflow::builder::WorkflowBuilder;
+//! use workflow_engine_core::workflow::builder::WorkflowBuilder;
 //!
 //! let workflow = WorkflowBuilder::new("parallel_workflow")
 //!     .start_with::<StartNode>()
@@ -110,7 +110,7 @@
 //! Create conditional workflow paths with router nodes:
 //!
 //! ```rust
-//! use ai_architecture_core::nodes::{Node, Router};
+//! use workflow_engine_core::nodes::{Node, Router};
 //!
 //! #[derive(Debug)]
 //! struct ConditionalRouter;
@@ -136,7 +136,7 @@
 //! Expose workflows as MCP servers or connect to external MCP services:
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     mcp::transport::TransportType,
 //!     workflow::Workflow,
 //! };
@@ -164,7 +164,7 @@
 //! All operations return [`Result`] types with [`WorkflowError`](error::WorkflowError):
 //!
 //! ```rust
-//! use ai_architecture_core::error::WorkflowError;
+//! use workflow_engine_core::error::WorkflowError;
 //!
 //! match workflow.run(event_data) {
 //!     Ok(result) => println!("Success: {:?}", result),

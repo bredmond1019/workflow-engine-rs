@@ -225,7 +225,7 @@ impl PricingApiClient for OpenAIPricingClient {
 }
 
 /// Alternative implementation using web scraping
-pub async fn scrape_openai_pricing(client: &reqwest::Client) -> TokenResult<HashMap<String, (f64, f64)>> {
+pub async fn scrape_openai_pricing(_client: &reqwest::Client) -> TokenResult<HashMap<String, (f64, f64)>> {
     // This is a placeholder for actual web scraping implementation
     // In production, you would:
     // 1. Fetch https://openai.com/pricing

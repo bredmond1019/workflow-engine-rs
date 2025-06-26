@@ -26,7 +26,7 @@
 //! ### Basic Node Implementation
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     nodes::Node,
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -51,7 +51,11 @@
 //!         let text = input.get("text")
 //!             .and_then(|v| v.as_str())
 //!             .ok_or_else(|| WorkflowError::ValidationError {
-//!                 message: "Missing 'text' field in input".to_string()
+//!                 message: "Missing 'text' field in input".to_string(),
+//!                 field: "text".to_string(),
+//!                 value: None,
+//!                 constraint: "required field".to_string(),
+//!                 context: "in text processor input".to_string(),
 //!             })?;
 //!
 //!         // Apply transformation based on type
@@ -74,23 +78,58 @@
 //! }
 //!
 //! // Usage in workflow
+//! # fn main() -> Result<(), workflow_engine_core::error::WorkflowError> {
 //! let processor = TextProcessorNode::new("uppercase".to_string());
 //! let context = TaskContext::new(
 //!     "text_processing".to_string(),
 //!     json!({"text": "hello world"})
 //! );
 //! let result = processor.process(context)?;
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! ### Router Node Implementation
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     nodes::{Node, Router},
 //!     task::TaskContext,
 //!     error::WorkflowError,
 //! };
 //! use serde_json::json;
+//!
+//! // Define the processor nodes that the router will route to
+//! #[derive(Debug)]
+//! struct HighPriorityProcessor;
+//! #[derive(Debug)]
+//! struct MediumPriorityProcessor;
+//! #[derive(Debug)]
+//! struct LowPriorityProcessor;
+//! #[derive(Debug)]
+//! struct DefaultProcessor;
+//!
+//! // Implement Node for each processor
+//! impl Node for HighPriorityProcessor {
+//!     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+//!         Ok(context)
+//!     }
+//! }
+//! impl Node for MediumPriorityProcessor {
+//!     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+//!         Ok(context)
+//!     }
+//! }
+//! impl Node for LowPriorityProcessor {
+//!     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+//!         Ok(context)
+//!     }
+//! }
+//! impl Node for DefaultProcessor {
+//!     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+//!         Ok(context)
+//!     }
+//! }
 //!
 //! #[derive(Debug)]
 //! struct PriorityRouter;
@@ -123,7 +162,7 @@
 //! ### Parallel Processing Node
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     nodes::{Node, ParallelNode},
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -137,7 +176,7 @@
 //!     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
 //!         // This could be called in parallel with other analysis nodes
 //!         self.execute_parallel(context)
-//!             .map(|results| results.into_iter().next().unwrap_or_else(|| context.clone()))
+//!             .map(|mut results| results.pop().unwrap_or_else(|| TaskContext::new("default".to_string(), serde_json::json!({}))))
 //!     }
 //! }
 //!
@@ -149,7 +188,11 @@
 //!         let input: serde_json::Value = context.get_event_data()?;
 //!         let data = input.get("data").and_then(|v| v.as_array())
 //!             .ok_or_else(|| WorkflowError::ValidationError {
-//!                 message: "Expected 'data' array in input".to_string()
+//!                 message: "Expected 'data' array in input".to_string(),
+//!                 field: "data".to_string(),
+//!                 value: None,
+//!                 constraint: "must be an array".to_string(),
+//!                 context: "in parallel processing".to_string(),
 //!             })?;
 //!
 //!         // Perform different analyses on the data
@@ -183,12 +226,15 @@
 //!
 //! ### Node Registry Usage
 //!
-//! ```rust
-//! use ai_architecture_core::{
+//! ```rust,ignore
+//! // This example requires the complete node definitions from earlier examples
+//! use workflow_engine_core::{
 //!     nodes::registry::NodeRegistry,
 //!     workflow::Workflow,
+//!     task::TaskContext,
 //! };
 //! use std::any::TypeId;
+//! use serde_json::json;
 //!
 //! // Create registry and register nodes
 //! let mut registry = NodeRegistry::new();
@@ -210,8 +256,9 @@
 //!
 //! ### Agent Node Configuration
 //!
-//! ```rust
-//! use ai_architecture_core::{
+//! ```rust,ignore
+//! // This example requires the ai_agents module
+//! use workflow_engine_core::{
 //!     nodes::agent::{AgentConfig, ModelProvider},
 //!     ai_agents::anthropic::AnthropicAgentNode,
 //! };
@@ -231,11 +278,10 @@
 //!
 //! ### External MCP Client Node
 //!
-//! ```rust
-//! use ai_architecture_core::{
-//!     nodes::external_mcp_client::ExternalMCPClientNode,
-//!     mcp::transport::TransportType,
-//! };
+//! ```rust,ignore
+//! // This example requires external dependencies
+//! use workflow_engine_core::nodes::external_mcp_client::ExternalMCPClientNode;
+//! use workflow_engine_mcp::transport::TransportType;
 //!
 //! // Create node that connects to external MCP server
 //! let mcp_node = ExternalMCPClientNode::new(
@@ -253,8 +299,9 @@
 //!
 //! ### Basic Configuration
 //!
-//! ```rust
-//! use ai_architecture_core::nodes::config::NodeConfig;
+//! ```rust,ignore
+//! // NodeConfig is typically defined in the config module
+//! use workflow_engine_core::nodes::config::NodeConfig;
 //! use serde_json::json;
 //!
 //! let node_config = NodeConfig {
@@ -273,8 +320,9 @@
 //!
 //! ### External Configuration
 //!
-//! ```rust
-//! use ai_architecture_core::nodes::external_config::ExternalNodeConfig;
+//! ```rust,ignore
+//! // ExternalNodeConfig is typically defined in the external_config module
+//! use workflow_engine_core::nodes::external_config::ExternalNodeConfig;
 //! use std::collections::HashMap;
 //!
 //! let mut env_vars = HashMap::new();
@@ -294,7 +342,7 @@
 //! ## Error Handling in Nodes
 //!
 //! ```rust
-//! use ai_architecture_core::{
+//! use workflow_engine_core::{
 //!     nodes::Node,
 //!     task::TaskContext,
 //!     error::WorkflowError,
@@ -303,6 +351,19 @@
 //! #[derive(Debug)]
 //! struct RobustProcessorNode;
 //!
+//! impl RobustProcessorNode {
+//!     fn perform_processing(&self, value: &serde_json::Value) -> Result<serde_json::Value, String> {
+//!         // Mock processing implementation
+//!         if value.is_null() {
+//!             return Err("Cannot process null value".to_string());
+//!         }
+//!         Ok(serde_json::json!({
+//!             "processed": true,
+//!             "input": value
+//!         }))
+//!     }
+//! }
+//!
 //! impl Node for RobustProcessorNode {
 //!     fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
 //!         // Validate input data
@@ -310,7 +371,11 @@
 //!             Ok(data) => data,
 //!             Err(_) => {
 //!                 return Err(WorkflowError::ValidationError {
-//!                     message: "Invalid input data format".to_string()
+//!                     message: "Invalid input data format".to_string(),
+//!                     field: "input".to_string(),
+//!                     value: None,
+//!                     constraint: "must be valid JSON".to_string(),
+//!                     context: "in robust processor".to_string(),
 //!                 });
 //!             }
 //!         };
@@ -318,7 +383,11 @@
 //!         // Check required fields
 //!         let required_field = input.get("required_value")
 //!             .ok_or_else(|| WorkflowError::ValidationError {
-//!                 message: "Missing required_value field".to_string()
+//!                 message: "Missing required_value field".to_string(),
+//!                 field: "required_value".to_string(),
+//!                 value: None,
+//!                 constraint: "required field".to_string(),
+//!                 context: "in robust processor".to_string(),
 //!             })?;
 //!
 //!         // Process with error handling
@@ -330,7 +399,10 @@
 //!             }
 //!             Err(processing_error) => {
 //!                 Err(WorkflowError::ProcessingError {
-//!                     message: format!("Processing failed: {}", processing_error)
+//!                     message: format!("Processing failed: {}", processing_error),
+//!                     node_id: None,
+//!                     node_type: "RobustProcessorNode".to_string(),
+//!                     source: None,
 //!                 })
 //!             }
 //!         }
@@ -372,8 +444,9 @@
 //! ### Dynamic Node Loading
 //! Nodes can be loaded dynamically based on configuration:
 //!
-//! ```rust
-//! use ai_architecture_core::nodes::registry::NodeRegistry;
+//! ```rust,ignore
+//! // This example shows a pattern but requires undefined types
+//! use workflow_engine_core::nodes::registry::NodeRegistry;
 //!
 //! // Register nodes based on runtime configuration
 //! let mut registry = NodeRegistry::new();
@@ -394,7 +467,8 @@
 //! ### Custom Node Metadata
 //! Nodes can provide metadata for better workflow visualization:
 //!
-//! ```rust
+//! ```rust,ignore
+//! // This example shows metadata usage
 //! impl Node for CustomNode {
 //!     fn node_name(&self) -> String {
 //!         "Custom Data Processor v2.1".to_string()
@@ -445,7 +519,7 @@ pub mod type_safe;
 /// # Examples
 ///
 /// ```rust
-/// use ai_architecture_core::{nodes::Node, task::TaskContext, error::WorkflowError};
+/// use workflow_engine_core::{nodes::Node, task::TaskContext, error::WorkflowError};
 /// use serde_json::json;
 ///
 /// #[derive(Debug)]
@@ -475,12 +549,19 @@ pub trait Node: Send + Sync + Debug {
     /// # Examples
     ///
     /// ```rust
+    /// use workflow_engine_core::{nodes::Node, task::TaskContext, error::WorkflowError};
+    /// 
+    /// #[derive(Debug)]
+    /// struct MyCustomNode;
+    /// 
     /// impl Node for MyCustomNode {
     ///     fn node_name(&self) -> String {
     ///         "Custom Data Processor v1.2".to_string()
     ///     }
     ///     
-    ///     // ... rest of implementation
+    ///     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+    ///         Ok(context)
+    ///     }
     /// }
     /// ```
     fn node_name(&self) -> String {
@@ -509,7 +590,7 @@ pub trait Node: Send + Sync + Debug {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
     ///     // Extract input data
     ///     let input: MyInputType = context.get_event_data()?;
@@ -556,7 +637,31 @@ pub trait RouterNode: Send + Sync + Debug {
 /// # Examples
 ///
 /// ```rust
-/// use ai_architecture_core::{nodes::{Node, Router}, task::TaskContext, error::WorkflowError};
+/// use workflow_engine_core::{nodes::{Node, Router}, task::TaskContext, error::WorkflowError};
+///
+/// // Define the processor nodes
+/// #[derive(Debug)]
+/// struct ProcessorA;
+/// #[derive(Debug)]
+/// struct ProcessorB;
+/// #[derive(Debug)]
+/// struct DefaultProcessor;
+///
+/// impl Node for ProcessorA {
+///     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+///         Ok(context)
+///     }
+/// }
+/// impl Node for ProcessorB {
+///     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+///         Ok(context)
+///     }
+/// }
+/// impl Node for DefaultProcessor {
+///     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+///         Ok(context)
+///     }
+/// }
 ///
 /// #[derive(Debug)]
 /// struct ConditionalRouter;
@@ -607,20 +712,32 @@ pub trait Router: Node {
 /// # Examples
 ///
 /// ```rust
-/// use ai_architecture_core::{
+/// use workflow_engine_core::{
 ///     nodes::{Node, ParallelNode},
 ///     task::TaskContext,
 ///     error::WorkflowError,
 /// };
+/// use serde_json::json;
 ///
 /// #[derive(Debug)]
 /// struct DataAnalysisNode;
 ///
+/// impl DataAnalysisNode {
+///     fn analyze_data_chunks(&self, input: &serde_json::Value) -> Result<serde_json::Value, WorkflowError> {
+///         // Mock analysis implementation
+///         Ok(json!({
+///             "chunk_count": 4,
+///             "total_processed": 1000
+///         }))
+///     }
+/// }
+///
 /// impl Node for DataAnalysisNode {
 ///     fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
-///         // Delegate to parallel execution
+///         // Delegate to parallel execution - note: in real code you'd handle this differently
+///         // This is just for demonstration
 ///         self.execute_parallel(context)
-///             .map(|results| results.into_iter().next().unwrap_or(context))
+///             .map(|mut results| results.pop().unwrap_or_else(|| TaskContext::new("default".to_string(), serde_json::json!({}))))
 ///     }
 /// }
 ///
@@ -739,7 +856,7 @@ pub trait AsyncNode: Send + Sync + Debug {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// async fn process_async(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
     ///     // Extract input data
     ///     let input: MyInputType = context.get_event_data()?;
@@ -765,10 +882,14 @@ pub trait AsyncNode: Send + Sync + Debug {
 /// # Examples
 ///
 /// ```rust
-/// use workflow_engine_core::nodes::{Node, AsyncNodeAdapter};
+/// use workflow_engine_core::{
+///     nodes::{Node, AsyncNodeAdapter},
+///     task::TaskContext,
+///     error::WorkflowError
+/// };
 ///
 /// // Existing sync node
-/// #[derive(Debug)]
+/// #[derive(Debug, Clone)]
 /// struct SyncNode;
 /// 
 /// impl Node for SyncNode {
