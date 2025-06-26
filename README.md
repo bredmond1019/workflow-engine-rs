@@ -1138,7 +1138,31 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Comprehensive monitoring with Prometheus/Grafana
 - Production-ready error handling and circuit breakers
 
+### 🚀 Coming Soon: GraphQL Federation
+
+**Transform your distributed services into a unified GraphQL API!**
+
+We're implementing Apollo Federation v2 to provide a single, powerful GraphQL endpoint that seamlessly combines all microservices:
+
+#### What's Being Added:
+- **🔗 Unified GraphQL Gateway**: Single endpoint at `http://localhost:4000/graphql` orchestrating all services
+- **📊 Schema Composition**: Automatic merging of service schemas with conflict resolution
+- **⚡ Optimized Query Planning**: Intelligent query execution across multiple services
+- **🔄 Entity Resolution**: Seamless data relationships across service boundaries
+- **🎯 Type Safety**: Strong typing maintained across distributed schemas
+- **📈 Performance**: Query plan caching and batching for optimal performance
+
+#### Benefits for Your Applications:
+- **Simplified Client Development**: One endpoint, one schema, infinite possibilities
+- **Reduced Network Overhead**: Automatic query optimization and batching
+- **Service Independence**: Microservices remain loosely coupled while appearing unified
+- **Progressive Adoption**: Add services to the federation incrementally
+- **Developer Experience**: GraphQL Playground with full introspection
+
+See [GRAPHQL_FEDERATION.md](GRAPHQL_FEDERATION.md) for detailed architecture and implementation plans.
+
 ### 🚧 In Development
+- GraphQL Federation Gateway (coming in v0.2.0)
 - Service registry API endpoints
 - Additional MCP server examples
 - Enhanced documentation and tutorials
@@ -1149,7 +1173,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Live AI pricing API integration
 - Additional AI provider integrations (Google Gemini, Ollama)
 - Advanced service discovery mechanisms
-- GraphQL API gateway
 
 For detailed project status and open source readiness, see [project-open-source.md](project-open-source.md)
 
