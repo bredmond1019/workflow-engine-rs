@@ -250,9 +250,9 @@ impl KeywordExtractor {
 
     /// Check if a word is a technical term
     fn is_technical_term(&self, word: &str) -> bool {
-        let technical_suffixes = vec!["ism", "ology", "graphy", "metry", "scopy"];
-        let technical_prefixes = vec!["bio", "geo", "micro", "macro", "proto", "pseudo"];
-        let technical_words = vec![
+        let technical_suffixes = ["ism", "ology", "graphy", "metry", "scopy"];
+        let technical_prefixes = ["bio", "geo", "micro", "macro", "proto", "pseudo"];
+        let technical_words = [
             "algorithm", "methodology", "analysis", "framework", "protocol",
             "implementation", "optimization", "configuration", "architecture"
         ];

@@ -179,7 +179,7 @@ impl QualityAssessor {
         score += (transition_count as f32 * 0.1).min(0.3);
         
         // Check for pronoun references (indicates connection between sentences)
-        let pronouns = vec!["this", "that", "these", "those", "it", "they", "them"];
+        let pronouns = ["this", "that", "these", "those", "it", "they", "them"];
         let pronoun_count = pronouns.iter()
             .filter(|&pronoun| lower_text.contains(pronoun))
             .count();
@@ -416,9 +416,6 @@ impl Default for QualityAssessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ProcessingPriority;
-    use chrono::Utc;
-    use std::collections::HashMap;
     use uuid::Uuid;
 
     #[tokio::test]

@@ -3,6 +3,7 @@
 //! Message types for inter-actor communication in the WebSocket system.
 
 use actix::{Message, Recipient};
+use actix::dev::MessageResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -66,7 +67,7 @@ pub enum ServerMessage {
 }
 
 /// Presence status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum PresenceStatus {
     Online,
     Away,
@@ -84,7 +85,7 @@ pub enum NotificationLevel {
 }
 
 /// Message delivery status
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DeliveryStatus {
     Sent,
     Delivered,
@@ -163,11 +164,11 @@ pub struct GetConnections {
 }
 
 #[derive(Message, Debug, Clone)]
-#[rtype(result = "SystemStats")]
+#[rtype(result = "()")]
 pub struct GetSystemStats;
 
 /// Message priority levels
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessagePriority {
     Low = 0,
     Normal = 1,
@@ -198,6 +199,8 @@ pub struct SystemStats {
     pub topics_active: usize,
     pub uptime_seconds: u64,
 }
+
+
 
 /// Message persistence request
 #[derive(Message, Debug, Clone)]
@@ -291,3 +294,6 @@ impl From<&str> for MessagePriority {
         }
     }
 }
+
+// Additional message types for actor communication
+

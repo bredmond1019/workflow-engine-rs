@@ -1,0 +1,282 @@
+# GraphQL Federation Test Configuration
+#
+# This configuration file defines test scenarios, performance thresholds,
+# and validation criteria for the complete federation system.
+
+[federation]
+name = "AI Workflow Engine GraphQL Federation"
+version = "1.0.0"
+description = "Production-ready GraphQL Federation with microservices"
+
+[services]
+# Gateway configuration
+[services.gateway]
+name = "GraphQL Gateway"
+port = 4000
+url = "http://localhost:4000/graphql"
+binary = "graphql-gateway"
+health_endpoint = "/graphql"
+startup_timeout = 30
+required = true
+
+# Main workflow API
+[services.workflow_api]
+name = "Workflow Engine API"
+port = 8080
+url = "http://localhost:8080/api/v1/graphql"
+binary = "workflow-engine"
+health_endpoint = "/api/v1/graphql"
+startup_timeout = 20
+required = true
+
+# Content processing service
+[services.content_processing]
+name = "Content Processing Service"
+port = 3001
+url = "http://localhost:3001/graphql"
+path = "services/content_processing"
+health_endpoint = "/graphql"
+startup_timeout = 15
+required = true
+
+# Knowledge graph service
+[services.knowledge_graph]
+name = "Knowledge Graph Service"
+port = 3002
+url = "http://localhost:3002/graphql"
+path = "services/knowledge_graph"
+health_endpoint = "/graphql"
+startup_timeout = 15
+required = true
+
+# Realtime communication service
+[services.realtime_communication]
+name = "Realtime Communication Service"
+port = 3003
+url = "http://localhost:3003/graphql"
+path = "services/realtime_communication"
+health_endpoint = "/graphql"
+startup_timeout = 15
+required = true
+
+[performance_thresholds]
+# Query performance thresholds (milliseconds)
+simple_query_max_time = 500
+complex_query_max_time = 2000
+aggregation_query_max_time = 5000
+
+# Cache performance
+cache_hit_rate_minimum = 0.80
+cache_warming_iterations = 3
+
+# Concurrency testing
+max_concurrent_queries = 20
+concurrent_success_rate_minimum = 0.95
+
+# Load testing
+load_test_requests = 50
+load_test_success_rate_minimum = 0.90
+
+# Health check
+health_check_timeout = 10
+health_check_max_retries = 30
+
+[test_scenarios]
+# Test 16: Multi-Subgraph Query Test
+[test_scenarios.test_16]
+name = "Multi-Subgraph Query Test"
+description = "Verify complex queries across multiple subgraphs"
+timeout = 30
+retry_count = 2
+
+[test_scenarios.test_16.sub_tests]
+cross_service_query = "Query spanning all services"
+entity_references = "Cross-service entity resolution"
+complex_nested = "Deep nested relationships"
+batch_optimization = "Batch query performance"
+
+# Test 17: Entity Reference Resolution Test
+[test_scenarios.test_17]
+name = "Entity Reference Resolution Test"
+description = "Test cross-service entity resolution using _entities"
+timeout = 30
+retry_count = 2
+
+[test_scenarios.test_17.sub_tests]
+basic_resolution = "Basic entity resolution"
+complex_resolution = "Complex entities with compound keys"
+error_handling = "Error handling for invalid entities"
+directive_compliance = "Federation directive compliance"
+
+# Test 18: Schema Composition Test
+[test_scenarios.test_18]
+name = "Schema Composition Test"
+description = "Verify gateway schema composition"
+timeout = 30
+retry_count = 2
+
+[test_scenarios.test_18.sub_tests]
+no_conflicts = "Schema composition without conflicts"
+type_consistency = "Type system consistency"
+introspection = "Gateway introspection capabilities"
+evolution_compatibility = "Schema evolution compatibility"
+
+# Test 19: Complete Workflow Query Test
+[test_scenarios.test_19]
+name = "Complete Workflow Query Test"
+description = "End-to-end workflow scenarios"
+timeout = 60
+retry_count = 1
+
+[test_scenarios.test_19.sub_tests]
+lifecycle_query = "Complete workflow lifecycle"
+cross_service_consistency = "Data consistency across services"
+realtime_updates = "Real-time workflow updates"
+complex_aggregations = "Complex aggregation queries"
+
+# Test 20: Performance Test with Caching
+[test_scenarios.test_20]
+name = "Performance Test with Caching"
+description = "Performance validation with cache optimization"
+timeout = 120
+retry_count = 1
+
+[test_scenarios.test_20.sub_tests]
+performance_baseline = "Query performance baseline"
+cache_validation = "Cache warming and hit rate"
+concurrent_performance = "Concurrent query performance"
+cache_invalidation = "Cache invalidation consistency"
+
+[validation_criteria]
+# Minimum success rates
+overall_test_success_rate = 0.90
+critical_test_success_rate = 1.00  # Tests 16-18 must pass
+performance_test_success_rate = 0.80
+
+# Federation requirements
+all_services_required = true
+schema_composition_required = true
+entity_resolution_required = true
+cross_service_queries_required = true
+
+# Performance requirements
+query_performance_validation = true
+cache_performance_validation = true
+concurrency_validation = true
+load_testing_validation = true
+
+[reporting]
+# Report generation
+generate_html_report = true
+generate_json_report = true
+generate_performance_charts = true
+
+# Log levels
+log_level = "info"
+detailed_logging = true
+service_logs = true
+
+# Output directories
+log_directory = "logs"
+report_directory = "reports"
+charts_directory = "reports/charts"
+
+[example_queries]
+# Sample queries for testing
+[example_queries.health_check]
+query = """
+{
+  __schema {
+    queryType {
+      name
+    }
+  }
+}
+"""
+
+[example_queries.simple_workflow]
+query = """
+{
+  workflows(limit: 5) {
+    id
+    name
+    status
+    createdAt
+  }
+}
+"""
+
+[example_queries.federation_service]
+query = """
+{
+  _service {
+    sdl
+  }
+}
+"""
+
+[example_queries.entity_resolution]
+query = """
+query EntityResolution($representations: [_Any!]!) {
+  _entities(representations: $representations) {
+    ... on User {
+      id
+      __typename
+    }
+    ... on Workflow {
+      id
+      name
+      __typename
+    }
+  }
+}
+"""
+
+[example_queries.cross_service_user]
+query = """
+query CrossServiceUser($userId: ID!) {
+  user(id: $userId) {
+    id
+    email
+    processedContent(limit: 3) {
+      id
+      title
+      contentType
+    }
+    learningProgress {
+      totalConceptsCompleted
+      averageDifficulty
+    }
+    conversations(limit: 3) {
+      id
+      name
+      participantIds
+    }
+  }
+}
+"""
+
+[deployment]
+# Deployment validation
+docker_compose_validation = true
+kubernetes_manifest_validation = false
+health_check_endpoints = true
+service_discovery_validation = true
+
+# Environment requirements
+rust_version_minimum = "1.75.0"
+cargo_features_required = ["federation", "graphql"]
+database_requirements = ["postgresql"]
+
+[monitoring]
+# Monitoring configuration for validation
+metrics_collection = true
+performance_monitoring = true
+error_tracking = true
+log_aggregation = true
+
+# Alert thresholds
+high_latency_threshold = 2000  # milliseconds
+error_rate_threshold = 0.05   # 5%
+memory_usage_threshold = 0.80 # 80%
+cpu_usage_threshold = 0.80    # 80%

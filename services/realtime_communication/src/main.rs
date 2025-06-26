@@ -8,14 +8,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use realtime_communication::{
     api::graphql::schema::create_schema,
-    server::{WebSocketServer, ServerConfig, ServerState},
+    server::{ServerConfig, ServerState, ServerMetrics},
     connection::ConnectionManager,
-    actors::manager::ActorManager,
-    persistence::MessageStore,
-    presence::PresenceManager,
-    protection::rate_limiter::RateLimiter,
-    protection::circuit_breaker::CircuitBreaker,
-    ServerMetrics,
 };
 
 #[actix_web::main]
@@ -50,7 +44,7 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize components
     let connection_manager = std::sync::Arc::new(ConnectionManager::new(config.max_connections));
-    let metrics = std::sync::Arc::new(ServerMetrics::new());
+    let metrics = std::sync::Arc::new(ServerMetrics::default());
     
     // Create server state
     let server_state = ServerState {

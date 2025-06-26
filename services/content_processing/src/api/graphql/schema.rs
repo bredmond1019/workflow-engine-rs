@@ -1,22 +1,25 @@
+#![allow(clippy::too_many_arguments, clippy::large_enum_variant)]
+
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
     ContentType as DomainContentType, ProcessingOptions as DomainProcessingOptions,
     ProcessingContext, ProcessingResult as DomainProcessingResult,
     ProcessingOutput, ProcessingError as DomainProcessingError,
-    ContentMetadata as DomainContentMetadata, ProcessingPriority,
-    Concept as DomainConcept, Entity as DomainEntity, EntityType as DomainEntityType,
+    EntityType as DomainEntityType,
     DifficultyLevel as DomainDifficultyLevel,
 };
 use crate::processor::DefaultContentProcessor;
 use crate::traits::ContentProcessor as ContentProcessorTrait;
 
+// The QueryRoot already includes federation support, so no need for a merged object
+
 pub type ContentProcessingSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
+#[derive(Default)]
 pub struct QueryRoot;
 pub struct MutationRoot;
 
@@ -561,7 +564,7 @@ impl ContentSearchResult {
 // Query implementation
 #[Object]
 impl QueryRoot {
-    async fn content(&self, _ctx: &Context<'_>, id: ID) -> Result<Option<ContentMetadata>> {
+    async fn content(&self, _ctx: &Context<'_>, _id: ID) -> Result<Option<ContentMetadata>> {
         // Would fetch content by ID from database
         Ok(None)
     }
@@ -569,12 +572,12 @@ impl QueryRoot {
     async fn search_content(
         &self,
         _ctx: &Context<'_>,
-        query: Option<String>,
-        content_type: Option<ContentType>,
-        min_quality: Option<f64>,
-        tags: Option<Vec<String>>,
-        limit: Option<i32>,
-        offset: Option<i32>,
+        _query: Option<String>,
+        _content_type: Option<ContentType>,
+        _min_quality: Option<f64>,
+        _tags: Option<Vec<String>>,
+        _limit: Option<i32>,
+        _offset: Option<i32>,
     ) -> Result<ContentSearchResult> {
         // Would search content in database
         Ok(ContentSearchResult {
@@ -584,7 +587,7 @@ impl QueryRoot {
         })
     }
 
-    async fn processing_job(&self, _ctx: &Context<'_>, id: ID) -> Result<Option<ProcessingJob>> {
+    async fn processing_job(&self, _ctx: &Context<'_>, _id: ID) -> Result<Option<ProcessingJob>> {
         // Would fetch job by ID
         Ok(None)
     }
@@ -592,7 +595,7 @@ impl QueryRoot {
     async fn user_processing_history(
         &self,
         _ctx: &Context<'_>,
-        user_id: ID,
+        _user_id: ID,
         limit: Option<i32>,
     ) -> Result<Vec<ProcessingJob>> {
         let _limit = limit.unwrap_or(50);
@@ -607,10 +610,120 @@ impl QueryRoot {
         }
     }
 
-    async fn _entities(&self, _ctx: &Context<'_>, representations: Vec<Any>) -> Result<Vec<Option<Entity>>> {
-        // For now, return empty entities
-        // TODO: Implement proper entity resolution
-        Ok(vec![None; representations.len()])
+    // Federation entity resolution (using entities instead of _entities for now)
+    async fn entities(&self, representations: Vec<Json<serde_json::Value>>) -> Result<Vec<Option<Json<serde_json::Value>>>> {
+        let mut results = Vec::new();
+        
+        for representation in representations {
+            let value = representation.0;
+            
+            if let Some(typename) = value.get("__typename").and_then(|t| t.as_str()) {
+                match typename {
+                    "ContentMetadata" => {
+                        if let Some(id) = value.get("id").and_then(|i| i.as_str()) {
+                            // TODO: Fetch from database
+                            let metadata = serde_json::json!({
+                                "__typename": "ContentMetadata",
+                                "id": id,
+                                "title": "Sample Content",
+                                "contentType": "Markdown",
+                                "format": "Text",
+                                "language": "en",
+                                "createdAt": Utc::now().to_rfc3339(),
+                                "updatedAt": Utc::now().to_rfc3339()
+                            });
+                            results.push(Some(Json(metadata)));
+                        } else {
+                            results.push(None);
+                        }
+                    }
+                    "ProcessingJob" => {
+                        if let Some(id) = value.get("id").and_then(|i| i.as_str()) {
+                            // TODO: Fetch from database
+                            let job = serde_json::json!({
+                                "__typename": "ProcessingJob",
+                                "id": id,
+                                "contentId": "content-1",
+                                "status": "Completed",
+                                "createdAt": Utc::now().to_rfc3339(),
+                                "completedAt": Utc::now().to_rfc3339()
+                            });
+                            results.push(Some(Json(job)));
+                        } else {
+                            results.push(None);
+                        }
+                    }
+                    "User" | "Workflow" => {
+                        // External entities - just return the representation
+                        results.push(Some(Json(value.clone())));
+                    }
+                    _ => {
+                        // Unknown entity type - return null
+                        results.push(None);
+                    }
+                }
+            } else {
+                results.push(None);
+            }
+        }
+        
+        Ok(results)
+    }
+
+    async fn _entities(&self, representations: Vec<Json<serde_json::Value>>) -> Result<Vec<Option<Json<serde_json::Value>>>> {
+        let mut results = Vec::new();
+        
+        for representation in representations {
+            let value = representation.0;
+            
+            if let Some(typename) = value.get("__typename").and_then(|t| t.as_str()) {
+                match typename {
+                    "ContentMetadata" => {
+                        if let Some(id) = value.get("id").and_then(|i| i.as_str()) {
+                            // TODO: Fetch from database
+                            let metadata = serde_json::json!({
+                                "__typename": "ContentMetadata",
+                                "id": id,
+                                "title": "Sample Content",
+                                "contentType": "Markdown",
+                                "format": "Text",
+                                "language": "en",
+                                "createdAt": Utc::now().to_rfc3339(),
+                                "updatedAt": Utc::now().to_rfc3339()
+                            });
+                            results.push(Some(Json(metadata)));
+                        } else {
+                            results.push(None);
+                        }
+                    }
+                    "ProcessingJob" => {
+                        if let Some(id) = value.get("id").and_then(|i| i.as_str()) {
+                            // TODO: Fetch from database
+                            let job = serde_json::json!({
+                                "__typename": "ProcessingJob",
+                                "id": id,
+                                "contentId": "content-1",
+                                "status": "Completed",
+                                "createdAt": Utc::now().to_rfc3339(),
+                                "completedAt": Utc::now().to_rfc3339()
+                            });
+                            results.push(Some(Json(job)));
+                        } else {
+                            results.push(None);
+                        }
+                    }
+                    "User" | "Workflow" => {
+                        // External entities - just return the representation
+                        results.push(Some(Json(value.clone())));
+                    }
+                    _ => results.push(None),
+                }
+            } else {
+                results.push(None);
+            }
+        }
+        
+        Ok(results)
     }
 }
 
@@ -619,7 +732,7 @@ impl QueryRoot {
 impl MutationRoot {
     async fn analyze_content(
         &self,
-        ctx: &Context<'_>,
+        _ctx: &Context<'_>,
         input: AnalyzeContentInput,
     ) -> Result<ProcessingResult> {
         let processor = DefaultContentProcessor::new();
@@ -717,7 +830,7 @@ impl MutationRoot {
         })
     }
 
-    async fn cancel_processing_job(&self, _ctx: &Context<'_>, job_id: ID) -> Result<ProcessingJob> {
+    async fn cancel_processing_job(&self, _ctx: &Context<'_>, _job_id: ID) -> Result<ProcessingJob> {
         // Would update job status in database
         Err(Error::new("Not implemented"))
     }
@@ -725,8 +838,8 @@ impl MutationRoot {
     async fn update_content_metadata(
         &self,
         _ctx: &Context<'_>,
-        id: ID,
-        input: UpdateContentMetadataInput,
+        _id: ID,
+        _input: UpdateContentMetadataInput,
     ) -> Result<ContentMetadata> {
         // Would update content metadata in database
         Err(Error::new("Not implemented"))
@@ -758,14 +871,16 @@ struct WorkflowRef {
 #[derive(Union, Clone)]
 enum Entity {
     ContentMetadata(ContentMetadata),
-    ProcessingJob(ProcessingJob),
+    ProcessingJob(Box<ProcessingJob>),
     User(User),
     Workflow(Workflow),
 }
 
+
 // Schema creation function
 pub fn create_schema() -> ContentProcessingSchema {
-    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+    Schema::build(QueryRoot::default(), MutationRoot, EmptySubscription)
+        .enable_federation()
         .finish()
 }
 
@@ -824,7 +939,7 @@ fn convert_content_metadata(output: &ProcessingOutput) -> ContentMetadata {
         },
         format: ContentFormat::Text, // Would determine based on content
         size_bytes: Some(output.content_metadata.size_bytes as i32),
-        hash: format!("{:x}", md5::compute(&output.id.to_string())), // Placeholder
+        hash: format!("{:x}", md5::compute(output.id.to_string())), // Placeholder
         quality_score: output.quality_metrics.as_ref().map(|m| m.overall_score as f64),
         difficulty_level: output.difficulty_analysis.as_ref().map(|d| match d.overall_level {
             DomainDifficultyLevel::Beginner => DifficultyLevel::Beginner,

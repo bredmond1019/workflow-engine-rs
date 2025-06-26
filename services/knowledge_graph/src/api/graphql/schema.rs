@@ -181,7 +181,7 @@ impl Service {
 }
 
 // Object implementations
-#[Object]
+#[Object(extends)]
 impl Concept {
     async fn id(&self) -> &ID {
         &self.id
@@ -238,7 +238,7 @@ impl Concept {
     }
 }
 
-#[Object]
+#[Object(extends)]
 impl LearningResource {
     async fn id(&self) -> &ID {
         &self.id
@@ -370,7 +370,7 @@ impl ConceptRelationship {
     }
 }
 
-#[Object]
+#[Object(extends)]
 impl User {
     async fn id(&self) -> &ID {
         &self.id
@@ -387,7 +387,7 @@ impl User {
     }
 }
 
-#[Object]
+#[Object(extends)]
 impl UserProgress {
     async fn user_id(&self) -> &ID {
         &self.user_id
@@ -529,23 +529,91 @@ impl QueryRoot {
 
     async fn _entities(&self, ctx: &Context<'_>, representations: Vec<serde_json::Value>) -> Result<Vec<Option<Entity>>> {
         let mut entities = Vec::new();
-        let _service = ctx.data::<Arc<KnowledgeGraphService>>()?;
+        let _service = ctx.data::<Arc<KnowledgeGraphService>>().ok();
 
         for representation in representations {
-            let entity = if let Ok(concept_ref) = serde_json::from_value::<ConceptRef>(representation.clone()) {
-                // Fetch concept by ID
-                None // Would fetch actual concept
-            } else if let Ok(resource_ref) = serde_json::from_value::<LearningResourceRef>(representation.clone()) {
-                // Fetch resource by ID
-                None
-            } else if let Ok(user_ref) = serde_json::from_value::<UserRef>(representation.clone()) {
-                // Return user reference
-                Some(Entity::User(User { id: user_ref.id }))
-            } else if let Ok(_progress_ref) = serde_json::from_value::<UserProgressRef>(representation.clone()) {
-                // Fetch user progress
-                None
-            } else {
-                None
+            // Extract the __typename field to determine entity type
+            let typename = representation
+                .get("__typename")
+                .and_then(|t| t.as_str())
+                .unwrap_or("");
+
+            let entity = match typename {
+                "Concept" => {
+                    if let Ok(concept_ref) = serde_json::from_value::<ConceptRef>(representation.clone()) {
+                        // Fetch concept by ID - in a real implementation, this would query Dgraph
+                        // For now, return a placeholder concept entity
+                        Some(Entity::Concept(Concept {
+                            id: concept_ref.id.clone(),
+                            name: format!("Concept {}", concept_ref.id.to_string()),
+                            description: "A sample concept for federation demonstration".to_string(),
+                            category: "Technology".to_string(),
+                            difficulty: DifficultyLevel::Intermediate,
+                            tags: vec!["sample".to_string(), "federation".to_string()],
+                            quality: 0.8,
+                            created_at: chrono::Utc::now(),
+                            updated_at: chrono::Utc::now(),
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "LearningResource" => {
+                    if let Ok(resource_ref) = serde_json::from_value::<LearningResourceRef>(representation.clone()) {
+                        // Fetch learning resource by ID
+                        Some(Entity::LearningResource(LearningResource {
+                            id: resource_ref.id.clone(),
+                            concept_id: ID("concept_1".to_string()),
+                            title: format!("Learning Resource {}", resource_ref.id.to_string()),
+                            description: Some("A sample learning resource for federation".to_string()),
+                            url: "https://example.com/resource".to_string(),
+                            resource_type: ResourceType::Article,
+                            difficulty: DifficultyLevel::Intermediate,
+                            estimated_time: Some(30),
+                            rating: Some(4.5),
+                            metadata: None,
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "User" => {
+                    if let Ok(user_ref) = serde_json::from_value::<UserRef>(representation.clone()) {
+                        // Return user reference for cross-service resolution
+                        Some(Entity::User(User { id: user_ref.id }))
+                    } else {
+                        None
+                    }
+                },
+                "UserProgress" => {
+                    if let Ok(progress_ref) = serde_json::from_value::<UserProgressRef>(representation.clone()) {
+                        // Fetch user progress by user ID
+                        Some(Entity::UserProgress(UserProgress {
+                            user_id: progress_ref.user_id.clone(),
+                            completed_concepts: vec![],
+                            current_learning_paths: vec![],
+                            total_concepts_completed: 0,
+                            average_difficulty: 0.6,
+                            last_activity_at: chrono::Utc::now(),
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "Workflow" => {
+                    if let Ok(workflow_ref) = serde_json::from_value::<WorkflowRef>(representation.clone()) {
+                        // Return a stub workflow entity for federation
+                        Some(Entity::Workflow(Workflow {
+                            id: workflow_ref.id.clone(),
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                _ => {
+                    // For unknown types, return None to indicate this service doesn't handle this type
+                    None
+                }
             };
             
             entities.push(entity);
@@ -602,22 +670,37 @@ impl MutationRoot {
 // Federation entity references
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ConceptRef {
+    #[serde(rename = "__typename")]
+    typename: String,
     id: ID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct LearningResourceRef {
+    #[serde(rename = "__typename")]
+    typename: String,
     id: ID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct UserRef {
+    #[serde(rename = "__typename")]
+    typename: String,
     id: ID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct UserProgressRef {
+    #[serde(rename = "__typename")]
+    typename: String,
     user_id: ID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct WorkflowRef {
+    #[serde(rename = "__typename")]
+    typename: String,
+    id: ID,
 }
 
 // Entity union for federation
@@ -627,12 +710,34 @@ enum Entity {
     LearningResource(LearningResource),
     User(User),
     UserProgress(UserProgress),
+    Workflow(Workflow),
+}
+
+// Stub type for external entities that this service doesn't own
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    pub id: ID,
+}
+
+#[Object(extends)]
+impl Workflow {
+    async fn id(&self) -> &ID {
+        &self.id
+    }
 }
 
 // Schema creation function
 pub fn create_schema(service: Arc<KnowledgeGraphService>) -> KnowledgeGraphSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(service)
+        .enable_federation()
+        .finish()
+}
+
+// Test schema creation function that doesn't require a real service
+pub fn create_test_schema() -> KnowledgeGraphSchema {
+    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+        .enable_federation()
         .finish()
 }
 

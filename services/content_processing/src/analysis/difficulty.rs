@@ -385,9 +385,6 @@ impl Default for DifficultyAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ProcessingPriority;
-    use chrono::Utc;
-    use std::collections::HashMap;
     use uuid::Uuid;
 
     #[tokio::test]

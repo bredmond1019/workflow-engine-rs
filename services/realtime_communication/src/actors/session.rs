@@ -77,7 +77,7 @@ struct HeartbeatManager {
 }
 
 /// Session metrics
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct SessionMetrics {
     messages_sent: u64,
     messages_received: u64,
@@ -86,6 +86,20 @@ struct SessionMetrics {
     bytes_received: u64,
     connection_duration: Duration,
     last_activity: Instant,
+}
+
+impl Default for SessionMetrics {
+    fn default() -> Self {
+        Self {
+            messages_sent: 0,
+            messages_received: 0,
+            messages_buffered: 0,
+            bytes_sent: 0,
+            bytes_received: 0,
+            connection_duration: Duration::default(),
+            last_activity: Instant::now(),
+        }
+    }
 }
 
 /// Session configuration
@@ -250,21 +264,35 @@ impl SessionActor {
     fn flush_message_buffer(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         let mut to_remove = Vec::new();
         
-        for (index, buffered_message) in self.message_buffer.iter_mut().enumerate() {
+        // Process messages in a way that avoids borrowing conflicts
+        let mut updated_messages = Vec::new();
+        let messages_to_process: Vec<_> = self.message_buffer.iter().enumerate().map(|(i, msg)| (i, msg.clone())).collect();
+        
+        for (index, buffered_message) in messages_to_process {
             match self.send_message_internal(ctx, buffered_message.message.clone()) {
                 Ok(()) => {
                     to_remove.push(index);
                 }
                 Err(e) => {
-                    buffered_message.retry_count += 1;
+                    let mut updated_message = buffered_message.clone();
+                    updated_message.retry_count += 1;
                     warn!("Failed to send buffered message (attempt {}): {}", 
-                          buffered_message.retry_count, e);
+                          updated_message.retry_count, e);
                     
-                    if buffered_message.retry_count >= buffered_message.max_retries {
+                    if updated_message.retry_count >= updated_message.max_retries {
                         error!("Max retries reached for buffered message, dropping");
                         to_remove.push(index);
+                    } else {
+                        updated_messages.push((index, updated_message));
                     }
                 }
+            }
+        }
+        
+        // Update retry counts for messages that weren't removed
+        for (index, updated_message) in updated_messages {
+            if let Some(msg) = self.message_buffer.get_mut(index) {
+                *msg = updated_message;
             }
         }
         
@@ -494,7 +522,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SessionActor {
             Ok(ws::Message::Close(reason)) => {
                 info!("WebSocket close received for connection {}: {:?}", 
                       self.connection_id, reason);
-                self.disconnect(ctx, reason.map(|r| r.description().unwrap_or("Unknown").to_string()));
+                self.disconnect(ctx, reason.map(|r| r.description.unwrap_or("Unknown".to_string())));
             }
             Err(e) => {
                 error!("WebSocket protocol error for connection {}: {}", 
@@ -517,7 +545,7 @@ impl Handler<SessionMessage> for SessionActor {
         // If connected, send immediately; otherwise buffer
         match self.state {
             SessionState::Connected | SessionState::Authenticated(_) => {
-                if let Err(e) = self.send_message_internal(ctx, msg.message) {
+                if let Err(e) = self.send_message_internal(ctx, msg.message.clone()) {
                     error!("Failed to send message to connection {}: {}", 
                            self.connection_id, e);
                     // Buffer the message for retry

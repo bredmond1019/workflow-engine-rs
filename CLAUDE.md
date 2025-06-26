@@ -1,21 +1,30 @@
-# CLAUDE.md - Parent Guide
+# CLAUDE.md
 
-This file provides high-level guidance to Claude Code (claude.ai/code) when working with code in this repository. For detailed component-specific guidance, refer to the individual CLAUDE.md files in each crate and service directory.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-This is a production-ready AI workflow orchestration system built in Rust with Python MCP (Model Context Protocol) servers. The system provides a foundation for building AI-powered applications with external service integrations.
+This is a production-ready AI workflow orchestration system built in Rust with Python MCP (Model Context Protocol) servers and **GraphQL Federation support**. The system provides a foundation for building AI-powered applications with external service integrations.
+
+**Current Branch**: `graphql-federation` - This branch contains the GraphQL Federation implementation that unifies multiple services under a single GraphQL gateway.
+
+### Recent Major Changes
+- Added GraphQL Gateway (`workflow-engine-gateway`) with Apollo Federation v2 support
+- Enhanced Workflow API with federation compliance
+- Implemented entity resolution and query planning
+- Added GraphQL playground interfaces
 
 ## Component-Specific Documentation
 
 Each crate and service has its own CLAUDE.md file with detailed guidance. Navigate to these files for component-specific information:
 
 ### Core Crates
-- **[workflow-engine-api](crates/workflow-engine-api/CLAUDE.md)**: Main HTTP API server with authentication, workflow endpoints, and service bootstrap
+- **[workflow-engine-api](crates/workflow-engine-api/CLAUDE.md)**: Main HTTP API server with authentication, workflow endpoints, service bootstrap, and **GraphQL federation subgraph support**
 - **[workflow-engine-core](crates/workflow-engine-core/CLAUDE.md)**: Core workflow engine logic, AI integration, error handling, and shared types
 - **[workflow-engine-mcp](crates/workflow-engine-mcp/CLAUDE.md)**: Model Context Protocol implementation with multi-transport support
 - **[workflow-engine-nodes](crates/workflow-engine-nodes/CLAUDE.md)**: Built-in workflow nodes for AI agents, external MCP, and templates
 - **[workflow-engine-app](crates/workflow-engine-app/CLAUDE.md)**: Main binary entry point that integrates all components
+- **[workflow-engine-gateway](crates/workflow-engine-gateway/)**: **NEW** - GraphQL Federation gateway with schema composition and query planning
 
 ### Microservices
 - **[content_processing](services/content_processing/CLAUDE.md)**: Document analysis service with WASM plugin support
@@ -38,8 +47,17 @@ Each crate and service has its own CLAUDE.md file with detailed guidance. Naviga
 ### API Development
 - **REST Endpoints**: See `workflow-engine-api` CLAUDE.md (API endpoints)
 - **WebSocket APIs**: See `realtime_communication` CLAUDE.md (WebSocket protocol)
-- **GraphQL Support**: See `knowledge_graph` CLAUDE.md (GraphQL parsing)
+- **GraphQL Federation**: See `workflow-engine-gateway` for gateway implementation and `workflow-engine-api` for subgraph support
+- **GraphQL Support**: See `knowledge_graph` CLAUDE.md (GraphQL parsing) and services for individual GraphQL APIs
 - **OpenAPI/Swagger**: See `workflow-engine-api` CLAUDE.md (OpenAPI section)
+
+### GraphQL Federation Features
+- **Schema Composition**: `crates/workflow-engine-gateway/src/federation/schema_registry.rs` 
+- **Query Planning**: `crates/workflow-engine-gateway/src/federation/query_planner.rs`
+- **Entity Resolution**: `crates/workflow-engine-gateway/src/federation/entities.rs`
+- **Federation Directives**: `crates/workflow-engine-gateway/src/federation/directives.rs`
+- **Subgraph Client**: `crates/workflow-engine-gateway/src/subgraph.rs`
+- **Federation Support in API**: `crates/workflow-engine-api/src/api/graphql/` (schema.rs, handlers.rs)
 
 ### Workflow & Node Development
 - **Core Workflow Engine**: See `workflow-engine-core` CLAUDE.md (workflow module)
@@ -92,8 +110,11 @@ Each crate and service has its own CLAUDE.md file with detailed guidance. Naviga
 cargo build
 cargo build --release
 
-# Run the main server
+# Run the main server (subgraph)
 cargo run --bin workflow-engine
+
+# Run the GraphQL Gateway (NEW)
+cargo run --bin graphql-gateway
 
 # Run with Docker Compose (recommended for full stack)
 docker-compose up -d
@@ -118,6 +139,11 @@ cargo test --test mcp_communication_test -- --ignored
 cargo test --test workflow_external_tools_test -- --ignored
 cargo test --test load_test -- --ignored --nocapture
 cargo test --test chaos_test -- --ignored --nocapture
+
+# Test GraphQL Federation (NEW)
+./validate_federation.sh
+cargo run --example federated_query
+cargo run --example test_federation
 
 # Run specific test categories
 cargo test mcp_client
@@ -175,7 +201,9 @@ cd services/knowledge_graph && cargo run
 cd services/realtime_communication && cargo run
 
 # Access services
+# GraphQL Gateway: http://localhost:4000/graphql (NEW - Federation endpoint)
 # Main API: http://localhost:8080
+# GraphQL Subgraph API: http://localhost:8080/api/v1/graphql (NEW)
 # Swagger UI: http://localhost:8080/swagger-ui/
 # Grafana: http://localhost:3000 (admin/admin)
 # Prometheus: http://localhost:9090
@@ -204,7 +232,11 @@ This section provides a high-level overview. For detailed component information,
    - Details in: [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
    - Key features: AI agents, external MCP clients, templates
 
-5. **Microservices** - Specialized processing services
+5. **GraphQL Gateway** - Federation orchestration layer
+   - Details in: [workflow-engine-gateway README](crates/workflow-engine-gateway/README.md)
+   - Key features: Schema composition, query planning, entity resolution, multi-subgraph coordination
+
+6. **Microservices** - Specialized processing services
    - **Content Processing**: Details in [content_processing CLAUDE.md](services/content_processing/CLAUDE.md)
    - **Knowledge Graph**: Details in [knowledge_graph CLAUDE.md](services/knowledge_graph/CLAUDE.md)
    - **Realtime Communication**: Details in [realtime_communication CLAUDE.md](services/realtime_communication/CLAUDE.md)
@@ -218,11 +250,12 @@ MCP servers are implemented in Python (`mcp-servers/`):
 
 ### Key Design Patterns
 
-1. **Service Bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/`
-2. **Repository Pattern**: Database access through repositories
-3. **Middleware Architecture**: Auth, rate limiting, correlation tracking
-4. **Protocol Abstraction**: Multi-transport support for MCP
-5. **Type-Safe Node System**: Compile-time checked workflow nodes
+1. **GraphQL Federation**: Apollo Federation v2 with schema composition and entity resolution
+2. **Service Bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/`
+3. **Repository Pattern**: Database access through repositories
+4. **Middleware Architecture**: Auth, rate limiting, correlation tracking
+5. **Protocol Abstraction**: Multi-transport support for MCP
+6. **Type-Safe Node System**: Compile-time checked workflow nodes
 
 ### Environment Configuration
 
@@ -273,8 +306,9 @@ For detailed step-by-step instructions, see the relevant component CLAUDE.md fil
    - Main app: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#database-interactions)
    - Services: See individual service CLAUDE.md files
 5. **Monitoring metrics**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#monitoring-module)
-6. **Adding microservice**: Follow patterns in existing service CLAUDE.md files
-7. **Testing external integrations**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#testing-approach)
+6. **Adding GraphQL Federation subgraph**: Follow patterns in `workflow-engine-api` GraphQL implementation
+7. **Adding microservice**: Follow patterns in existing service CLAUDE.md files
+8. **Testing external integrations**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#testing-approach)
 
 ### Debugging Tips
 
@@ -288,28 +322,114 @@ For detailed step-by-step instructions, see the relevant component CLAUDE.md fil
 
 ### Key Architecture Patterns
 
-1. **Multi-transport MCP**: HTTP, WebSocket, and stdio support in `crates/workflow-engine-mcp/src/transport.rs`
-2. **Connection pooling**: MCP client connections managed in `crates/workflow-engine-mcp/src/connection_pool.rs`
-3. **Service bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/service.rs`
-4. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
-5. **Microservice isolation**: Each service in `services/` has independent database and configuration
+1. **GraphQL Federation**: Schema composition and query planning in `crates/workflow-engine-gateway/src/federation/`
+2. **Multi-transport MCP**: HTTP, WebSocket, and stdio support in `crates/workflow-engine-mcp/src/transport.rs`
+3. **Connection pooling**: MCP client connections managed in `crates/workflow-engine-mcp/src/connection_pool.rs`
+4. **Service bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/service.rs`
+5. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
+6. **Microservice isolation**: Each service in `services/` has independent database and configuration
+7. **Federated entities**: Entity resolution across subgraphs with `@key` directives
+
+## GraphQL Federation Development Guide
+
+### Working with the Federation
+
+#### Starting the Federation Stack
+```bash
+# Terminal 1: Start the main API (subgraph)
+cargo run --bin workflow-engine
+
+# Terminal 2: Start the GraphQL Gateway
+cargo run --bin graphql-gateway
+
+# Access GraphQL Playground
+# Gateway: http://localhost:4000/graphql
+# Subgraph: http://localhost:8080/api/v1/graphql
+```
+
+#### Example Federation Queries
+```graphql
+# Simple workflow query
+{
+  workflow(id: "123") {
+    id
+    name
+    status
+  }
+}
+
+# Federation service query
+{
+  _service {
+    sdl
+  }
+}
+
+# Entity resolution
+query ResolveEntities($representations: [_Any!]!) {
+  _entities(representations: $representations) {
+    ... on Workflow {
+      id
+      name
+      status
+    }
+  }
+}
+```
+
+#### Adding New Subgraphs
+1. Implement federation directives (`@key`, `@extends`)
+2. Add `_service` and `_entities` resolvers
+3. Register subgraph in gateway configuration
+4. Update schema composition
+
+#### Federation Testing
+```bash
+# Validate federation setup
+./validate_federation.sh
+
+# Run federation examples
+cargo run --example federated_query
+cargo run --example test_federation
+
+# Test gateway independently
+cd crates/workflow-engine-gateway && cargo test
+```
+
+### Code Quality Requirements
+
+**Rust Version**: 1.75.0+ (MSRV)
+
+**Code Style**:
+```bash
+# Format code
+cargo fmt
+
+# Run linter (must pass)
+cargo clippy -- -D warnings
+
+# Security audit
+cargo audit
+```
+
+**Testing Requirements**:
+- Unit tests for all new functionality
+- Integration tests for API endpoints
+- Federation tests for GraphQL gateway
+- External service integration tests with `--ignored` flag
+
+**Commit Convention**:
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring
+- `test:` - Test additions/changes
+- `chore:` - Maintenance tasks
 
 ## How to Use This Documentation
 
-### When to Use This Parent Guide
-- **Initial project understanding**: Start here to understand the overall architecture
-- **Finding features**: Use the "Where to Search for Features" section to locate functionality
-- **Cross-component work**: When working across multiple crates/services
-- **General commands**: Reference the essential commands that apply system-wide
-
-### When to Use Component-Specific CLAUDE.md Files
-- **Deep diving into a crate/service**: Go directly to the component's CLAUDE.md
-- **Component-specific tasks**: Each CLAUDE.md has tailored development tasks
-- **Detailed architecture**: Component files have in-depth architectural details
-- **Testing strategies**: Each component has specific testing approaches
-
 ### Navigation Tips
-1. Start with this parent guide for orientation
+1. Start with this guide for GraphQL Federation and overall architecture
 2. Use "Where to Search for Features" to find the right component
-3. Navigate to the specific component's CLAUDE.md for detailed work
-4. Return to this guide for cross-component integration tasks
+3. Navigate to component-specific CLAUDE.md files for detailed work
+4. Check recent commits and federation documentation for latest changes

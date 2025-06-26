@@ -60,6 +60,7 @@ struct RouterMetrics {
     broadcast_messages: u64,
     active_sessions: usize,
     unique_users: usize,
+    total_presence_updates: u64,
 }
 
 impl RouterActor {
@@ -567,10 +568,10 @@ impl Handler<GetConnections> for RouterActor {
 
 /// Get system stats handler
 impl Handler<GetSystemStats> for RouterActor {
-    type Result = SystemStats;
+    type Result = ();
 
     fn handle(&mut self, _msg: GetSystemStats, _ctx: &mut Self::Context) -> Self::Result {
-        SystemStats {
+        let stats = SystemStats {
             total_connections: self.sessions.len(),
             active_connections: self.sessions.len(),
             unique_users: self.user_connections.len(),
@@ -579,7 +580,31 @@ impl Handler<GetSystemStats> for RouterActor {
             messages_failed: self.metrics.messages_failed,
             topics_active: self.topic_subscriptions.len(),
             uptime_seconds: 0, // Would need to track start time
+        };
+        
+        // Log the stats instead of returning them
+        debug!("System stats: connections={}, users={}, messages_routed={}", 
+               stats.total_connections, stats.unique_users, stats.messages_routed);
+    }
+}
+
+/// UpdatePresence message handler
+impl Handler<UpdatePresence> for RouterActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: UpdatePresence, _ctx: &mut Self::Context) -> Self::Result {
+        // Update connection metadata with new presence status
+        if let Some(info) = self.connection_metadata.get_mut(&msg.connection_id) {
+            info.presence_status = msg.status.clone();
+            info.last_activity = Utc::now();
         }
+
+        // Notify other users about presence change (if they are subscribed to this user's presence)
+        // This would typically involve sending presence updates to interested connections
+        debug!("Updated presence for user {} (connection {}): {:?}", 
+               msg.user_id, msg.connection_id, msg.status);
+        
+        self.metrics.total_presence_updates += 1;
     }
 }
 
@@ -606,7 +631,7 @@ mod tests {
         
         let connection_id = Uuid::new_v4();
         let user_id = Some("test_user".to_string());
-        let metadata = HashMap::new();
+        let metadata: HashMap<String, String> = HashMap::new();
         
         // Create a mock session address (this would normally be a real session actor)
         // For testing, we'll skip the actual session_addr since it requires complex setup

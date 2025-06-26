@@ -282,7 +282,17 @@ impl GraphTraversal {
         for &concept_id in &all_concepts {
             if !visited.contains(&concept_id) {
                 let mut component = Vec::new();
-                let config = TraversalConfig::default();
+                // Use config that follows both directions for connected components
+                let config = TraversalConfig {
+                    follow_relationships: vec![
+                        RelationshipType::Related,
+                        RelationshipType::Prerequisite,
+                        RelationshipType::Progression,
+                        RelationshipType::Similarity,
+                        RelationshipType::Inverse, // Important: include inverse to follow both directions
+                    ],
+                    ..Default::default()
+                };
                 self.dfs_component(concept_id, &config, &mut visited, &mut component)?;
                 
                 if !component.is_empty() {

@@ -180,9 +180,6 @@ impl Default for QualityWeights {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ProcessingPriority;
-    use chrono::Utc;
-    use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_comprehensive_analyzer_creation() {
@@ -201,7 +198,7 @@ mod tests {
     #[tokio::test]
     async fn test_basic_text_analysis() {
         let analyzer = ComprehensiveAnalyzer::new();
-        let context = ProcessingContext::new(Uuid::new_v4());
+        let _context = ProcessingContext::new(Uuid::new_v4());
 
         let text = "This is a simple test document about machine learning algorithms.";
         

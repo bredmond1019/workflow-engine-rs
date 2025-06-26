@@ -405,15 +405,24 @@ mod tests {
 
     #[test]
     fn test_mcp_config_from_env_enabled() {
-        with_env_vars(vec![
-            ("MCP_ENABLED", "true"),
-            ("MCP_CLIENT_NAME", "test-client"),
-            ("MCP_CLIENT_VERSION", "2.0.0"),
+        without_env_vars(vec![
+            "MCP_ENABLED",
+            "MCP_CLIENT_NAME",
+            "MCP_CLIENT_VERSION",
+            "MCP_CUSTOMER_SUPPORT_ENABLED",
+            "MCP_EXTERNAL_SERVER_1_NAME",
+            "MCP_EXTERNAL_SERVER_1_ENABLED",
         ], || {
-            let config = McpConfig::from_env().unwrap();
-            assert!(config.enabled);
-            assert_eq!(config.client_name, "test-client");
-            assert_eq!(config.client_version, "2.0.0");
+            with_env_vars(vec![
+                ("MCP_ENABLED", "true"),
+                ("MCP_CLIENT_NAME", "test-client"),
+                ("MCP_CLIENT_VERSION", "2.0.0"),
+            ], || {
+                let config = McpConfig::from_env().unwrap();
+                assert!(config.enabled);
+                assert_eq!(config.client_name, "test-client");
+                assert_eq!(config.client_version, "2.0.0");
+            });
         });
     }
 

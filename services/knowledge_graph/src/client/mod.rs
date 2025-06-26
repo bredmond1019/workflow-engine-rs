@@ -11,7 +11,7 @@ pub use connection::{ConnectionConfig, ConnectionStats, DgraphConnection};
 pub use dgraph::{DgraphResponseParser, MutationResult, MutationOperationType, ConflictInfo};
 pub use pool::{ConnectionPool, PoolConfig, PoolStats, PooledConnection};
 
-use crate::error::{Result, ErrorContext, RetryExecutor, RetryPolicy, CircuitBreaker, ResultExt};
+use crate::error::{Result, ErrorContext, RetryExecutor, RetryPolicy, ResultExt};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;

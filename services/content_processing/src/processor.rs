@@ -37,7 +37,7 @@ impl ContentProcessorTrait for DefaultContentProcessor {
     async fn process(
         &self,
         content: &[u8],
-        content_type: ContentType,
+        _content_type: ContentType,
         options: ProcessingOptions,
         context: &ProcessingContext,
     ) -> crate::Result<ProcessingResult> {
@@ -60,63 +60,55 @@ impl ContentProcessorTrait for DefaultContentProcessor {
         
         // Language detection
         if options.detect_language {
-            match self.analyzer.detect_language(text).await {
-                Ok(lang) => language = Some(lang),
-                Err(_) => {}, // Continue processing even if language detection fails
+            if let Ok(lang) = self.analyzer.detect_language(text).await {
+                language = Some(lang);
             }
         }
         
         // Concept extraction
         if options.extract_concepts {
-            match self.analyzer.extract_concepts(text, context).await {
-                Ok(extracted_concepts) => concepts = extracted_concepts,
-                Err(_) => {}, // Continue processing
+            if let Ok(extracted_concepts) = self.analyzer.extract_concepts(text, context).await {
+                concepts = extracted_concepts;
             }
         }
         
         // Quality assessment
         if options.assess_quality {
-            match self.analyzer.assess_quality(text, context).await {
-                Ok(quality) => quality_metrics = Some(quality),
-                Err(_) => {},
+            if let Ok(quality) = self.analyzer.assess_quality(text, context).await {
+                quality_metrics = Some(quality);
             }
         }
         
         // Difficulty analysis
         if options.analyze_difficulty {
-            match self.analyzer.analyze_difficulty(text, context).await {
-                Ok(difficulty) => difficulty_analysis = Some(difficulty),
-                Err(_) => {},
+            if let Ok(difficulty) = self.analyzer.analyze_difficulty(text, context).await {
+                difficulty_analysis = Some(difficulty);
             }
         }
         
         // Learning objectives extraction
         if options.extract_objectives {
-            match self.analyzer.extract_objectives(text, context).await {
-                Ok(objectives) => learning_objectives = objectives,
-                Err(_) => {},
+            if let Ok(objectives) = self.analyzer.extract_objectives(text, context).await {
+                learning_objectives = objectives;
             }
         }
         
         // Keyword extraction
         if options.extract_keywords {
-            match self.analyzer.extract_keywords(text, Some(15)).await {
-                Ok(extracted_keywords) => keywords = extracted_keywords,
-                Err(_) => {},
+            if let Ok(extracted_keywords) = self.analyzer.extract_keywords(text, Some(15)).await {
+                keywords = extracted_keywords;
             }
         }
         
         // Entity extraction (always enabled for now - can be made conditional later)
-        match self.analyzer.extract_entities(text, context).await {
-            Ok(extracted_entities) => entities = extracted_entities,
-            Err(_) => {},
+        if let Ok(extracted_entities) = self.analyzer.extract_entities(text, context).await {
+            entities = extracted_entities;
         }
         
         // Summary generation
         if options.generate_summary {
-            match self.analyzer.generate_summary(text, Some(500), context).await {
-                Ok(generated_summary) => summary = Some(generated_summary),
-                Err(_) => {},
+            if let Ok(generated_summary) = self.analyzer.generate_summary(text, Some(500), context).await {
+                summary = Some(generated_summary);
             }
         }
         
@@ -196,7 +188,6 @@ impl ContentProcessorTrait for DefaultContentProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::*;
     use std::collections::HashMap;
     
     #[tokio::test]

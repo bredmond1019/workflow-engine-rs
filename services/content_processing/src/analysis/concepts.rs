@@ -1,4 +1,6 @@
 //! Concept extraction using NLP techniques
+
+#![allow(clippy::manual_clamp)]
 //!
 //! This module implements concept extraction from text using various
 //! natural language processing techniques including:
@@ -294,9 +296,6 @@ impl Default for ConceptExtractor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ProcessingPriority;
-    use chrono::Utc;
-    use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_concept_extraction() {

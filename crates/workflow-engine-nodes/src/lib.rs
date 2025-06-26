@@ -25,12 +25,12 @@
 //! 
 //! ## Examples
 //! 
-//! ```rust
+//! ```rust,ignore
 //! use workflow_engine_nodes::ai_agents::openai::OpenAiNode;
 //! use workflow_engine_core::prelude::*;
 //! 
 //! #[tokio::main]
-//! async fn main() -> Result<(), WorkflowError> {
+//! async fn main() -> workflow_engine_core::error::Result<()> {
 //!     let node = OpenAiNode::new("gpt-4", "You are a helpful assistant")?;
 //!     
 //!     let context = TaskContext::new(

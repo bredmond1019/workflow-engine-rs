@@ -20,9 +20,6 @@ use crate::{
 
 pub type RealtimeCommunicationSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
-// Scalar types
-scalar!(serde_json::Value, "JSON", "Arbitrary JSON data");
-
 // Query root
 pub struct QueryRoot;
 
@@ -257,16 +254,97 @@ impl QueryRoot {
     }
 
     // Federation service
-    async fn _service(&self) -> Service {
-        Service {
+    #[graphql(name = "_service")]
+    async fn _service(&self) -> _Service {
+        _Service {
             sdl: include_str!("schema.graphql").to_string(),
         }
     }
 
     // Entity resolver for federation
-    async fn _entities(&self, _ctx: &Context<'_>, representations: Vec<Any>) -> Result<Vec<Option<Entity>>> {
-        // TODO: Implement entity resolution
-        Ok(vec![None; representations.len()])
+    #[graphql(name = "_entities")]
+    async fn _entities(&self, _ctx: &Context<'_>, representations: Vec<serde_json::Value>) -> Result<Vec<Option<Entity>>> {
+        println!("Entity resolution called with representations: {:?}", representations);
+        let mut entities = Vec::new();
+        
+        for representation in representations {
+            // First, check if this representation has a __typename field
+            let typename = representation.get("__typename")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            
+            println!("Processing entity with typename: '{}', representation: {:?}", typename, representation);
+            
+            let entity = match typename {
+                "Message" => {
+                    if let Ok(message_ref) = serde_json::from_value::<MessageRef>(representation.clone()) {
+                        // Fetch message by ID - in a real implementation, this would query the database
+                        // For now, return a placeholder message entity
+                        Some(Entity::Message(Message {
+                            id: message_ref.id.clone(),
+                            conversation_id: ID("conv_1".to_string()),
+                            sender_id: ID("user_1".to_string()),
+                            content: format!("Sample message {}", message_ref.id.to_string()),
+                            timestamp: chrono::Utc::now().to_rfc3339(),
+                            status: MessageStatus::Delivered,
+                            metadata: None,
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "Conversation" => {
+                    if let Ok(conversation_ref) = serde_json::from_value::<ConversationRef>(representation.clone()) {
+                        // Fetch conversation by ID
+                        Some(Entity::Conversation(Conversation {
+                            id: conversation_ref.id.clone(),
+                            name: Some(format!("Sample Conversation {}", conversation_ref.id.to_string())),
+                            conversation_type: ConversationType::Direct,
+                            participant_ids: vec![ID("user_1".to_string()), ID("user_2".to_string())],
+                            created_at: chrono::Utc::now().to_rfc3339(),
+                            last_activity_at: chrono::Utc::now().to_rfc3339(),
+                            metadata: None,
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "User" => {
+                    if let Ok(user_ref) = serde_json::from_value::<UserRef>(representation.clone()) {
+                        // Return user reference for cross-service resolution
+                        Some(Entity::User(User {
+                            id: user_ref.id,
+                            status: Some(UserStatus::Online),
+                            last_seen_at: Some(chrono::Utc::now().to_rfc3339()),
+                            unread_message_count: 0,
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                "Session" => {
+                    if let Ok(session_ref) = serde_json::from_value::<SessionRef>(representation.clone()) {
+                        // Fetch session by ID
+                        Some(Entity::Session(Session {
+                            id: session_ref.id.clone(),
+                            user_id: ID("user_1".to_string()),
+                            device_id: "device_1".to_string(),
+                            connection_type: ConnectionType::WebSocket,
+                            connected_at: chrono::Utc::now().to_rfc3339(),
+                            last_ping_at: chrono::Utc::now().to_rfc3339(),
+                            metadata: None,
+                        }))
+                    } else {
+                        None
+                    }
+                },
+                _ => None,
+            };
+            
+            entities.push(entity);
+        }
+        
+        Ok(entities)
     }
 }
 
@@ -409,7 +487,7 @@ impl SubscriptionRoot {
 
 // Federation service struct
 #[derive(SimpleObject)]
-struct Service {
+struct _Service {
     sdl: String,
 }
 
@@ -442,6 +520,8 @@ enum Entity {
     User(User),
     Session(Session),
 }
+
+// Entity resolution is now handled by the ComplexObject implementations above
 
 // Schema creation function
 pub fn create_schema() -> RealtimeCommunicationSchema {

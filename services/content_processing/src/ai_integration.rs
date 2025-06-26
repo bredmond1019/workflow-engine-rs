@@ -1,12 +1,12 @@
 //! AI integration module for content processing
+
+#![allow(clippy::needless_borrows_for_generic_args, clippy::unwrap_or_default)]
 //!
 //! This module provides integration with the main system's AI agents
 //! for enhanced content analysis capabilities
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use serde_json::json;
 
 use crate::models::*;

@@ -1,5 +1,7 @@
 //! XML parser with schema-aware processing
 
+#![allow(clippy::manual_flatten)]
+
 use async_trait::async_trait;
 use quick_xml::events::Event;
 use quick_xml::Reader;

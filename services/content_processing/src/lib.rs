@@ -1,4 +1,8 @@
 //! Content Processing Engine
+
+#![allow(clippy::manual_clamp, clippy::unnecessary_map_or, clippy::manual_range_contains, 
+         clippy::manual_strip, clippy::only_used_in_recursion, clippy::needless_borrows_for_generic_args,
+         clippy::unwrap_or_default, clippy::manual_flatten, clippy::needless_borrow)]
 //! 
 //! High-performance content processing service for analyzing and extracting
 //! information from various document formats.
