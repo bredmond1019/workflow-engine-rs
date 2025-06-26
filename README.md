@@ -409,37 +409,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 2. Customer Support Automation
+### 2. External MCP Integration
 
 ```rust
-use workflow_engine_api::workflows::customer_support_workflow::CustomerSupportWorkflow;
-use workflow_engine_mcp::clients::http::HttpMCPClient;
+use workflow_engine_nodes::external_mcp_client::ExternalMCPClientNode;
+use workflow_engine_core::workflow::builder::WorkflowBuilder;
 use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize customer support workflow
-    let support_workflow = CustomerSupportWorkflow::new().await?;
+    // Create workflow with external MCP integration
+    let workflow = WorkflowBuilder::new::<ExternalMCPClientNode>("external_integration".to_string())
+        .description("Connect to external MCP-compliant services".to_string())
+        .build()?;
     
-    // Process incoming ticket
-    let ticket_context = json!({
-        "ticket_id": "TICK-2024-001",
-        "customer_email": "customer@example.com",
-        "subject": "Unable to process payment",
-        "message": "I'm having trouble with my credit card being declined",
-        "priority": "high",
-        "category": "billing"
+    // Configure external MCP server connection
+    let context = json!({
+        "server_url": "http://localhost:8001",
+        "method": "process",
+        "params": {
+            "action": "analyze",
+            "data": "Process this data through external MCP server"
+        },
+        "timeout_ms": 30000
     });
     
-    // Execute automated support flow
-    let response = support_workflow.process_ticket(ticket_context).await?;
-    println!("Support ticket processed: {:?}", response);
+    // Execute workflow with external MCP
+    let result = workflow.run(context)?;
+    println!("External MCP result: {:?}", result);
     
     Ok(())
 }
 ```
 
-### 3. Content Processing with WASM Plugins
+### 3. Content Processing Service
 
 ```rust
 use reqwest::Client;
@@ -459,7 +462,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "extract_concepts": true,
                 "analyze_difficulty": true,
                 "generate_summary": true,
-                "enable_wasm_plugins": true
+                "enable_advanced_analysis": true
             }
         }))
         .send()
@@ -1110,17 +1113,45 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Graph & Data Processing
 - **[Dgraph](https://dgraph.io/)** - High-performance graph database
-- **[WebAssembly](https://webassembly.org/)** - Safe and fast plugin execution
+- **[SQLite](https://sqlite.org/)** - Embedded database for content processing
+- **[PostgreSQL](https://postgresql.org/)** - Primary data store with event sourcing
 
 ---
 
 ## 📚 Additional Resources
 
-- **[Development Setup Guide](DEVELOPMENT_SETUP.md)** - Comprehensive development environment setup
+- **[Development Setup Guide](DEV_SETUP.md)** - Comprehensive development environment setup
 - **[Quick Start Guide](QUICK_START.md)** - Get started in 5 minutes
 - **[API Documentation](docs/)** - Complete API reference and tutorials
 - **[Monitoring Guide](monitoring/README.md)** - Production monitoring setup
 - **[DevOps Setup](DEVOPS_SETUP_REPORT.md)** - Infrastructure and deployment guide
+
+## 🚧 Current Status & Roadmap
+
+### ✅ Implemented Features
+- Core workflow engine with parallel execution
+- Complete MCP protocol implementation (HTTP, WebSocket, stdio)
+- JWT authentication and multi-tenancy
+- Event sourcing with PostgreSQL
+- AI integrations (OpenAI, Anthropic, AWS Bedrock)
+- Three microservices (content processing, knowledge graph, realtime communication)
+- Comprehensive monitoring with Prometheus/Grafana
+- Production-ready error handling and circuit breakers
+
+### 🚧 In Development
+- Service registry API endpoints
+- Additional MCP server examples
+- Enhanced documentation and tutorials
+- Crates.io package publishing
+
+### 📋 Planned Features
+- WASM plugin system for content processing
+- Live AI pricing API integration
+- Additional AI provider integrations (Google Gemini, Ollama)
+- Advanced service discovery mechanisms
+- GraphQL API gateway
+
+For detailed project status and open source readiness, see [project-open-source.md](project-open-source.md)
 
 ### Community & Support
 
