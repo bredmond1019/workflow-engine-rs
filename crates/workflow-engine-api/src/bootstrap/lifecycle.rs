@@ -466,7 +466,7 @@ impl ServiceLifecycleHooks for DefaultLifecycleHooks {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use workflow_engine_core::registry::agent_registry::MockAgentRegistry;
+    use crate::testing::mocks::MockAgentRegistry;
     use super::super::discovery::RegistryDiscovery;
     
     #[tokio::test]

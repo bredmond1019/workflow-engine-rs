@@ -395,8 +395,11 @@ mod tests {
             "MCP_EXTERNAL_SERVER_3_URI",
             "MCP_EXTERNAL_SERVER_3_TRANSPORT",
         ], || {
-            let config = McpConfig::from_env().unwrap();
-            assert!(!config.enabled);
+            // Explicitly set MCP_ENABLED to false to ensure proper isolation
+            with_env_vars(vec![("MCP_ENABLED", "false")], || {
+                let config = McpConfig::from_env().unwrap();
+                assert!(!config.enabled);
+            });
         });
     }
 
@@ -464,6 +467,13 @@ mod tests {
             "MCP_EXTERNAL_SERVER_1_URI",
             "MCP_EXTERNAL_SERVER_1_TRANSPORT",
             "MCP_CUSTOMER_SUPPORT_ENABLED",
+            "MCP_CUSTOMER_SUPPORT_TRANSPORT",
+            "MCP_CUSTOMER_SUPPORT_COMMAND",
+            "MCP_CUSTOMER_SUPPORT_ARGS",
+            "MCP_EXTERNAL_SERVER_2_NAME",
+            "MCP_EXTERNAL_SERVER_2_ENABLED",
+            "MCP_EXTERNAL_SERVER_2_URI",
+            "MCP_EXTERNAL_SERVER_2_TRANSPORT",
         ], || {
             with_env_vars(vec![
                 ("MCP_EXTERNAL_SERVER_1_NAME", "test-server"),
@@ -499,7 +509,14 @@ mod tests {
             "MCP_EXTERNAL_SERVER_2_ENABLED",
             "MCP_EXTERNAL_SERVER_2_URI",
             "MCP_EXTERNAL_SERVER_2_TRANSPORT",
+            "MCP_EXTERNAL_SERVER_3_NAME",
+            "MCP_EXTERNAL_SERVER_3_ENABLED",
+            "MCP_EXTERNAL_SERVER_3_URI",
+            "MCP_EXTERNAL_SERVER_3_TRANSPORT",
             "MCP_CUSTOMER_SUPPORT_ENABLED",
+            "MCP_CUSTOMER_SUPPORT_TRANSPORT",
+            "MCP_CUSTOMER_SUPPORT_COMMAND",
+            "MCP_CUSTOMER_SUPPORT_ARGS",
         ], || {
             with_env_vars(vec![
                 ("MCP_EXTERNAL_SERVER_1_NAME", "server1"),
