@@ -417,9 +417,10 @@ mod tests {
                 ("MCP_ENABLED", "true"),
                 ("MCP_CLIENT_NAME", "test-client"),
                 ("MCP_CLIENT_VERSION", "2.0.0"),
+                ("MCP_CUSTOMER_SUPPORT_ENABLED", "true"),
             ], || {
                 let config = McpConfig::from_env().unwrap();
-                assert!(config.enabled);
+                assert!(config.enabled, "Expected config.enabled to be true, but it was false");
                 assert_eq!(config.client_name, "test-client");
                 assert_eq!(config.client_version, "2.0.0");
             });
@@ -536,6 +537,7 @@ mod tests {
                 ("MCP_EXTERNAL_SERVER_2_ENABLED", "false"),
                 ("MCP_EXTERNAL_SERVER_2_URI", "ws://localhost:8081"),
                 ("MCP_EXTERNAL_SERVER_2_TRANSPORT", "websocket"),
+                ("MCP_CUSTOMER_SUPPORT_ENABLED", "false"),
             ], || {
                 let config = McpConfig::from_env().unwrap();
                 let enabled_servers = config.get_enabled_servers();

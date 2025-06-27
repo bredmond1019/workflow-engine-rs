@@ -9,13 +9,33 @@ use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::Extension,
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Json},
     routing::{get, post},
     Router,
+    http::StatusCode,
 };
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use futures_util::{stream, Stream};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize)]
+pub struct HealthResponse {
+    pub status: String,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub version: String,
+    pub uptime_seconds: u64,
+    pub subgraphs: HashMap<String, SubgraphHealth>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SubgraphHealth {
+    pub status: String,
+    pub url: String,
+    pub last_check: chrono::DateTime<chrono::Utc>,
+    pub response_time_ms: Option<u64>,
+}
 
 pub struct GraphQLGateway {
     schema: Schema<QueryRoot, MutationRoot, SubscriptionRoot>,
@@ -24,6 +44,7 @@ pub struct GraphQLGateway {
     query_planner: Arc<QueryPlanner>,
     entity_resolver: Arc<Box<dyn EntityResolver>>,
     query_cache: Arc<QueryPlanCache>,
+    startup_time: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(MergedObject, Default)]
@@ -197,6 +218,7 @@ impl GraphQLGateway {
             query_planner,
             entity_resolver,
             query_cache,
+            startup_time: chrono::Utc::now(),
         }
     }
     
@@ -242,11 +264,61 @@ impl GraphQLGateway {
         Ok(())
     }
     
+    /// Check the health of all subgraphs
+    pub async fn check_subgraphs_health(&self) -> HashMap<String, SubgraphHealth> {
+        let mut subgraph_health = HashMap::new();
+        let subgraphs = self.subgraph_client.get_subgraphs();
+        
+        for subgraph in subgraphs {
+            let start_time = std::time::Instant::now();
+            let health_query = r#"{ __typename }"#; // Simple introspection query
+            
+            let (status, response_time) = match self.subgraph_client.query_subgraph(&subgraph.name, health_query, None).await {
+                Ok(_) => {
+                    let elapsed = start_time.elapsed();
+                    ("healthy".to_string(), Some(elapsed.as_millis() as u64))
+                }
+                Err(_) => ("unhealthy".to_string(), None)
+            };
+            
+            subgraph_health.insert(subgraph.name.clone(), SubgraphHealth {
+                status,
+                url: subgraph.url.clone(),
+                last_check: chrono::Utc::now(),
+                response_time_ms: response_time,
+            });
+        }
+        
+        subgraph_health
+    }
+    
+    /// Get the overall health status
+    pub async fn get_health(&self) -> HealthResponse {
+        let subgraphs = self.check_subgraphs_health().await;
+        let all_healthy = subgraphs.values().all(|h| h.status == "healthy");
+        let uptime = chrono::Utc::now()
+            .signed_duration_since(self.startup_time)
+            .num_seconds() as u64;
+        
+        HealthResponse {
+            status: if all_healthy { "healthy".to_string() } else { "degraded".to_string() },
+            timestamp: chrono::Utc::now(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            uptime_seconds: uptime,
+            subgraphs,
+        }
+    }
+    
     pub fn into_router(self) -> Router {
+        let gateway = Arc::new(self);
+        
         Router::new()
             .route("/graphql", post(graphql_handler))
             .route("/graphql", get(graphql_playground))
-            .layer(Extension(self.schema))
+            .route("/health", get(health_handler))
+            .route("/health/detailed", get(detailed_health_handler))
+            .layer(Extension(gateway.schema.clone()))
+            .layer(Extension(gateway.clone()))
             .layer(CorsLayer::permissive())
     }
 }
@@ -260,4 +332,26 @@ async fn graphql_handler(
 
 async fn graphql_playground() -> impl IntoResponse {
     Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
+}
+
+/// Simple health check endpoint
+async fn health_handler() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "status": "healthy",
+        "timestamp": chrono::Utc::now()
+    }))
+}
+
+/// Detailed health check endpoint that includes subgraph status
+async fn detailed_health_handler(
+    Extension(gateway): Extension<Arc<GraphQLGateway>>,
+) -> impl IntoResponse {
+    let health = gateway.get_health().await;
+    let status_code = match health.status.as_str() {
+        "healthy" => StatusCode::OK,
+        "degraded" => StatusCode::PARTIAL_CONTENT,
+        _ => StatusCode::SERVICE_UNAVAILABLE,
+    };
+    
+    (status_code, Json(health))
 }

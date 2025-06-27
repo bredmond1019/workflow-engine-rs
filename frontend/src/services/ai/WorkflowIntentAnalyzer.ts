@@ -82,7 +82,13 @@ export class WorkflowIntentAnalyzer {
         intent = this.processCreateWorkflow(message, lowerMessage, intent);
         break;
       case IntentType.MODIFY_WORKFLOW:
-        intent = this.processModifyWorkflow(message, lowerMessage, intent);
+        // Check if it's a contextual reference to a previous workflow
+        if (this.lastIntent && this.lastIntent.type === IntentType.CREATE_WORKFLOW && 
+            !lowerMessage.includes('workflow')) {
+          intent = this.processContextualFollowUp(message, lowerMessage);
+        } else {
+          intent = this.processModifyWorkflow(message, lowerMessage, intent);
+        }
         break;
       case IntentType.DELETE_WORKFLOW:
         intent = this.processDeleteWorkflow(message, lowerMessage, intent);
@@ -112,6 +118,12 @@ export class WorkflowIntentAnalyzer {
     const nonWorkflowPatterns = [
       'weather', 'news', 'time', 'date', 'hello', 'hi', 'thanks', 'bye'
     ];
+    
+    // Don't consider "create something" as non-workflow
+    if (message.includes('create something')) {
+      return false;
+    }
+    
     return nonWorkflowPatterns.some(pattern => message.includes(pattern)) &&
            !message.includes('workflow') && !message.includes('automat') && !message.includes('process');
   }
@@ -141,8 +153,8 @@ export class WorkflowIntentAnalyzer {
       /\bautomate\b/,
       /\bset up\b.*\b(automated|automation)\b/,
       /help me.*automat/,
-      /want to create something/,
-      /i want to create something/
+      /\bwant to create something\b/,
+      /\bi want to create something\b/
     ];
     
     if (createPatterns.some(pattern => message.match(pattern))) {
@@ -155,7 +167,8 @@ export class WorkflowIntentAnalyzer {
     }
 
     // Context-based detection for follow-ups
-    if (this.lastIntent && message.match(/\b(make it|run|every|schedule)\b/)) {
+    if (this.lastIntent && this.lastIntent.type === IntentType.CREATE_WORKFLOW && 
+        (message.match(/\b(make it|run|every|schedule)\b/) || message.match(/\bmake\s+it\s+run\b/))) {
       return IntentType.MODIFY_WORKFLOW;
     }
 
@@ -317,12 +330,17 @@ export class WorkflowIntentAnalyzer {
     intent.contextualReference = true;
     
     // Extract schedule parameters if present
-    if (lowerMessage.includes('every hour')) {
+    if (lowerMessage.includes('every hour') || lowerMessage.match(/\brun\s+every\s+hour/) || 
+        lowerMessage.match(/\bmake\s+it\s+run\s+every\s+hour/)) {
       intent.parameters = [{
         name: 'trigger',
         value: 'schedule',
         metadata: { frequency: 'hourly' }
       }];
+    } else if (lowerMessage.match(/\bevery\s+\w+/)) {
+      // Handle other schedule patterns
+      const parameters = this.extractParameters(message, lowerMessage);
+      intent.parameters = parameters;
     }
 
     return intent;
