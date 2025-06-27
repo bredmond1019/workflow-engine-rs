@@ -15,3 +15,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Mock scrollTo for tests
+Element.prototype.scrollTo = jest.fn();

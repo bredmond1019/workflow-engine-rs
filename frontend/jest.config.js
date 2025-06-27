@@ -12,10 +12,13 @@ export default {
       tsconfig: {
         jsx: 'react',
         esModuleInterop: true,
+        moduleResolution: 'node',
+        allowSyntheticDefaultImports: true,
       },
     }],
   },
   moduleNameMapper: {
+    '\\.module\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
   },

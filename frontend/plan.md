@@ -30,15 +30,15 @@ Building a modern, conversational interface for creating AI workflows using Test
 - [x] 2f. Shows character count limit
 ```
 
-#### [ ] Test 3: ChatContainer Layout
+#### [x] Test 3: ChatContainer Layout
 **Purpose**: Container for chat messages with proper scrolling
 ```typescript
 // Test cases:
-- [ ] 3a. Renders list of messages in order
-- [ ] 3b. Auto-scrolls to bottom on new message
-- [ ] 3c. Maintains scroll position when loading history
-- [ ] 3d. Shows loading indicator when fetching
-- [ ] 3e. Displays empty state when no messages
+- [x] 3a. Renders list of messages in order
+- [x] 3b. Auto-scrolls to bottom on new message
+- [x] 3c. Maintains scroll position when loading history
+- [x] 3d. Shows loading indicator when fetching
+- [x] 3e. Displays empty state when no messages
 ```
 
 ### Phase 2: AI Assistant Integration
