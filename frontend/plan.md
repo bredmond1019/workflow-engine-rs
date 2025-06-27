@@ -47,11 +47,13 @@ Building a modern, conversational interface for creating AI workflows using Test
 **Purpose**: Parse user input to identify workflow intent
 ```typescript
 // Test cases:
-- [ ] 4a. Detects "create workflow" intent
-- [ ] 4b. Identifies workflow type from description
-- [ ] 4c. Extracts key parameters from natural language
-- [ ] 4d. Handles ambiguous requests with clarification
-- [ ] 4e. Recognizes workflow modification requests
+- [ ] 4a. Detects "create workflow" intent (7 tests failing)
+- [ ] 4b. Identifies workflow type from description (6 tests failing)
+- [ ] 4c. Extracts key parameters from natural language (5 tests failing)
+- [ ] 4d. Handles ambiguous requests with clarification (5 tests failing)
+- [ ] 4e. Recognizes workflow modification requests (7 tests failing)
+- [ ] Edge cases and error handling (4 tests failing)
+// Total: 31 tests written and failing (Red phase)
 ```
 
 #### [ ] Test 5: Dynamic Form Generation
