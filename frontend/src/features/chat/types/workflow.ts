@@ -6,6 +6,7 @@ export interface WorkflowIntent {
   extractedEntities: Record<string, any>;
   suggestedWorkflows?: string[];
   parameters?: Record<string, any>;
+  nodeProgress?: Record<string, number>;
 }
 
 export interface FormField {

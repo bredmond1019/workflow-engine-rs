@@ -1,0 +1,306 @@
+.workflowPreview {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  background-color: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.workflowContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.workflowCanvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: grab;
+}
+
+.workflowCanvas:active {
+  cursor: grabbing;
+}
+
+/* View modes */
+.expandedView {
+  padding: 24px;
+}
+
+.compactView {
+  padding: 12px;
+}
+
+/* Nodes */
+.node {
+  position: absolute;
+  background: white;
+  border: 2px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  user-select: none;
+}
+
+.node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.node:focus {
+  outline: 2px solid #0969da;
+  outline-offset: 2px;
+}
+
+/* Node types */
+.nodeTypeTrigger {
+  border-color: #0969da;
+  background-color: #ddf4ff;
+}
+
+.nodeTypeSource {
+  border-color: #1a7f37;
+  background-color: #dafbe1;
+}
+
+.nodeTypeCondition {
+  border-color: #fb8500;
+  background-color: #fff8e1;
+}
+
+.nodeTypeAction {
+  border-color: #8250df;
+  background-color: #fbefff;
+}
+
+.nodeTypeTransformation {
+  border-color: #0969da;
+  background-color: #f0f9ff;
+}
+
+.nodeTypeAI {
+  border-color: #bf3989;
+  background-color: #ffeff7;
+}
+
+/* Node states */
+.nodeActive {
+  border-width: 3px;
+  transform: scale(1.05);
+}
+
+.nodeHighlight {
+  animation: highlight 2s ease-in-out infinite;
+}
+
+.nodePulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.nodeCompleted {
+  opacity: 0.8;
+}
+
+.nodeDimmed {
+  opacity: 0.4;
+}
+
+.nodeNew {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Progress indicator */
+.nodeProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: #0969da;
+  border-radius: 0 0 6px 6px;
+  transition: width 0.3s ease;
+}
+
+/* Connections */
+.connection {
+  position: absolute;
+  stroke: #6e7781;
+  stroke-width: 2;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connection:hover {
+  stroke-width: 3;
+  stroke: #0969da;
+}
+
+.connectionActive {
+  stroke: #0969da;
+  stroke-dasharray: 5, 5;
+  animation: dash 1s linear infinite;
+}
+
+.connectionCompleted {
+  stroke: #1a7f37;
+}
+
+/* Connection labels */
+.connectionLabel {
+  position: absolute;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #e1e4e8;
+  pointer-events: none;
+}
+
+/* Tooltips */
+.nodeTooltip {
+  position: absolute;
+  background: #24292f;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nodeTooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #24292f;
+  transform: rotate(45deg);
+}
+
+/* Context menu */
+.contextMenu {
+  position: absolute;
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  min-width: 150px;
+  padding: 4px 0;
+}
+
+.contextMenuItem {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.contextMenuItem:hover {
+  background-color: #f6f8fa;
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6e7781;
+  font-size: 16px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* View toggle */
+.viewToggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.viewToggleButton {
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.viewToggleButton:hover {
+  background-color: #f6f8fa;
+  border-color: #d1d5da;
+}
+
+/* Accessibility */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Animations */
+@keyframes highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(9, 105, 218, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(9, 105, 218, 0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

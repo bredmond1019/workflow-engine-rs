@@ -1,0 +1,35 @@
+declare const styles: {
+  readonly workflowPreview: string;
+  readonly workflowContainer: string;
+  readonly workflowCanvas: string;
+  readonly expandedView: string;
+  readonly compactView: string;
+  readonly node: string;
+  readonly nodeTypeTrigger: string;
+  readonly nodeTypeSource: string;
+  readonly nodeTypeCondition: string;
+  readonly nodeTypeAction: string;
+  readonly nodeTypeTransformation: string;
+  readonly nodeTypeAI: string;
+  readonly nodeActive: string;
+  readonly nodeHighlight: string;
+  readonly nodePulse: string;
+  readonly nodeCompleted: string;
+  readonly nodeDimmed: string;
+  readonly nodeNew: string;
+  readonly nodeProgress: string;
+  readonly connection: string;
+  readonly connectionActive: string;
+  readonly connectionCompleted: string;
+  readonly connectionLabel: string;
+  readonly nodeTooltip: string;
+  readonly contextMenu: string;
+  readonly contextMenuItem: string;
+  readonly emptyState: string;
+  readonly emptyStateIcon: string;
+  readonly viewToggle: string;
+  readonly viewToggleButton: string;
+  readonly srOnly: string;
+};
+
+export default styles;
