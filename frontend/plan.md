@@ -18,16 +18,16 @@ Building a modern, conversational interface for creating AI workflows using Test
 - [x] 1e. Handles markdown content rendering
 ```
 
-#### [ ] Test 2: ChatInput Component
+#### [x] Test 2: ChatInput Component
 **Purpose**: Handle user input and message submission
 ```typescript
 // Test cases:
-- [ ] 2a. Renders input field with placeholder
-- [ ] 2b. Handles text input changes
-- [ ] 2c. Submits on Enter key press
-- [ ] 2d. Clears input after submission
-- [ ] 2e. Disables input while processing
-- [ ] 2f. Shows character count limit
+- [x] 2a. Renders input field with placeholder
+- [x] 2b. Handles text input changes
+- [x] 2c. Submits on Enter key press
+- [x] 2d. Clears input after submission
+- [x] 2e. Disables input while processing
+- [x] 2f. Shows character count limit
 ```
 
 #### [ ] Test 3: ChatContainer Layout
