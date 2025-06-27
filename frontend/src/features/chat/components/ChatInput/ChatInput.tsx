@@ -1,17 +1,20 @@
-import React, { useState, KeyboardEvent, ChangeEvent } from 'react';
-import { ChatInputProps } from '../../types';
+import React, { useState } from 'react';
+import type { KeyboardEvent, ChangeEvent } from 'react';
+import type { ChatInputProps } from '../../types';
+import { CHARACTER_COUNT, UI_TEXT, CSS_CLASSES, ICONS } from '../../constants';
+import { shouldShowCharCount, isEmptyMessage, buildClassName } from '../../utils';
 import './ChatInput.module.css';
 
 const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   disabled = false,
-  placeholder = 'Type a message...',
+  placeholder = UI_TEXT.DEFAULT_PLACEHOLDER,
   maxLength,
 }) => {
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
+    if (!isEmptyMessage(message) && !disabled) {
       onSendMessage(message);
       setMessage('');
     }
@@ -31,8 +34,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const showCharCount = maxLength && message.length > maxLength * 0.7;
-  const isNearLimit = maxLength && message.length > maxLength * 0.9;
+  const showCharCount = shouldShowCharCount(message.length, maxLength, CHARACTER_COUNT.SHOW_THRESHOLD);
+  const isNearLimit = shouldShowCharCount(message.length, maxLength, CHARACTER_COUNT.WARNING_THRESHOLD);
+  const charCountClassName = buildClassName(
+    CSS_CLASSES.CHARACTER_COUNT,
+    isNearLimit ? 'warning' : undefined
+  );
 
   return (
     <div className="chat-input">
@@ -51,7 +58,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         {showCharCount && (
           <div 
             data-testid="character-count"
-            className={`character-count ${isNearLimit ? 'character-count--warning' : ''}`}
+            className={charCountClassName}
           >
             {message.length} / {maxLength}
           </div>
@@ -62,15 +69,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
         data-testid="send-button"
         className="chat-input__send"
         onClick={handleSend}
-        disabled={disabled || !message.trim()}
+        disabled={disabled || isEmptyMessage(message)}
         type="button"
       >
         {disabled ? (
           <span data-testid="loading-indicator" className="loading-indicator">
-            ⋯
+            {ICONS.LOADING}
           </span>
         ) : (
-          <span className="send-icon">➤</span>
+          <span className="send-icon">{ICONS.SEND}</span>
         )}
       </button>
     </div>

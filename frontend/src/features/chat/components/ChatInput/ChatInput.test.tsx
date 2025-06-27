@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import ChatInput from './ChatInput';
@@ -60,7 +60,7 @@ describe('ChatInput Component', () => {
     const user = userEvent.setup();
     render(<ChatInput onSendMessage={mockOnSendMessage} />);
     
-    const inputElement = screen.getByRole('textbox');
+    screen.getByRole('textbox');
     await user.keyboard('{Enter}');
     
     expect(mockOnSendMessage).not.toHaveBeenCalled();

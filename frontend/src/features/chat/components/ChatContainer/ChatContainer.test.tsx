@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import ChatContainer from './ChatContainer';
-import { ChatMessage } from '../../types';
+import type { ChatMessage } from '../../types';
 
 describe('ChatContainer Component', () => {
   const mockMessages: ChatMessage[] = [

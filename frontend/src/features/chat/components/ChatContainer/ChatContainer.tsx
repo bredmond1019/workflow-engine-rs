@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { ChatContainerProps } from '../../types';
+import type { ChatContainerProps } from '../../types';
+import { UI_TEXT, ARIA_LABELS } from '../../constants';
 import ChatMessage from '../ChatMessage';
 import ChatInput from '../ChatInput';
 import './ChatContainer.module.css';
@@ -14,44 +15,42 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
 
   useEffect(() => {
     // Auto-scroll to bottom on new messages (not when loading history)
-    if (scrollContainerRef.current && messages.length > previousMessageCountRef.current) {
+    const hasNewMessages = messages.length > previousMessageCountRef.current;
+    const shouldScroll = scrollContainerRef.current && hasNewMessages;
+    
+    if (shouldScroll && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollHeight,
         behavior: 'smooth'
       });
     }
+    
     previousMessageCountRef.current = messages.length;
   }, [messages.length]);
+
+  const isEmpty = messages.length === 0;
 
   return (
     <div className="container">
       <div 
         className="messagesContainer"
         role="log"
-        aria-label="Chat messages"
+        aria-label={ARIA_LABELS.CHAT_MESSAGES}
       >
         <div
           ref={scrollContainerRef}
           data-testid="chat-scroll-container"
           className="scrollContainer"
-          aria-label="Chat conversation"
+          aria-label={ARIA_LABELS.CHAT_CONVERSATION}
         >
-          {messages.length === 0 ? (
-            <div className="emptyState" data-testid="chat-empty-state">
-              <h3>Start a conversation</h3>
-              <p>I'm here to help you create workflows</p>
-              <p>Type a message below to get started</p>
-            </div>
+          {isEmpty ? (
+            <EmptyState />
           ) : (
             messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))
           )}
-          {isLoading && (
-            <div className="loading" data-testid="chat-loading">
-              AI is thinking...
-            </div>
-          )}
+          {isLoading && <LoadingIndicator />}
         </div>
       </div>
       <div className="inputContainer">
@@ -63,5 +62,19 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     </div>
   );
 };
+
+const EmptyState: React.FC = () => (
+  <div className="emptyState" data-testid="chat-empty-state">
+    <h3>{UI_TEXT.EMPTY_STATE.TITLE}</h3>
+    <p>{UI_TEXT.EMPTY_STATE.SUBTITLE}</p>
+    <p>{UI_TEXT.EMPTY_STATE.HELPER}</p>
+  </div>
+);
+
+const LoadingIndicator: React.FC = () => (
+  <div className="loading" data-testid="chat-loading">
+    {UI_TEXT.LOADING_MESSAGE}
+  </div>
+);
 
 export default ChatContainer;
