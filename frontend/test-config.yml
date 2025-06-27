@@ -1,0 +1,268 @@
+# Visual Testing System Configuration
+
+# Service endpoints configuration
+services:
+  workflow_api:
+    name: "Workflow API"
+    url: "http://localhost:8080"
+    health_endpoint: "/health"
+    graphql_endpoint: "/api/v1/graphql"
+    category: "core"
+    critical: true
+    timeout: 5000
+    retry_attempts: 3
+
+  graphql_gateway:
+    name: "GraphQL Gateway"
+    url: "http://localhost:4000"
+    health_endpoint: "/health"
+    graphql_endpoint: "/graphql"
+    category: "core"
+    critical: true
+    timeout: 5000
+    retry_attempts: 3
+
+  content_processing:
+    name: "Content Processing"
+    url: "http://localhost:8081"
+    health_endpoint: "/health"
+    graphql_endpoint: "/graphql"
+    category: "microservice"
+    critical: false
+    timeout: 10000
+    retry_attempts: 2
+
+  knowledge_graph:
+    name: "Knowledge Graph"
+    url: "http://localhost:8082"
+    health_endpoint: "/health"
+    graphql_endpoint: "/graphql"
+    category: "microservice"
+    critical: false
+    timeout: 10000
+    retry_attempts: 2
+
+  realtime_communication:
+    name: "Realtime Communication"
+    url: "http://localhost:8083"
+    health_endpoint: "/health"
+    websocket_endpoint: "/ws"
+    graphql_endpoint: "/graphql"
+    category: "microservice"
+    critical: false
+    timeout: 5000
+    retry_attempts: 2
+
+  # MCP Services
+  helpscout_mcp:
+    name: "HelpScout MCP"
+    url: "http://localhost:8001"
+    health_endpoint: "/health"
+    category: "mcp"
+    critical: false
+    timeout: 5000
+    retry_attempts: 2
+
+  notion_mcp:
+    name: "Notion MCP"
+    url: "http://localhost:8002"
+    health_endpoint: "/health"
+    category: "mcp"
+    critical: false
+    timeout: 5000
+    retry_attempts: 2
+
+  slack_mcp:
+    name: "Slack MCP"
+    url: "http://localhost:8003"
+    health_endpoint: "/health"
+    category: "mcp"
+    critical: false
+    timeout: 5000
+    retry_attempts: 2
+
+# Test categories configuration
+test_categories:
+  health:
+    name: "Health Checks"
+    description: "Basic service availability tests"
+    interval: 30000  # 30 seconds
+    enabled: true
+    
+  graphql:
+    name: "GraphQL Queries"
+    description: "GraphQL endpoint validation"
+    interval: 60000  # 1 minute
+    enabled: true
+    queries:
+      - name: "Service SDL"
+        query: |
+          {
+            _service {
+              sdl
+            }
+          }
+      - name: "Basic Workflow Query"
+        query: |
+          {
+            workflows {
+              id
+              name
+              status
+            }
+          }
+
+  federation:
+    name: "Federation Tests"
+    description: "GraphQL Federation validation"
+    interval: 120000  # 2 minutes
+    enabled: true
+    queries:
+      - name: "Entity Resolution"
+        query: |
+          query ResolveEntities($representations: [_Any!]!) {
+            _entities(representations: $representations) {
+              ... on Workflow {
+                id
+                name
+                status
+              }
+            }
+          }
+        variables:
+          representations:
+            - __typename: "Workflow"
+              id: "test-workflow-1"
+
+  performance:
+    name: "Performance Tests"
+    description: "Response time and throughput tests"
+    interval: 300000  # 5 minutes
+    enabled: true
+    thresholds:
+      response_time_p95: 500  # ms
+      response_time_p99: 1000  # ms
+      error_rate: 0.01  # 1%
+
+  integration:
+    name: "Integration Tests"
+    description: "Cross-service communication tests"
+    interval: 600000  # 10 minutes
+    enabled: true
+
+# Alert thresholds
+alerts:
+  service_down:
+    threshold: 2  # consecutive failures
+    severity: "critical"
+    notification_channels: ["console", "dashboard"]
+    
+  high_latency:
+    threshold: 1000  # ms
+    duration: 60000  # 1 minute
+    severity: "warning"
+    notification_channels: ["dashboard"]
+    
+  error_rate:
+    threshold: 0.05  # 5%
+    duration: 300000  # 5 minutes
+    severity: "warning"
+    notification_channels: ["dashboard"]
+
+# Dashboard configuration
+dashboard:
+  refresh_interval: 5000  # 5 seconds
+  history_retention: 3600000  # 1 hour
+  chart_points: 100
+  theme: "light"
+  
+  layout:
+    service_grid:
+      columns: 4
+      show_metrics: true
+      show_logs: true
+      
+    charts:
+      - type: "line"
+        metric: "response_time"
+        title: "Response Times"
+        services: ["all"]
+        
+      - type: "bar"
+        metric: "success_rate"
+        title: "Success Rates"
+        services: ["all"]
+        
+      - type: "gauge"
+        metric: "health_score"
+        title: "Overall Health"
+        
+    topology:
+      show_connections: true
+      show_data_flow: true
+      animation: true
+
+# Logging configuration
+logging:
+  level: "info"
+  format: "json"
+  outputs:
+    - type: "console"
+      level: "info"
+    - type: "file"
+      path: "./logs/visual-tests.log"
+      level: "debug"
+      rotation: "daily"
+      max_files: 7
+
+# Storage configuration
+storage:
+  results:
+    path: "./test-results"
+    format: "json"
+    retention_days: 7
+    
+  metrics:
+    type: "memory"  # or "redis", "postgres"
+    retention_hours: 24
+    
+  screenshots:
+    enabled: true
+    path: "./screenshots"
+    on_failure: true
+    format: "png"
+
+# Test execution configuration
+execution:
+  parallel_tests: 4
+  timeout_multiplier: 1.5
+  retry_on_failure: true
+  stop_on_critical_failure: false
+  
+  schedule:
+    enabled: true
+    continuous: true
+    quiet_hours:
+      enabled: false
+      start: "22:00"
+      end: "06:00"
+      
+# Report generation
+reports:
+  daily_summary:
+    enabled: true
+    time: "09:00"
+    format: "html"
+    recipients: []
+    
+  test_results:
+    format: "json"
+    include_traces: true
+    include_timings: true
+    
+# Development mode
+development:
+  mock_services: false
+  verbose_logging: true
+  skip_auth: true
+  test_data_generation: true

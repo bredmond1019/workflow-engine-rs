@@ -1,0 +1,154 @@
+# Example test configuration for AI Workflow System
+# Copy this file to test-config.yaml and customize as needed
+
+test_categories:
+  infrastructure:
+    name: Infrastructure
+    icon: 🏗️
+    enabled: true
+    tests:
+      - name: PostgreSQL
+        check: port
+        host: localhost
+        port: 5432
+        timeout: 3.0
+        retry_count: 3
+        retry_delay: 1.0
+      
+      - name: Redis
+        check: port
+        host: localhost
+        port: 6379
+        timeout: 2.0
+
+  backend:
+    name: Backend Services
+    icon: 🚀
+    enabled: true
+    tests:
+      - name: Main API
+        check: http
+        url: http://localhost:8080/health
+        timeout: 10.0
+        retry_count: 2
+      
+      - name: GraphQL Gateway
+        check: http
+        url: http://localhost:4000/.well-known/apollo/server-health
+        timeout: 10.0
+      
+      - name: Swagger UI
+        check: http
+        url: http://localhost:8080/swagger-ui/
+        timeout: 5.0
+
+  mcp:
+    name: MCP Servers
+    icon: 🔌
+    enabled: true
+    tests:
+      - name: HelpScout MCP
+        check: http
+        url: http://localhost:8001/health
+        timeout: 5.0
+      
+      - name: Notion MCP
+        check: http
+        url: http://localhost:8002/health
+        timeout: 5.0
+      
+      - name: Slack MCP
+        check: http
+        url: http://localhost:8003/health
+        timeout: 5.0
+
+  microservices:
+    name: Microservices
+    icon: 🎯
+    enabled: true
+    tests:
+      - name: Content Processing
+        check: http
+        url: http://localhost:8082/health
+        timeout: 5.0
+      
+      - name: Knowledge Graph
+        check: http
+        url: http://localhost:8083/health
+        timeout: 5.0
+      
+      - name: Realtime Communication
+        check: http
+        url: http://localhost:8084/health
+        timeout: 5.0
+
+  frontend:
+    name: Frontend
+    icon: 🎨
+    enabled: true
+    tests:
+      - name: Vite Dev Server
+        check: http
+        url: http://localhost:5173
+        timeout: 10.0
+        retry_count: 2
+        retry_delay: 2.0
+
+  monitoring:
+    name: Monitoring
+    icon: 📊
+    enabled: true
+    tests:
+      - name: Prometheus
+        check: http
+        url: http://localhost:9090/-/ready
+        timeout: 5.0
+      
+      - name: Grafana
+        check: http
+        url: http://localhost:3000/api/health
+        timeout: 5.0
+      
+      - name: Jaeger
+        check: http
+        url: http://localhost:16686/
+        timeout: 5.0
+
+  # Example of custom command checks
+  database_checks:
+    name: Database Checks
+    icon: 🗄️
+    enabled: false  # Disabled by default
+    tests:
+      - name: PostgreSQL Connection
+        check: command
+        command: "psql -h localhost -U postgres -d ai_workflow_db -c 'SELECT 1'"
+        timeout: 5.0
+      
+      - name: Redis Ping
+        check: command
+        command: "redis-cli ping"
+        timeout: 2.0
+
+# Global settings
+settings:
+  # Directory to save test results
+  output_dir: test-reports
+  
+  # Whether to save results to JSON file
+  save_results: true
+  
+  # Use rich terminal output (disable for CI/CD)
+  rich_output: true
+  
+  # Run tests in parallel for faster execution
+  parallel_execution: true
+  
+  # Maximum number of parallel workers
+  max_workers: 10
+  
+  # Default timeout for all tests (seconds)
+  default_timeout: 5.0
+  
+  # Retry failed tests
+  retry_failed: true

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Testing Dashboard - AI Workflow System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vis-network@latest/dist/vis-network.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vis-network@latest/dist/vis-network.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1>Visual Testing Dashboard</h1>
+            <div class="header-controls">
+                <div class="status-indicator" id="overall-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Checking...</span>
+                </div>
+                <button class="btn btn-primary" id="run-all-tests">Run All Tests</button>
+                <button class="btn btn-secondary" id="refresh-dashboard">Refresh</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Service Status Grid -->
+        <section class="dashboard-section">
+            <h2>Service Status</h2>
+            <div class="service-grid" id="service-grid">
+                <!-- Service cards will be dynamically generated -->
+            </div>
+        </section>
+
+        <!-- System Topology -->
+        <section class="dashboard-section">
+            <h2>System Topology</h2>
+            <div class="topology-container">
+                <div id="network-topology"></div>
+                <div class="topology-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot healthy"></span>
+                        <span>Healthy</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot warning"></span>
+                        <span>Warning</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot error"></span>
+                        <span>Error</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot unknown"></span>
+                        <span>Unknown</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Performance Metrics -->
+        <section class="dashboard-section">
+            <h2>Performance Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Response Times</h3>
+                    <canvas id="response-time-chart"></canvas>
+                </div>
+                <div class="metric-card">
+                    <h3>Success Rates</h3>
+                    <canvas id="success-rate-chart"></canvas>
+                </div>
+                <div class="metric-card">
+                    <h3>Error Distribution</h3>
+                    <canvas id="error-distribution-chart"></canvas>
+                </div>
+                <div class="metric-card">
+                    <h3>Test Coverage</h3>
+                    <canvas id="test-coverage-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Test Results -->
+        <section class="dashboard-section">
+            <h2>Recent Test Results</h2>
+            <div class="test-results-container">
+                <div class="test-filters">
+                    <select id="test-category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="health">Health Checks</option>
+                        <option value="graphql">GraphQL Queries</option>
+                        <option value="federation">Federation Tests</option>
+                        <option value="performance">Performance Tests</option>
+                        <option value="integration">Integration Tests</option>
+                    </select>
+                    <select id="test-status-filter">
+                        <option value="all">All Statuses</option>
+                        <option value="passed">Passed</option>
+                        <option value="failed">Failed</option>
+                        <option value="warning">Warning</option>
+                    </select>
+                    <input type="text" id="test-search" placeholder="Search tests...">
+                </div>
+                <div class="test-results-table">
+                    <table id="test-results">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Service</th>
+                                <th>Test</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Test results will be dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alert History -->
+        <section class="dashboard-section">
+            <h2>Alert History</h2>
+            <div class="alert-container" id="alert-container">
+                <!-- Alerts will be dynamically generated -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Test Detail Modal -->
+    <div class="modal" id="test-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Test Details</h3>
+                <button class="modal-close" onclick="closeTestDetail()">&times;</button>
+            </div>
+            <div class="modal-body" id="test-detail-content">
+                <!-- Test details will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Detail Modal -->
+    <div class="modal" id="service-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Service Details</h3>
+                <button class="modal-close" onclick="closeServiceDetail()">&times;</button>
+            </div>
+            <div class="modal-body" id="service-detail-content">
+                <!-- Service details will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-content">
+            <div class="footer-stats">
+                <span>Last Update: <span id="last-update">-</span></span>
+                <span>Tests Run: <span id="total-tests">0</span></span>
+                <span>Services: <span id="total-services">0</span></span>
+                <span>Uptime: <span id="system-uptime">-</span></span>
+            </div>
+            <div class="footer-controls">
+                <label>
+                    <input type="checkbox" id="auto-refresh" checked>
+                    Auto-refresh
+                </label>
+                <label>
+                    Update interval:
+                    <select id="refresh-interval">
+                        <option value="5000">5s</option>
+                        <option value="10000">10s</option>
+                        <option value="30000">30s</option>
+                        <option value="60000">1m</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+    </footer>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
