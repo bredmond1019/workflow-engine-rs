@@ -17,7 +17,7 @@ export function useWorkflowIntent(): UseWorkflowIntentReturn {
   const [intentHistory, setIntentHistory] = useState<WorkflowIntent[]>([]);
   
   const analyzerRef = useRef<WorkflowIntentAnalyzer>(new WorkflowIntentAnalyzer());
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const analyzeMessage = useCallback(async (message: string) => {
     // Clear any existing debounce timer
