@@ -219,6 +219,42 @@ services:
     networks:
       - ai-workflow-net
 
+  # GraphQL Federation Gateway
+  graphql-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: gateway
+    container_name: graphql-gateway
+    depends_on:
+      ai-workflow-system:
+        condition: service_healthy
+      content-processing:
+        condition: service_healthy
+      knowledge-graph:
+        condition: service_healthy
+      realtime-communication:
+        condition: service_healthy
+    environment:
+      # Gateway configuration
+      GATEWAY_HOST: 0.0.0.0
+      GATEWAY_PORT: 4000
+      RUST_LOG: ${RUST_LOG:-info}
+      # Service URLs for federation
+      WORKFLOW_API_URL: http://ai-workflow-system:8080/api/v1/graphql
+      CONTENT_PROCESSING_URL: http://content-processing:8082/graphql
+      KNOWLEDGE_GRAPH_URL: http://knowledge-graph:3002/graphql
+      REALTIME_COMM_URL: http://realtime-communication:8081/graphql
+    ports:
+      - "${GATEWAY_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ai-workflow-net
+
   # Nginx reverse proxy (optional, for production)
   nginx:
     image: nginx:alpine

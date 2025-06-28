@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:password@localhost/content_processing".to_string());
     let bind_address = env::var("BIND_ADDRESS")
-        .unwrap_or_else(|_| "127.0.0.1:8001".to_string());
+        .unwrap_or_else(|_| "127.0.0.1:8082".to_string());
 
     // Create database pool
     let pool = create_pool(&database_url).await

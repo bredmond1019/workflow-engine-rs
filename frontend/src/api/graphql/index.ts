@@ -3,6 +3,7 @@
 
 export { GraphQLClient } from './GraphQLClient';
 export { WorkflowOperations } from './operations';
+export { FederationClient } from './FederationClient';
 export type { 
   GraphQLResponse, 
   RetryOptions, 
@@ -19,4 +20,10 @@ export type {
   WorkflowPreviewData,
   ChatIntent
 } from './operations';
+export type {
+  FederationError,
+  FederationResponse,
+  SubscriptionHandler,
+  HealthStatus
+} from './FederationClient';
 export { GRAPHQL_CONFIG } from './config';

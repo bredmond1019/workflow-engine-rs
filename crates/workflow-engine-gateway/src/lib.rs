@@ -1,8 +1,11 @@
+pub mod config;
 pub mod error;
 pub mod federation;
 pub mod gateway;
+pub mod health;
 pub mod subgraph;
 
+pub use config::GatewayConfig;
 pub use error::{GatewayError, Result};
 pub use gateway::{GraphQLGateway, HealthResponse, SubgraphHealth};
 pub use subgraph::{SubgraphClient, SubgraphConfig};

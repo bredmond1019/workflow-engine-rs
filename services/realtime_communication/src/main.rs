@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
     // Get configuration from environment
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = env::var("PORT")
-        .unwrap_or_else(|_| "8002".to_string())
+        .unwrap_or_else(|_| "8081".to_string())
         .parse::<u16>()
         .expect("Invalid PORT");
     let redis_url = env::var("REDIS_URL")

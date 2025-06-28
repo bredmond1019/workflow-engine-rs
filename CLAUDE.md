@@ -62,6 +62,7 @@ Each crate and service has its own CLAUDE.md file with detailed guidance. Naviga
 - **Federation Directives**: `crates/workflow-engine-gateway/src/federation/directives.rs`
 - **Subgraph Client**: `crates/workflow-engine-gateway/src/subgraph.rs`
 - **Federation Support in API**: `crates/workflow-engine-api/src/api/graphql/` (schema.rs, handlers.rs)
+- **Federation Documentation**: See [FEDERATION.md](FEDERATION.md) for complete architecture and testing guide
 
 ### Workflow & Node Development
 - **Core Workflow Engine**: See `workflow-engine-core` CLAUDE.md (workflow module)
@@ -162,9 +163,10 @@ cargo test --test load_test -- --ignored --nocapture
 cargo test --test chaos_test -- --ignored --nocapture
 
 # Test GraphQL Federation (NEW)
+./scripts/run-federation-stack.sh    # Start all services
+./scripts/test-federation.sh         # Test federation connectivity
+cargo test graphql_federation_integration_test -- --ignored
 ./validate_federation.sh
-cargo run --example federated_query
-cargo run --example test_federation
 ./test-gateway-health.sh
 
 # Run specific test categories
