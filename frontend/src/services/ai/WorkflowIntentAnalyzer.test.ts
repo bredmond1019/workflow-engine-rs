@@ -241,7 +241,7 @@ describe('WorkflowIntentAnalyzer', () => {
       expect(intent.type).toBe(IntentType.CREATE_WORKFLOW);
       expect(intent.confidence).toBeLessThan(0.3);
       expect(intent.needsClarification).toBe(true);
-      expect(intent.clarificationQuestions.length).toBeGreaterThan(2);
+      expect(intent.clarificationQuestions?.length).toBeGreaterThan(2);
     });
   });
 

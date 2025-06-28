@@ -4,6 +4,19 @@ import { WorkflowIntent } from '../../types/workflow';
 import { IntentType, WorkflowType } from '../../../../services/ai/WorkflowIntentAnalyzer';
 import styles from './WorkflowPreview.module.css';
 
+// Helper function to get node type CSS class safely
+const getNodeTypeClass = (nodeType: string): string => {
+  const typeMap: Record<string, string> = {
+    'trigger': styles.nodeTypeTrigger,
+    'source': styles.nodeTypeSource,
+    'condition': styles.nodeTypeCondition,
+    'action': styles.nodeTypeAction,
+    'transformation': styles.nodeTypeTransformation,
+    'ai': styles.nodeTypeAI,
+  };
+  return typeMap[nodeType] || '';
+};
+
 export interface WorkflowNode {
   id: string;
   type: 'trigger' | 'source' | 'condition' | 'action' | 'transformation' | 'ai';
@@ -547,7 +560,7 @@ export const WorkflowPreview: React.FC<WorkflowPreviewProps> = ({
                 }}
                 className={`
                   ${styles.node} 
-                  ${styles[`nodeType${node.type === 'ai' ? 'AI' : node.type.charAt(0).toUpperCase() + node.type.slice(1)}`]}
+                  ${getNodeTypeClass(node.type)}
                   ${isActive ? `${styles.nodeActive} ${styles.nodeHighlight} ${styles.nodePulse}` : ''}
                   ${isCompleted ? styles.nodeCompleted : ''}
                   ${isDimmed ? styles.nodeDimmed : ''}

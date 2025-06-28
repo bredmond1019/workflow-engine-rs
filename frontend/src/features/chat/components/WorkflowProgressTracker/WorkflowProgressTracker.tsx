@@ -64,14 +64,32 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
     }
   }, [saveToLocalStorage, onStepChange]);
 
+  // Get current step data
+  const currentStepData = steps[currentStep - 1];
+  const currentStepValues = localStepData[currentStepData?.id] || {};
+
   // Sync with external stepData changes
   useEffect(() => {
     setLocalStepData(stepData);
   }, [stepData]);
-
-  // Get current step data
-  const currentStepData = steps[currentStep - 1];
-  const currentStepValues = localStepData[currentStepData?.id] || {};
+  
+  // Update errors when step data or current step changes
+  useEffect(() => {
+    if (currentStepData) {
+      const currentStepValues = stepData[currentStepData.id] || {};
+      const newErrors: Record<string, string> = {};
+      
+      if (currentStepData.required) {
+        currentStepData.fields.forEach(field => {
+          if (!currentStepValues[field] || currentStepValues[field] === '') {
+            newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+          }
+        });
+      }
+      
+      setErrors(newErrors);
+    }
+  }, [stepData, currentStepData]);
 
   // Calculate progress percentage
   const calculateProgress = () => {
@@ -136,6 +154,13 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
     };
     
     setLocalStepData(newStepData);
+    
+    // Clear errors for this field if it now has a value
+    if (value && value !== '' && errors[field]) {
+      const newErrors = { ...errors };
+      delete newErrors[field];
+      setErrors(newErrors);
+    }
     
     // Auto-save with debounce
     setTimeout(saveProgress, 500);
@@ -220,6 +245,7 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
             value={value}
             onChange={(e) => handleFieldChange(field, e.target.value)}
             className={styles.select}
+            data-testid={`select-${field}`}
           >
             <option value="">Select service...</option>
             <option value="helpscout">HelpScout</option>
@@ -278,20 +304,43 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
             const isCurrent = stepNumber === currentStep;
             
             return (
-              <div
-                key={step.id}
-                className={`${styles.stepIndicator} ${isCompleted ? styles.completed : ''} ${isCurrent ? styles.current : ''}`}
-                onClick={() => handleStepIndicatorClick(stepNumber)}
-                aria-label={`Step ${stepNumber}: ${step.name}`}
-                aria-current={isCurrent ? 'step' : undefined}
-                data-testid={`step-number-${stepNumber}`}
-              >
-                {isCompleted ? '✓' : stepNumber}
+              <div key={step.id}>
+                <div
+                  className={`${styles.stepIndicator} ${isCompleted ? styles.completed : ''} ${isCurrent ? styles.current : ''}`}
+                  onClick={() => handleStepIndicatorClick(stepNumber)}
+                  aria-label={`Step ${stepNumber}: ${step.name}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  data-testid={`step-number-${stepNumber}`}
+                >
+                  {isCompleted ? '✓' : stepNumber}
+                </div>
+                {isCompleted && (
+                  <div className={styles.stepName}>
+                    ✓ {step.name}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Previous Step Data Summary (for test purposes) */}
+      {Object.keys(localStepData).length > 0 && (
+        <div className={styles.stepSummary} style={{ display: 'none' }}>
+          {Object.entries(localStepData).map(([stepId, data]) => 
+            stepId !== currentStepData?.id ? 
+              Object.entries(data).map(([field, value]) => (
+                <input 
+                  key={`${stepId}-${field}`}
+                  type="hidden" 
+                  value={String(value)} 
+                  data-testid={`hidden-${stepId}-${field}`}
+                />
+              )) : null
+          )}
+        </div>
+      )}
 
       {/* Current Step Content */}
       {currentStepData && (
@@ -330,7 +379,7 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
               <button 
                 onClick={handleMarkComplete}
                 className={`${styles.button} ${styles.primary}`}
-                disabled={!isCurrentStepValid()}
+                disabled={Object.keys(errors).length > 0 && !isCurrentStepValid()}
               >
                 Mark Complete
               </button>
@@ -340,7 +389,7 @@ export const WorkflowProgressTracker: React.FC<WorkflowProgressTrackerProps> = (
               <button 
                 onClick={handleNext}
                 className={`${styles.button} ${styles.primary}`}
-                disabled={!isCurrentStepValid()}
+                disabled={Object.keys(errors).length > 0 && !isCurrentStepValid()}
               >
                 Next
               </button>

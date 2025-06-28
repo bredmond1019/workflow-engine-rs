@@ -9,15 +9,7 @@ export default {
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react',
-        esModuleInterop: true,
-        moduleResolution: 'node',
-        allowSyntheticDefaultImports: true,
-        types: ['jest', '@testing-library/jest-dom'],
-        lib: ['ES2022', 'DOM', 'DOM.Iterable'],
-        target: 'ES2022',
-      },
+      tsconfig: '<rootDir>/tsconfig.test.json',
     }],
   },
   moduleNameMapper: {

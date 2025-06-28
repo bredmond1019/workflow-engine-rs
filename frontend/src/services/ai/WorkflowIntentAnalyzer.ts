@@ -424,7 +424,7 @@ export class WorkflowIntentAnalyzer {
           // Extract Slack channel if present
           if (value === 'slack') {
             const channelMatch = lowerMessage.match(/#(\w+)/);
-            if (channelMatch) {
+            if (channelMatch && param.metadata) {
               param.metadata.channel = '#' + channelMatch[1];
             }
           }
