@@ -836,6 +836,12 @@ pub trait McpClient {
 
 ## 🧪 Testing
 
+### 📚 Testing Documentation
+
+- **[USER_TESTING.md](USER_TESTING.md)** - Comprehensive validation guide for all components
+- **[QUICK_TEST_REFERENCE.md](QUICK_TEST_REFERENCE.md)** - Quick reference card for common test commands
+- **[FEDERATION.md](FEDERATION.md)** - GraphQL Federation testing and architecture guide
+
 ### Test Categories
 
 #### Unit Tests
