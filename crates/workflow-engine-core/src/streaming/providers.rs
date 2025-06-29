@@ -339,7 +339,7 @@ impl BedrockStreamingProvider {
             .map_err(|e| WorkflowError::api_error(
                 format!("Bedrock streaming API request failed: {}", e),
                 "AWS Bedrock",
-                &format!("model/{}", self.model_name),
+                format!("model/{}", self.model_name),
                 None,
             ))?;
 
@@ -512,7 +512,7 @@ impl BedrockStreamingProvider {
             .map_err(|e| WorkflowError::api_error(
                 format!("Bedrock API request failed: {}", e),
                 "AWS Bedrock",
-                &format!("model/{}", self.model_name),
+                format!("model/{}", self.model_name),
                 None,
             ))?;
         
@@ -532,7 +532,7 @@ impl BedrockStreamingProvider {
                 .ok_or_else(|| WorkflowError::api_error(
                     "Invalid response structure from Bedrock Claude",
                     "AWS Bedrock",
-                    &format!("model/{}", self.model_name),
+                    format!("model/{}", self.model_name),
                     None,
                 ))?
         } else if self.model_name.starts_with("amazon.titan") {
@@ -541,7 +541,7 @@ impl BedrockStreamingProvider {
                 .ok_or_else(|| WorkflowError::api_error(
                     "Invalid response structure from Bedrock Titan",
                     "AWS Bedrock",
-                    &format!("model/{}", self.model_name),
+                    format!("model/{}", self.model_name),
                     None,
                 ))?
         } else {

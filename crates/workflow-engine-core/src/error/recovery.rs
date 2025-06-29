@@ -201,9 +201,12 @@ impl RecoveryHandler for DefaultRecoveryHandler {
     }
 }
 
+/// Type alias for async operations in degradation builder
+type AsyncOperation<T> = std::pin::Pin<Box<dyn Future<Output = Result<T, WorkflowError>> + Send>>;
+
 /// Graceful degradation builder
 pub struct DegradationBuilder<T> {
-    operations: Vec<std::pin::Pin<Box<dyn Future<Output = Result<T, WorkflowError>> + Send>>>,
+    operations: Vec<AsyncOperation<T>>,
 }
 
 impl<T> DegradationBuilder<T> {

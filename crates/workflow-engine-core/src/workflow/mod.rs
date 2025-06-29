@@ -482,10 +482,7 @@ impl Workflow {
                 "Failed to acquire read lock on node registry",
                 "Registry",
                 None,
-                Some(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    e.to_string()
-                ))),
+                Some(Box::new(std::io::Error::other(e.to_string()))),
             )
         })
     }
@@ -760,10 +757,7 @@ fn acquire_arc_registry_read_lock<'a>(
             format!("Failed to acquire read lock on node registry in {}", context),
             "Registry",
             None,
-            Some(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                e.to_string()
-            ))),
+            Some(Box::new(std::io::Error::other(e.to_string()))),
         )
     })
 }

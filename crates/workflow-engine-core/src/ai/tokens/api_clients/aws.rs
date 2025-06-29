@@ -273,12 +273,12 @@ pub fn parse_aws_pricing_response(json: &str) -> TokenResult<Vec<BedrockModelPri
                 // Find pricing terms for this SKU
                 if let Some(on_demand_terms) = response.terms.get("OnDemand") {
                     if let Some(sku_terms) = on_demand_terms.get(&sku) {
-                        for (_, term) in sku_terms {
+                        for term in sku_terms.values() {
                             // Extract input and output pricing
                             let mut input_price = 0.0;
                             let mut output_price = 0.0;
                             
-                            for (_, dimension) in &term.price_dimensions {
+                            for dimension in term.price_dimensions.values() {
                                 if dimension.description.contains("input") {
                                     if let Some(price_str) = dimension.price_per_unit.get("USD") {
                                         input_price = price_str.parse::<f64>().unwrap_or(0.0);

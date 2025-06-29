@@ -169,7 +169,7 @@ impl TemplateValidator {
         // Check that all extracted variables are defined (if strict mode)
         for rule in &self.rules {
             if matches!(rule, ValidationRule::RequireVariableDefinitions) {
-                for (var_name, _) in &extracted_vars {
+                for var_name in extracted_vars.keys() {
                     if !template.variables.contains_key(var_name) {
                         return Err(ValidationError::MissingVariable {
                             name: var_name.clone(),

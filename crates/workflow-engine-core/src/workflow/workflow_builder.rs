@@ -13,11 +13,14 @@ use crate::{
     workflow::{Workflow, schema::WorkflowSchema},
 };
 
+/// Type alias for validation rule functions
+type ValidationRule = Box<dyn Fn(&WorkflowSchema) -> Result<(), WorkflowError>>;
+
 /// Type-safe workflow builder with compile-time guarantees
 pub struct TypedWorkflowBuilder<StartNode: Node + 'static> {
     schema: WorkflowSchema,
     node_configs: HashMap<TypeId, NodeConfig>,
-    validation_rules: Vec<Box<dyn Fn(&WorkflowSchema) -> Result<(), WorkflowError>>>,
+    validation_rules: Vec<ValidationRule>,
     metadata: HashMap<String, serde_json::Value>,
     _phantom: PhantomData<StartNode>,
 }

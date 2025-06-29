@@ -190,37 +190,29 @@ impl BudgetLimits {
         let config = self.config.read().await;
 
         // Check global limits
-        if config.global_limits.enabled {
-            if !self.check_global_limits(&config.global_limits, token_usage, cost).await? {
-                return Ok(false);
-            }
+        if config.global_limits.enabled && !self.check_global_limits(&config.global_limits, token_usage, cost).await? {
+            return Ok(false);
         }
 
         // Check provider limits
         if let Some(provider_limits) = config.provider_limits.get(provider) {
-            if provider_limits.enabled {
-                if !self.check_provider_limits(provider_limits, token_usage, cost).await? {
-                    return Ok(false);
-                }
+            if provider_limits.enabled && !self.check_provider_limits(provider_limits, token_usage, cost).await? {
+                return Ok(false);
             }
         }
 
         // Check model limits
         if let Some(model_limits) = config.model_limits.get(model) {
-            if model_limits.enabled {
-                if !self.check_model_limits(model_limits, token_usage, cost).await? {
-                    return Ok(false);
-                }
+            if model_limits.enabled && !self.check_model_limits(model_limits, token_usage, cost).await? {
+                return Ok(false);
             }
         }
 
         // Check user limits
         if let Some(user_id) = user_id {
             if let Some(user_limits) = config.user_limits.get(user_id) {
-                if user_limits.enabled {
-                    if !self.check_user_limits(user_limits, token_usage, cost).await? {
-                        return Ok(false);
-                    }
+                if user_limits.enabled && !self.check_user_limits(user_limits, token_usage, cost).await? {
+                    return Ok(false);
                 }
             }
         }
@@ -836,17 +828,17 @@ impl BudgetLimits {
         // Check thresholds for each scope
         for threshold in &config.alerting.warning_thresholds {
             let should_alert = match &threshold.scope {
-                AlertScope::Global => self.check_threshold_violation(&threshold, &AlertScope::Global).await?,
-                AlertScope::Provider(p) if p == provider => self.check_threshold_violation(&threshold, &AlertScope::Provider(provider.clone())).await?,
-                AlertScope::Model(m) if m == model => self.check_threshold_violation(&threshold, &AlertScope::Model(model.clone())).await?,
+                AlertScope::Global => self.check_threshold_violation(threshold, &AlertScope::Global).await?,
+                AlertScope::Provider(p) if p == provider => self.check_threshold_violation(threshold, &AlertScope::Provider(provider.clone())).await?,
+                AlertScope::Model(m) if m == model => self.check_threshold_violation(threshold, &AlertScope::Model(model.clone())).await?,
                 AlertScope::User(u) if user_id.map(|id| id == u).unwrap_or(false) => {
-                    self.check_threshold_violation(&threshold, &AlertScope::User(u.clone())).await?
+                    self.check_threshold_violation(threshold, &AlertScope::User(u.clone())).await?
                 },
                 _ => false,
             };
 
             if should_alert {
-                self.send_alert(&threshold, &config.alerting).await?;
+                self.send_alert(threshold, &config.alerting).await?;
             }
         }
 

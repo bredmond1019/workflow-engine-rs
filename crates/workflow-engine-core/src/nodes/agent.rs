@@ -615,7 +615,7 @@ impl ModelInstance for BedrockModelInstance {
             .map_err(|e| WorkflowError::api_error(
                 format!("Bedrock API request failed: {}", e),
                 "AWS Bedrock",
-                &format!("model/{}", self.model_name),
+                format!("model/{}", self.model_name),
                 None,
             ))?;
         
@@ -635,7 +635,7 @@ impl ModelInstance for BedrockModelInstance {
                 .ok_or_else(|| WorkflowError::api_error(
                     "Invalid response structure from Bedrock Claude",
                     "AWS Bedrock",
-                    &format!("model/{}", self.model_name),
+                    format!("model/{}", self.model_name),
                     None,
                 ))
                 .map(|s| s.to_string())
@@ -645,7 +645,7 @@ impl ModelInstance for BedrockModelInstance {
                 .ok_or_else(|| WorkflowError::api_error(
                     "Invalid response structure from Bedrock Titan",
                     "AWS Bedrock",
-                    &format!("model/{}", self.model_name),
+                    format!("model/{}", self.model_name),
                     None,
                 ))
                 .map(|s| s.to_string())
@@ -653,7 +653,7 @@ impl ModelInstance for BedrockModelInstance {
             Err(WorkflowError::api_error(
                 "Unknown response format",
                 "AWS Bedrock",
-                &format!("model/{}", self.model_name),
+                format!("model/{}", self.model_name),
                 None,
             ))
         }

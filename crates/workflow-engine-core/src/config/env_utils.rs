@@ -121,7 +121,7 @@ impl EnvLoader {
                     Err(ConfigError::invalid_value(
                         key,
                         &value,
-                        &format!("one of: {}", allowed_values.join(", ")),
+                        format!("one of: {}", allowed_values.join(", ")),
                         "environment variable",
                     ))
                 }

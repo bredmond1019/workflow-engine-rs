@@ -228,10 +228,8 @@ impl BudgetTracker {
         // Check project budget
         if let Some(project_id) = project_id {
             if let Some(project_budget) = config.project_budgets.get(project_id) {
-                if project_budget.enabled {
-                    if !self.check_project_budget(project_budget, cost).await? {
-                        return Ok(false);
-                    }
+                if project_budget.enabled && !self.check_project_budget(project_budget, cost).await? {
+                    return Ok(false);
                 }
             }
         }

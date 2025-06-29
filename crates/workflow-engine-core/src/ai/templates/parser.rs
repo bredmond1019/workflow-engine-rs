@@ -217,9 +217,9 @@ impl TemplateParser {
         }
         
         // Check for special forms
-        if trimmed.starts_with('#') {
+        if let Some(stripped) = trimmed.strip_prefix('#') {
             // Block start
-            let parts: Vec<&str> = trimmed[1..].split_whitespace().collect();
+            let parts: Vec<&str> = stripped.split_whitespace().collect();
             if parts.is_empty() {
                 return Err(ParseError::InvalidSyntax {
                     position: start_pos,
@@ -234,9 +234,9 @@ impl TemplateParser {
                     name: parts[0].to_string(),
                 }),
             }
-        } else if trimmed.starts_with('/') {
+        } else if let Some(stripped) = trimmed.strip_prefix('/') {
             // Block end
-            let block_type = trimmed[1..].trim();
+            let block_type = stripped.trim();
             match block_type {
                 "if" => Ok(Token::IfEnd),
                 "each" => Ok(Token::EachEnd),
@@ -247,9 +247,9 @@ impl TemplateParser {
             }
         } else if trimmed == "else" {
             Ok(Token::Else)
-        } else if trimmed.starts_with('>') {
+        } else if let Some(stripped) = trimmed.strip_prefix('>') {
             // Include
-            let template_name = trimmed[1..].trim();
+            let template_name = stripped.trim();
             Ok(Token::Include(template_name.to_string()))
         } else {
             // Variable or helper

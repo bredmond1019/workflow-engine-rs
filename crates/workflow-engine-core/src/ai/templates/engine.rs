@@ -405,7 +405,7 @@ fn capitalize_helper(
         let mut chars = s.chars();
         if let Some(first) = chars.next() {
             out.write(&first.to_uppercase().to_string())?;
-            out.write(&chars.as_str())?;
+            out.write(chars.as_str())?;
         }
     }
     Ok(())

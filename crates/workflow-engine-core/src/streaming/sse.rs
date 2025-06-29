@@ -41,11 +41,8 @@ impl SSEParser {
                             string_data
                                 .lines()
                                 .filter_map(|line| {
-                                    if line.starts_with("data: ") {
-                                        Some(Ok(line[6..].to_string()))
-                                    } else {
-                                        None
-                                    }
+                                    line.strip_prefix("data: ")
+                                        .map(|stripped| Ok(stripped.to_string()))
                                 })
                                 .collect::<Vec<_>>()
                         )
