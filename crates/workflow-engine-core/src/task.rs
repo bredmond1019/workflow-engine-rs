@@ -268,7 +268,7 @@ use uuid::Uuid;
 // Event integration is in the API crate
 // use crate::db::event::Event;
 
-use super::error::WorkflowError;
+use super::error::{WorkflowError, SerializationErrorDetails, DeserializationErrorDetails};
 
 /// The primary data container that flows through workflow execution.
 ///
@@ -383,13 +383,13 @@ impl TaskContext {
 
     pub fn get_event_data<T: for<'de> Deserialize<'de>>(&self) -> Result<T, WorkflowError> {
         serde_json::from_value(self.event_data.clone()).map_err(|e| {
-            WorkflowError::DeserializationError {
+            WorkflowError::DeserializationError(Box::new(DeserializationErrorDetails {
                 message: format!("Failed to deserialize event data: {}", e),
                 expected_type: std::any::type_name::<T>().to_string(),
                 context: "from event data".to_string(),
                 raw_data: Some(self.event_data.to_string()),
                 source: Some(e),
-            }
+            }))
         })
     }
 
@@ -400,7 +400,7 @@ impl TaskContext {
         match self.nodes.get(node_name) {
             Some(value) => {
                 let data = serde_json::from_value(value.clone()).map_err(|e| {
-                    WorkflowError::DeserializationError {
+                    WorkflowError::DeserializationError(Box::new(DeserializationErrorDetails {
                         message: format!(
                             "Failed to deserialize node data for {}: {}",
                             node_name, e
@@ -409,7 +409,7 @@ impl TaskContext {
                         context: format!("from node '{}' data", node_name),
                         raw_data: Some(value.to_string()),
                         source: Some(e),
-                    }
+                    }))
                 })?;
                 Ok(Some(data))
             }
@@ -420,9 +420,9 @@ impl TaskContext {
     /*
     pub fn to_event(&self) -> Result<Event, WorkflowError> {
         let task_context_value =
-            serde_json::to_value(self).map_err(|e| WorkflowError::SerializationError {
-                message: format!("Failed to serialize task context: {}", e),
-            })?;
+            serde_json::to_value(self).map_err(|e| WorkflowError::serialization_error_simple(
+                format!("Failed to serialize task context: {}", e)
+            ))?;
 
         Ok(Event {
             id: self.event_id,
@@ -437,12 +437,12 @@ impl TaskContext {
 
     // Additional methods that are referenced in the codebase
     pub fn set_data<T: Serialize>(&mut self, key: &str, data: T) -> Result<(), WorkflowError> {
-        let value = serde_json::to_value(data).map_err(|e| WorkflowError::SerializationError {
+        let value = serde_json::to_value(data).map_err(|e| WorkflowError::SerializationError(Box::new(SerializationErrorDetails {
             message: format!("Failed to serialize data for key {}: {}", key, e),
             type_name: std::any::type_name::<T>().to_string(),
             context: format!("for key '{}'", key),
             source: Some(e),
-        })?;
+        })))?;
         self.nodes.insert(key.to_string(), value);
         self.updated_at = Utc::now();
         Ok(())
@@ -461,12 +461,12 @@ impl TaskContext {
     }
 
     pub fn set_metadata<T: Serialize>(&mut self, key: &str, value: T) -> Result<(), WorkflowError> {
-        let serialized_value = serde_json::to_value(value).map_err(|e| WorkflowError::SerializationError {
+        let serialized_value = serde_json::to_value(value).map_err(|e| WorkflowError::SerializationError(Box::new(SerializationErrorDetails {
             message: format!("Failed to serialize metadata for key {}: {}", key, e),
             type_name: std::any::type_name::<T>().to_string(),
             context: format!("for metadata key '{}'", key),
             source: Some(e),
-        })?;
+        })))?;
         self.metadata.insert(key.to_string(), serialized_value);
         self.updated_at = Utc::now();
         Ok(())
@@ -476,13 +476,13 @@ impl TaskContext {
         match self.metadata.get(key) {
             Some(value) => {
                 let data = serde_json::from_value(value.clone()).map_err(|e| {
-                    WorkflowError::DeserializationError {
+                    WorkflowError::DeserializationError(Box::new(DeserializationErrorDetails {
                         message: format!("Failed to deserialize metadata for {}: {}", key, e),
                         expected_type: std::any::type_name::<T>().to_string(),
                         context: format!("from metadata key '{}'", key),
                         raw_data: Some(value.to_string()),
                         source: Some(e),
-                    }
+                    }))
                 })?;
                 Ok(Some(data))
             }

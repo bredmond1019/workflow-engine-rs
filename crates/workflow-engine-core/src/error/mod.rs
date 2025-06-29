@@ -22,6 +22,7 @@ pub mod retry;
 pub mod circuit_breaker;
 pub mod context;
 pub mod recovery;
+pub mod boxed;
 
 #[cfg(feature = "monitoring")]
 pub mod metrics;
@@ -32,6 +33,7 @@ pub use retry::{RetryPolicy, RetryableError, retry_with_policy, RetryBuilder};
 pub use circuit_breaker::{CircuitBreaker, CircuitBreakerConfig, CircuitState};
 pub use context::{ErrorContext, ErrorContextExt};
 pub use recovery::{RecoveryStrategy, FallbackValue, with_fallback, with_fallback_fn, CacheRecovery};
+pub use boxed::*;
 
 #[cfg(feature = "monitoring")]
 pub use metrics::ErrorMetrics;

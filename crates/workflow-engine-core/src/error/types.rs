@@ -221,6 +221,7 @@
 //! - `TransportError` → `WorkflowError::MCPTransportError`
 
 use std::any::TypeId;
+use super::boxed::*;
 
 /// Primary error type for all AI Architecture Core operations.
 ///
@@ -349,18 +350,8 @@ pub enum WorkflowError {
     /// - `node_id` - Identifier of the node that failed
     /// - `node_type` - Type name of the failed node
     /// - `source` - Underlying error that caused the failure
-    #[error("Node processing error in {node_type}{}: {message}", node_id.as_ref().map(|id| format!(" (ID: {})", id)).unwrap_or_default())]
-    ProcessingError { 
-        /// Detailed description of the processing failure
-        message: String,
-        /// Node identifier for debugging
-        node_id: Option<String>,
-        /// Node type name for context
-        node_type: String,
-        /// Underlying error that caused this failure
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    ProcessingError(Box<ProcessingErrorDetails>),
 
     /// Referenced node type is not registered in the workflow.
     ///
@@ -389,18 +380,8 @@ pub enum WorkflowError {
     /// - `type_name` - Name of the type being serialized
     /// - `context` - Context where serialization failed
     /// - `source` - Underlying serde error
-    #[error("Serialization error for type '{type_name}' {context}: {message}")]
-    SerializationError { 
-        /// Details about the serialization failure
-        message: String,
-        /// Type name being serialized
-        type_name: String,
-        /// Context information (e.g., "during workflow save", "in API response")
-        context: String,
-        /// Underlying serde_json::Error
-        #[source]
-        source: Option<serde_json::Error>,
-    },
+    #[error("{0}")]
+    SerializationError(Box<SerializationErrorDetails>),
 
     /// Failed to deserialize JSON data to expected type.
     ///
@@ -413,20 +394,8 @@ pub enum WorkflowError {
     /// - `context` - Context where deserialization failed
     /// - `raw_data` - Raw JSON data that failed to deserialize (truncated for large data)
     /// - `source` - Underlying serde error
-    #[error("Deserialization error to type '{expected_type}' {context}: {message}")]
-    DeserializationError { 
-        /// Details about the deserialization failure
-        message: String,
-        /// Expected target type name
-        expected_type: String,
-        /// Context information (e.g., "from API response", "from database")
-        context: String,
-        /// Raw JSON data (truncated if too long)
-        raw_data: Option<String>,
-        /// Underlying serde_json::Error
-        #[source]
-        source: Option<serde_json::Error>,
-    },
+    #[error("{0}")]
+    DeserializationError(Box<DeserializationErrorDetails>),
 
     /// Database operation failure.
     ///
@@ -438,18 +407,8 @@ pub enum WorkflowError {
     /// - `operation` - The database operation that failed
     /// - `table` - Database table involved (if applicable)
     /// - `source` - Underlying database error
-    #[error("Database error during {operation}{}: {message}", table.as_ref().map(|t| format!(" on table '{}'", t)).unwrap_or_default())]
-    DatabaseError { 
-        /// Details about the database operation failure
-        message: String,
-        /// Database operation type (e.g., "SELECT", "INSERT", "connection")
-        operation: String,
-        /// Table name if applicable
-        table: Option<String>,
-        /// Underlying database error (Diesel, SQLx, etc.)
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    DatabaseError(Box<DatabaseErrorDetails>),
 
     /// Workflow type mismatch between expected and actual.
     ///
@@ -479,22 +438,8 @@ pub enum WorkflowError {
     /// - `status_code` - HTTP status code if available
     /// - `retry_count` - Number of retries attempted
     /// - `source` - Underlying HTTP client error
-    #[error("API error from {service} at {endpoint}{}: {message}", status_code.map(|c| format!(" (status {})", c)).unwrap_or_default())]
-    ApiError { 
-        /// Details about the API call failure
-        message: String,
-        /// Service name (e.g., "OpenAI", "Anthropic", "HelpScout")
-        service: String,
-        /// API endpoint path
-        endpoint: String,
-        /// HTTP status code if available
-        status_code: Option<u16>,
-        /// Number of retry attempts made
-        retry_count: u32,
-        /// Underlying HTTP error (reqwest, etc.)
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    ApiError(Box<ApiErrorDetails>),
 
     /// General runtime error.
     ///
@@ -519,18 +464,8 @@ pub enum WorkflowError {
     /// - `server_name` - Name of the MCP server
     /// - `operation` - MCP operation that failed
     /// - `source` - Underlying MCP error
-    #[error("MCP error from server '{server_name}' during {operation}: {message}")]
-    MCPError { 
-        /// Details about the MCP operation failure
-        message: String,
-        /// Name of the MCP server
-        server_name: String,
-        /// MCP operation (e.g., "tool_call", "list_tools", "connect")
-        operation: String,
-        /// Underlying MCP-specific error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    MCPError(Box<MCPErrorDetails>),
 
     /// MCP connection establishment failure.
     ///
@@ -544,22 +479,8 @@ pub enum WorkflowError {
     /// - `endpoint` - Connection endpoint or command
     /// - `retry_count` - Number of connection retries attempted
     /// - `source` - Underlying connection error
-    #[error("MCP connection error to server '{server_name}' via {transport_type} at '{endpoint}' (retries: {retry_count}): {message}")]
-    MCPConnectionError { 
-        /// Details about the connection failure
-        message: String,
-        /// Name of the MCP server
-        server_name: String,
-        /// Transport type (WebSocket, stdio, HTTP)
-        transport_type: String,
-        /// Connection endpoint URL or command
-        endpoint: String,
-        /// Number of retry attempts made
-        retry_count: u32,
-        /// Underlying transport error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    MCPConnectionError(Box<MCPConnectionErrorDetails>),
 
     /// MCP protocol violation or communication error.
     ///
@@ -573,22 +494,8 @@ pub enum WorkflowError {
     /// - `received` - What was actually received
     /// - `message_type` - Type of MCP message being processed
     /// - `source` - Underlying protocol error
-    #[error("MCP protocol error from server '{server_name}' for {message_type}: {message}. Expected: {expected}, Received: {received}")]
-    MCPProtocolError { 
-        /// Details about the protocol violation
-        message: String,
-        /// Name of the MCP server
-        server_name: String,
-        /// What was expected according to protocol
-        expected: String,
-        /// What was actually received
-        received: String,
-        /// MCP message type (request, response, notification)
-        message_type: String,
-        /// Underlying protocol parsing error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    MCPProtocolError(Box<MCPProtocolErrorDetails>),
 
     /// MCP transport layer failure.
     ///
@@ -601,20 +508,8 @@ pub enum WorkflowError {
     /// - `transport_type` - Type of transport that failed
     /// - `operation` - Transport operation that failed
     /// - `source` - Underlying transport error
-    #[error("MCP transport error ({transport_type}) from server '{server_name}' during {operation}: {message}")]
-    MCPTransportError { 
-        /// Details about the transport layer failure
-        message: String,
-        /// Name of the MCP server
-        server_name: String,
-        /// Transport type (WebSocket, stdio, HTTP)
-        transport_type: String,
-        /// Transport operation (send, receive, connect, disconnect)
-        operation: String,
-        /// Underlying transport layer error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    MCPTransportError(Box<MCPTransportErrorDetails>),
 
     /// Input validation failure.
     ///
@@ -627,19 +522,8 @@ pub enum WorkflowError {
     /// - `value` - Value that failed validation (sanitized)
     /// - `constraint` - Validation constraint that was violated
     /// - `context` - Context where validation occurred
-    #[error("Validation error for field '{field}' {context}: {message}. Constraint: {constraint}")]
-    ValidationError { 
-        /// Details about what validation rule was violated
-        message: String,
-        /// Field name that failed validation
-        field: String,
-        /// Value that failed validation (potentially sanitized for security)
-        value: Option<String>,
-        /// Validation constraint description
-        constraint: String,
-        /// Context where validation occurred (e.g., "in workflow input", "during node processing")
-        context: String,
-    },
+    #[error("{0}")]
+    ValidationError(Box<ValidationErrorDetails>),
 
     /// Agent registry operation failure.
     ///
@@ -652,20 +536,8 @@ pub enum WorkflowError {
     /// - `resource_type` - Type of resource (agent, node, workflow)
     /// - `resource_id` - ID of the resource if applicable
     /// - `source` - Underlying registry error
-    #[error("Registry error during {operation} for {resource_type}{}: {message}", resource_id.as_ref().map(|id| format!(" '{}'", id)).unwrap_or_default())]
-    RegistryError { 
-        /// Details about the registry operation failure
-        message: String,
-        /// Registry operation (register, unregister, lookup, list)
-        operation: String,
-        /// Type of resource being operated on
-        resource_type: String,
-        /// Resource identifier if applicable
-        resource_id: Option<String>,
-        /// Underlying registry-specific error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    RegistryError(Box<RegistryErrorDetails>),
 
     /// Invalid workflow step type.
     ///
@@ -677,17 +549,8 @@ pub enum WorkflowError {
     /// - `workflow_id` - ID of the workflow containing the invalid step
     /// - `step_index` - Index of the step in the workflow
     /// - `available_types` - List of available step types
-    #[error("Invalid step type '{step_type}' at index {step_index} in workflow '{workflow_id}'. Available types: {}", available_types.join(", "))]
-    InvalidStepType {
-        /// Invalid step type name
-        step_type: String,
-        /// Workflow identifier
-        workflow_id: String,
-        /// Step index in workflow
-        step_index: usize,
-        /// Available step types for reference
-        available_types: Vec<String>,
-    },
+    #[error("{0}")]
+    InvalidStepType(Box<InvalidStepTypeDetails>),
 
     /// Invalid workflow input.
     ///
@@ -700,19 +563,8 @@ pub enum WorkflowError {
     /// - `expected_schema` - Expected input schema description
     /// - `received_fields` - Fields that were actually received
     /// - `missing_fields` - Required fields that are missing
-    #[error("Invalid input for workflow '{workflow_id}': {message}. Expected schema: {expected_schema}. Missing fields: {}", missing_fields.join(", "))]
-    InvalidInput {
-        /// Details about the invalid input
-        message: String,
-        /// Workflow identifier
-        workflow_id: String,
-        /// Description of expected schema
-        expected_schema: String,
-        /// Fields that were received
-        received_fields: Vec<String>,
-        /// Required fields that are missing
-        missing_fields: Vec<String>,
-    },
+    #[error("{0}")]
+    InvalidInput(Box<InvalidInputDetails>),
 
     /// Cross-system communication error.
     ///
@@ -726,22 +578,8 @@ pub enum WorkflowError {
     /// - `operation` - Operation being performed
     /// - `retry_count` - Number of retries attempted
     /// - `source` - Underlying communication error
-    #[error("Cross-system error from {source_service} to {target_service} during {operation} (retries: {retry_count}): {message}")]
-    CrossSystemError {
-        /// Details about the cross-system failure
-        message: String,
-        /// Service making the call
-        source_service: String,
-        /// Service being called
-        target_service: String,
-        /// Operation being performed
-        operation: String,
-        /// Number of retry attempts made
-        retry_count: u32,
-        /// Underlying communication error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    CrossSystemError(Box<CrossSystemErrorDetails>),
 
     /// Configuration error.
     ///
@@ -755,22 +593,8 @@ pub enum WorkflowError {
     /// - `expected_format` - Expected format or value range
     /// - `received_value` - Value that was received (sanitized)
     /// - `source` - Underlying configuration parsing error
-    #[error("Configuration error for key '{config_key}' from {config_source}: {message}. Expected: {expected_format}, Received: {}", received_value.as_deref().unwrap_or("<none>"))]
-    ConfigurationError {
-        /// Details about the configuration issue
-        message: String,
-        /// Configuration key that has the issue
-        config_key: String,
-        /// Source of the configuration (environment, file, command-line, default)
-        config_source: String,
-        /// Expected format or value description
-        expected_format: String,
-        /// Value that was received (potentially sanitized for security)
-        received_value: Option<String>,
-        /// Underlying configuration parsing error
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error("{0}")]
+    ConfigurationError(Box<ConfigurationErrorDetails>),
 }
 
 #[cfg(feature = "database")]
@@ -782,12 +606,12 @@ impl From<diesel::result::Error> for WorkflowError {
             _ => ("unknown".to_string(), None),
         };
         
-        WorkflowError::DatabaseError {
+        WorkflowError::DatabaseError(Box::new(DatabaseErrorDetails {
             message: format!("Diesel error: {}", error),
             operation,
             table,
             source: Some(Box::new(error)),
-        }
+        }))
     }
 }
 
@@ -798,14 +622,13 @@ impl From<reqwest::Error> for WorkflowError {
         let endpoint = error.url().map(|u| u.to_string()).unwrap_or_else(|| "unknown".to_string());
         let service = "external_api".to_string(); // Default service name
         
-        WorkflowError::ApiError {
+        WorkflowError::ApiError(Box::new(ApiErrorDetails {
             message: format!("HTTP request failed: {}", error),
             service,
             endpoint,
             status_code,
-            retry_count: 0,
             source: Some(Box::new(error)),
-        }
+        }))
     }
 }
 
@@ -820,20 +643,20 @@ impl From<serde_json::Error> for WorkflowError {
                                error_msg.contains("expected");
         
         if is_deserialization {
-            WorkflowError::DeserializationError {
+            WorkflowError::DeserializationError(Box::new(DeserializationErrorDetails {
                 message: format!("JSON deserialization failed: {}", error),
                 expected_type: "unknown".to_string(),
                 context: "during JSON parsing".to_string(),
                 raw_data: None, // Raw data not available from serde_json::Error
                 source: Some(error),
-            }
+            }))
         } else {
-            WorkflowError::SerializationError {
+            WorkflowError::SerializationError(Box::new(SerializationErrorDetails {
                 message: format!("JSON serialization failed: {}", error),
                 type_name: "unknown".to_string(),
                 context: "during JSON encoding".to_string(),
                 source: Some(error),
-            }
+            }))
         }
     }
 }
@@ -841,90 +664,89 @@ impl From<serde_json::Error> for WorkflowError {
 #[cfg(feature = "monitoring")]
 impl From<prometheus::Error> for WorkflowError {
     fn from(error: prometheus::Error) -> Self {
-        WorkflowError::ProcessingError {
+        WorkflowError::ProcessingError(Box::new(ProcessingErrorDetails {
             message: format!("Prometheus metrics error: {}", error),
             node_id: None,
             node_type: "metrics_collector".to_string(),
             source: Some(Box::new(error)),
-        }
+        }))
     }
 }
 
 impl WorkflowError {
     /// Create a configuration error with a simple message (backward compatibility)
     pub fn configuration_error_simple(message: impl Into<String>) -> Self {
-        Self::ConfigurationError {
+        Self::ConfigurationError(Box::new(ConfigurationErrorDetails {
             message: message.into(),
             config_key: "unknown".to_string(),
             config_source: "application".to_string(),
             expected_format: "valid configuration".to_string(),
             received_value: None,
             source: None,
-        }
+        }))
     }
 
     /// Create an API error with minimal information (backward compatibility)
     pub fn api_error_simple(message: impl Into<String>) -> Self {
-        Self::ApiError {
+        Self::ApiError(Box::new(ApiErrorDetails {
             message: message.into(),
             service: "external_service".to_string(),
             endpoint: "unknown".to_string(),
             status_code: None,
-            retry_count: 0,
             source: None,
-        }
+        }))
     }
 
     /// Create a processing error with minimal information (backward compatibility) 
     pub fn processing_error_simple(message: impl Into<String>) -> Self {
-        Self::ProcessingError {
+        Self::ProcessingError(Box::new(ProcessingErrorDetails {
             message: message.into(),
             node_id: None,
             node_type: "unknown".to_string(),
             source: None,
-        }
+        }))
     }
 
     /// Create a validation error with minimal information (backward compatibility)
     pub fn validation_error_simple(message: impl Into<String>) -> Self {
-        Self::ValidationError {
+        Self::ValidationError(Box::new(ValidationErrorDetails {
             message: message.into(),
             field: "unknown".to_string(),
             value: None,
             constraint: "validation_failed".to_string(),
             context: "during validation".to_string(),
-        }
+        }))
     }
 
     /// Create a serialization error with minimal information (backward compatibility)
     pub fn serialization_error_simple(message: impl Into<String>) -> Self {
-        Self::SerializationError {
+        Self::SerializationError(Box::new(SerializationErrorDetails {
             message: message.into(),
             type_name: "unknown".to_string(),
             context: "during serialization".to_string(),
             source: None,
-        }
+        }))
     }
 
     /// Create a deserialization error with minimal information (backward compatibility)
     pub fn deserialization_error_simple(message: impl Into<String>) -> Self {
-        Self::DeserializationError {
+        Self::DeserializationError(Box::new(DeserializationErrorDetails {
             message: message.into(),
             expected_type: "unknown".to_string(),
             context: "during deserialization".to_string(),
             raw_data: None,
             source: None,
-        }
+        }))
     }
 
     /// Create a processing error with basic information
     pub fn processing_error(message: impl Into<String>, node_type: impl Into<String>) -> Self {
-        Self::ProcessingError {
+        Self::ProcessingError(Box::new(ProcessingErrorDetails {
             message: message.into(),
             node_id: None,
             node_type: node_type.into(),
             source: None,
-        }
+        }))
     }
 
     /// Create a processing error with full context
@@ -934,12 +756,12 @@ impl WorkflowError {
         node_id: Option<String>,
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     ) -> Self {
-        Self::ProcessingError {
+        Self::ProcessingError(Box::new(ProcessingErrorDetails {
             message: message.into(),
             node_id,
             node_type: node_type.into(),
             source,
-        }
+        }))
     }
 
     /// Create a validation error with context
@@ -949,13 +771,13 @@ impl WorkflowError {
         constraint: impl Into<String>,
         context: impl Into<String>,
     ) -> Self {
-        Self::ValidationError {
+        Self::ValidationError(Box::new(ValidationErrorDetails {
             message: message.into(),
             field: field.into(),
             value: None,
             constraint: constraint.into(),
             context: context.into(),
-        }
+        }))
     }
 
     /// Create a validation error with the failing value
@@ -966,13 +788,13 @@ impl WorkflowError {
         constraint: impl Into<String>,
         context: impl Into<String>,
     ) -> Self {
-        Self::ValidationError {
+        Self::ValidationError(Box::new(ValidationErrorDetails {
             message: message.into(),
             field: field.into(),
             value,
             constraint: constraint.into(),
             context: context.into(),
-        }
+        }))
     }
 
     /// Create a database error with operation context
@@ -981,12 +803,12 @@ impl WorkflowError {
         operation: impl Into<String>,
         table: Option<String>,
     ) -> Self {
-        Self::DatabaseError {
+        Self::DatabaseError(Box::new(DatabaseErrorDetails {
             message: message.into(),
             operation: operation.into(),
             table,
             source: None,
-        }
+        }))
     }
 
     /// Create an API error with full context
@@ -996,14 +818,13 @@ impl WorkflowError {
         endpoint: impl Into<String>,
         status_code: Option<u16>,
     ) -> Self {
-        Self::ApiError {
+        Self::ApiError(Box::new(ApiErrorDetails {
             message: message.into(),
             service: service.into(),
             endpoint: endpoint.into(),
             status_code,
-            retry_count: 0,
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP connection error
@@ -1013,14 +834,14 @@ impl WorkflowError {
         transport_type: impl Into<String>,
         endpoint: impl Into<String>,
     ) -> Self {
-        Self::MCPConnectionError {
+        Self::MCPConnectionError(Box::new(MCPConnectionErrorDetails {
             message: message.into(),
             server_name: server_name.into(),
             transport_type: transport_type.into(),
             endpoint: endpoint.into(),
             retry_count: 0,
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP protocol error
@@ -1031,14 +852,14 @@ impl WorkflowError {
         received: impl Into<String>,
         message_type: impl Into<String>,
     ) -> Self {
-        Self::MCPProtocolError {
+        Self::MCPProtocolError(Box::new(MCPProtocolErrorDetails {
             message: message.into(),
             server_name: server_name.into(),
             expected: expected.into(),
             received: received.into(),
             message_type: message_type.into(),
             source: None,
-        }
+        }))
     }
 
     /// Create a serialization error with type context
@@ -1047,12 +868,12 @@ impl WorkflowError {
         type_name: impl Into<String>,
         context: impl Into<String>,
     ) -> Self {
-        Self::SerializationError {
+        Self::SerializationError(Box::new(SerializationErrorDetails {
             message: message.into(),
             type_name: type_name.into(),
             context: context.into(),
             source: None,
-        }
+        }))
     }
 
     /// Create a deserialization error with type context
@@ -1062,13 +883,13 @@ impl WorkflowError {
         context: impl Into<String>,
         raw_data: Option<String>,
     ) -> Self {
-        Self::DeserializationError {
+        Self::DeserializationError(Box::new(DeserializationErrorDetails {
             message: message.into(),
             expected_type: expected_type.into(),
             context: context.into(),
             raw_data,
             source: None,
-        }
+        }))
     }
 
     /// Create a configuration error
@@ -1079,14 +900,14 @@ impl WorkflowError {
         expected_format: impl Into<String>,
         received_value: Option<String>,
     ) -> Self {
-        Self::ConfigurationError {
+        Self::ConfigurationError(Box::new(ConfigurationErrorDetails {
             message: message.into(),
             config_key: config_key.into(),
             config_source: config_source.into(),
             expected_format: expected_format.into(),
             received_value,
             source: None,
-        }
+        }))
     }
 
     /// Create a registry error
@@ -1096,13 +917,13 @@ impl WorkflowError {
         resource_type: impl Into<String>,
         resource_id: Option<String>,
     ) -> Self {
-        Self::RegistryError {
+        Self::RegistryError(Box::new(RegistryErrorDetails {
             message: message.into(),
             operation: operation.into(),
             resource_type: resource_type.into(),
             resource_id,
             source: None,
-        }
+        }))
     }
 
     /// Create a cross-system error
@@ -1112,24 +933,24 @@ impl WorkflowError {
         target_service: impl Into<String>,
         operation: impl Into<String>,
     ) -> Self {
-        Self::CrossSystemError {
+        Self::CrossSystemError(Box::new(CrossSystemErrorDetails {
             message: message.into(),
             source_service: source_service.into(),
             target_service: target_service.into(),
             operation: operation.into(),
             retry_count: 0,
             source: None,
-        }
+        }))
     }
 
     /// Create a general MCP error with minimal information
     pub fn mcp_error_simple(message: impl Into<String>) -> Self {
-        Self::MCPError {
+        Self::MCPError(Box::new(MCPErrorDetails {
             message: message.into(),
             server_name: "unknown".to_string(),
             operation: "unknown".to_string(),
             source: None,
-        }
+        }))
     }
 
     /// Create a general MCP error with full context
@@ -1138,24 +959,24 @@ impl WorkflowError {
         server_name: impl Into<String>,
         operation: impl Into<String>,
     ) -> Self {
-        Self::MCPError {
+        Self::MCPError(Box::new(MCPErrorDetails {
             message: message.into(),
             server_name: server_name.into(),
             operation: operation.into(),
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP connection error with minimal information
     pub fn mcp_connection_error_simple(message: impl Into<String>) -> Self {
-        Self::MCPConnectionError {
+        Self::MCPConnectionError(Box::new(MCPConnectionErrorDetails {
             message: message.into(),
             server_name: "unknown".to_string(),
             transport_type: "unknown".to_string(),
             endpoint: "unknown".to_string(),
             retry_count: 0,
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP connection error with retry count
@@ -1166,25 +987,25 @@ impl WorkflowError {
         endpoint: impl Into<String>,
         retry_count: u32,
     ) -> Self {
-        Self::MCPConnectionError {
+        Self::MCPConnectionError(Box::new(MCPConnectionErrorDetails {
             message: message.into(),
             server_name: server_name.into(),
             transport_type: transport_type.into(),
             endpoint: endpoint.into(),
             retry_count,
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP transport error with minimal information
     pub fn mcp_transport_error_simple(message: impl Into<String>) -> Self {
-        Self::MCPTransportError {
+        Self::MCPTransportError(Box::new(MCPTransportErrorDetails {
             message: message.into(),
             server_name: "unknown".to_string(),
             transport_type: "unknown".to_string(),
             operation: "unknown".to_string(),
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP transport error with full context
@@ -1194,36 +1015,36 @@ impl WorkflowError {
         transport_type: impl Into<String>,
         operation: impl Into<String>,
     ) -> Self {
-        Self::MCPTransportError {
+        Self::MCPTransportError(Box::new(MCPTransportErrorDetails {
             message: message.into(),
             server_name: server_name.into(),
             transport_type: transport_type.into(),
             operation: operation.into(),
             source: None,
-        }
+        }))
     }
 
     /// Create an MCP protocol error with minimal information
     pub fn mcp_protocol_error_simple(message: impl Into<String>) -> Self {
-        Self::MCPProtocolError {
+        Self::MCPProtocolError(Box::new(MCPProtocolErrorDetails {
             message: message.into(),
             server_name: "unknown".to_string(),
             expected: "valid_protocol".to_string(),
             received: "invalid_data".to_string(),
             message_type: "unknown".to_string(),
             source: None,
-        }
+        }))
     }
 
     /// Create an invalid input error with minimal information (backward compatibility)
     pub fn invalid_input_simple(message: impl Into<String>) -> Self {
-        Self::InvalidInput {
+        Self::InvalidInput(Box::new(InvalidInputDetails {
             message: message.into(),
             workflow_id: "unknown".to_string(),
             expected_schema: "valid input".to_string(),
             received_fields: Vec::new(),
             missing_fields: Vec::new(),
-        }
+        }))
     }
 
     /// Create an invalid input error with workflow context
@@ -1231,24 +1052,24 @@ impl WorkflowError {
         message: impl Into<String>,
         workflow_id: impl Into<String>,
     ) -> Self {
-        Self::InvalidInput {
+        Self::InvalidInput(Box::new(InvalidInputDetails {
             message: message.into(),
             workflow_id: workflow_id.into(),
             expected_schema: "valid input".to_string(),
             received_fields: Vec::new(),
             missing_fields: Vec::new(),
-        }
+        }))
     }
 
     /// Create a registry error with minimal information (backward compatibility)
     pub fn registry_error_simple(message: impl Into<String>) -> Self {
-        Self::RegistryError {
+        Self::RegistryError(Box::new(RegistryErrorDetails {
             message: message.into(),
             operation: "unknown".to_string(),
             resource_type: "unknown".to_string(),
             resource_id: None,
             source: None,
-        }
+        }))
     }
 
 
@@ -1257,12 +1078,12 @@ impl WorkflowError {
         step_type: impl Into<String>,
         workflow_id: impl Into<String>,
     ) -> Self {
-        Self::InvalidStepType {
+        Self::InvalidStepType(Box::new(InvalidStepTypeDetails {
             step_type: step_type.into(),
             workflow_id: workflow_id.into(),
             step_index: 0,
             available_types: Vec::new(),
-        }
+        }))
     }
 
     /// Create an invalid step type error with full context
@@ -1272,24 +1093,24 @@ impl WorkflowError {
         step_index: usize,
         available_types: Vec<String>,
     ) -> Self {
-        Self::InvalidStepType {
+        Self::InvalidStepType(Box::new(InvalidStepTypeDetails {
             step_type: step_type.into(),
             workflow_id: workflow_id.into(),
             step_index,
             available_types,
-        }
+        }))
     }
 
     /// Create a cross-system error with minimal information (backward compatibility)
     pub fn cross_system_error_simple(message: impl Into<String>) -> Self {
-        Self::CrossSystemError {
+        Self::CrossSystemError(Box::new(CrossSystemErrorDetails {
             message: message.into(),
             source_service: "unknown".to_string(),
             target_service: "unknown".to_string(),
             operation: "unknown".to_string(),
             retry_count: 0,
             source: None,
-        }
+        }))
     }
 
 }
@@ -1299,12 +1120,12 @@ impl super::ErrorExt for WorkflowError {
         use super::ErrorCategory;
         match self {
             // Transient errors that may succeed on retry
-            Self::MCPConnectionError { .. } | 
-            Self::MCPTransportError { .. } |
-            Self::ApiError { .. } => {
+            Self::MCPConnectionError(_) | 
+            Self::MCPTransportError(_) |
+            Self::ApiError(_) => {
                 ErrorCategory::Transient
             }
-            Self::DatabaseError { operation, .. } if operation.contains("connection") => {
+            Self::DatabaseError(details) if details.operation.contains("connection") => {
                 ErrorCategory::Transient
             }
             
@@ -1314,31 +1135,31 @@ impl super::ErrorExt for WorkflowError {
             Self::InvalidRouter { .. } |
             Self::NodeNotFound { .. } |
             Self::WorkflowTypeMismatch { .. } |
-            Self::InvalidStepType { .. } |
-            Self::InvalidInput { .. } => {
+            Self::InvalidStepType(_) |
+            Self::InvalidInput(_) => {
                 ErrorCategory::Permanent
             }
             
             // User errors (bad input, validation failures)
-            Self::ValidationError { .. } |
-            Self::DeserializationError { .. } |
-            Self::ConfigurationError { .. } => {
+            Self::ValidationError(_) |
+            Self::DeserializationError(_) |
+            Self::ConfigurationError(_) => {
                 ErrorCategory::User
             }
             
             // System errors (infrastructure, dependencies)
-            Self::DatabaseError { .. } |
-            Self::SerializationError { .. } |
+            Self::DatabaseError(_) |
+            Self::SerializationError(_) |
             Self::RuntimeError { .. } |
-            Self::CrossSystemError { .. } => {
+            Self::CrossSystemError(_) => {
                 ErrorCategory::System
             }
             
             // Business logic errors
-            Self::ProcessingError { .. } |
-            Self::RegistryError { .. } |
-            Self::MCPError { .. } |
-            Self::MCPProtocolError { .. } => {
+            Self::ProcessingError(_) |
+            Self::RegistryError(_) |
+            Self::MCPError(_) |
+            Self::MCPProtocolError(_) => {
                 ErrorCategory::Business
             }
         }
@@ -1351,12 +1172,12 @@ impl super::ErrorExt for WorkflowError {
             Self::CycleDetected => {
                 ErrorSeverity::Critical
             }
-            Self::DatabaseError { operation, .. } if operation.contains("connection") => {
+            Self::DatabaseError(details) if details.operation.contains("connection") => {
                 ErrorSeverity::Critical
             }
             
             // Error - requires attention
-            Self::ProcessingError { .. } |
+            Self::ProcessingError(_) |
             Self::NodeNotFound { .. } |
             Self::RegistryError { .. } |
             Self::MCPConnectionError { .. } |
@@ -1372,14 +1193,14 @@ impl super::ErrorExt for WorkflowError {
             Self::MCPProtocolError { .. } |
             Self::MCPTransportError { .. } |
             Self::ApiError { .. } |
-            Self::SerializationError { .. } |
+            Self::SerializationError(_) |
             Self::DatabaseError { .. } => {
                 ErrorSeverity::Warning
             }
             
             // Info - validation and user input errors
             Self::ValidationError { .. } |
-            Self::DeserializationError { .. } |
+            Self::DeserializationError(_) |
             Self::WorkflowTypeMismatch { .. } |
             Self::InvalidStepType { .. } |
             Self::InvalidInput { .. } |
