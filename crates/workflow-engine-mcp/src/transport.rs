@@ -419,61 +419,53 @@ impl From<TransportError> for workflow_engine_core::error::WorkflowError {
     fn from(err: TransportError) -> Self {
         match &err {
             TransportError::IoError { message, operation, .. } => {
-                workflow_engine_core::error::WorkflowError::MCPTransportError {
-                    message: format!("I/O error during {}: {}", operation, message),
-                    server_name: "unknown".to_string(),
-                    transport_type: "stdio".to_string(),
-                    operation: operation.clone(),
-                    source: Some(Box::new(err)),
-                }
+                workflow_engine_core::error::WorkflowError::mcp_transport_error(
+                    format!("I/O error during {}: {}", operation, message),
+                    "unknown",
+                    "stdio",
+                    operation,
+                )
             },
             TransportError::SerializationError { message, data_type, operation, .. } => {
-                workflow_engine_core::error::WorkflowError::SerializationError {
-                    message: format!("MCP serialization error for {}: {}", data_type, message),
-                    type_name: data_type.clone(),
-                    context: format!("during MCP {}", operation),
-                    source: None, // Can't extract serde_json::Error due to Box constraints
-                }
+                workflow_engine_core::error::WorkflowError::serialization_error(
+                    format!("MCP serialization error for {}: {}", data_type, message),
+                    data_type,
+                    format!("during MCP {}", operation),
+                )
             },
             TransportError::WebSocketError { message, endpoint, operation, .. } => {
-                workflow_engine_core::error::WorkflowError::MCPConnectionError {
-                    message: format!("WebSocket error during {}: {}", operation, message),
-                    server_name: "unknown".to_string(),
-                    transport_type: "WebSocket".to_string(),
-                    endpoint: endpoint.clone(),
-                    retry_count: 0,
-                    source: Some(Box::new(err)),
-                }
+                workflow_engine_core::error::WorkflowError::mcp_connection_error(
+                    format!("WebSocket error during {}: {}", operation, message),
+                    "unknown",
+                    "WebSocket",
+                    endpoint,
+                )
             },
             TransportError::HttpError { message, endpoint, status_code, operation, .. } => {
-                workflow_engine_core::error::WorkflowError::ApiError {
-                    message: format!("HTTP transport error during {}: {}", operation, message),
-                    service: "mcp_server".to_string(),
-                    endpoint: endpoint.clone(),
-                    status_code: *status_code,
-                    retry_count: 0,
-                    source: Some(Box::new(err)),
-                }
+                workflow_engine_core::error::WorkflowError::api_error(
+                    format!("HTTP transport error during {}: {}", operation, message),
+                    "mcp_server",
+                    endpoint,
+                    *status_code,
+                )
             },
             TransportError::ConnectionError { message, endpoint, transport_type, retry_count } => {
-                workflow_engine_core::error::WorkflowError::MCPConnectionError {
-                    message: message.clone(),
-                    server_name: "unknown".to_string(),
-                    transport_type: transport_type.clone(),
-                    endpoint: endpoint.clone(),
-                    retry_count: *retry_count,
-                    source: Some(Box::new(err)),
-                }
+                workflow_engine_core::error::WorkflowError::mcp_connection_error_with_retry(
+                    message.clone(),
+                    "unknown",
+                    transport_type,
+                    endpoint,
+                    *retry_count,
+                )
             },
             TransportError::ProtocolError { message, operation, expected, received } => {
-                workflow_engine_core::error::WorkflowError::MCPProtocolError {
-                    message: message.clone(),
-                    server_name: "unknown".to_string(),
-                    expected: expected.clone(),
-                    received: received.clone(),
-                    message_type: operation.clone(),
-                    source: Some(Box::new(err)),
-                }
+                workflow_engine_core::error::WorkflowError::mcp_protocol_error(
+                    message.clone(),
+                    "unknown",
+                    expected,
+                    received,
+                    operation,
+                )
             },
         }
     }

@@ -29,13 +29,12 @@ impl Node for SendKnowledgeReplyNode {
     fn process(&self, mut task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
         let response = task_context
             .get_data::<String>("generated_response")?
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "No generated response found".to_string(),
-                field: "generated_response".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in send_knowledge_reply node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error(
+                "No generated response found",
+                "generated_response",
+                "required field",
+                "in send_knowledge_reply node",
+            ))?;
 
         let response_type = task_context
             .get_data::<String>("response_type")?

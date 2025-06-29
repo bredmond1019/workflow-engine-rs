@@ -96,9 +96,7 @@ impl BaseAgentNode {
             let mut client_guard = client.lock().await;
             client_guard.call_tool(name, arguments).await
         } else {
-            Err(WorkflowError::MCPError {
-                message: "No MCP client configured".to_string(),
-            })
+            Err(WorkflowError::mcp_error_simple("No MCP client configured"))
         }
     }
     */
@@ -390,50 +388,42 @@ impl ModelInstance for OpenAIModelInstance {
             }))
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("OpenAI API request failed: {}", e),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: e.status().map(|s| s.as_u16()),
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("OpenAI API request failed: {}", e),
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                e.status().map(|s| s.as_u16()),
+            ))?;
         
         let status = response.status();
         if !status.is_success() {
             let error_body = response.text().await.unwrap_or_default();
-            return Err(WorkflowError::ApiError {
-                message: format!("OpenAI API error: {} - {}", status, error_body),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: Some(status.as_u16()),
-                retry_count: 0,
-                source: None,
-            });
+            return Err(WorkflowError::api_error(
+                format!("OpenAI API error: {} - {}", status, error_body),
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                Some(status.as_u16()),
+            ));
         }
         
         let result = response
             .json::<serde_json::Value>()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Failed to parse OpenAI response: {}", e),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: None,
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Failed to parse OpenAI response: {}", e),
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                None,
+            ))?;
         
         result["choices"][0]["message"]["content"]
             .as_str()
-            .ok_or_else(|| WorkflowError::ApiError {
-                message: "Invalid response structure from OpenAI".to_string(),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: None,
-                retry_count: 0,
-                source: None,
-            })
+            .ok_or_else(|| WorkflowError::api_error(
+                "Invalid response structure from OpenAI",
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                None,
+            ))
             .map(|s| s.to_string())
     }
     
@@ -496,50 +486,42 @@ impl ModelInstance for AnthropicModelInstance {
             }))
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Anthropic API request failed: {}", e),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: e.status().map(|s| s.as_u16()),
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Anthropic API request failed: {}", e),
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                e.status().map(|s| s.as_u16()),
+            ))?;
         
         let status = response.status();
         if !status.is_success() {
             let error_body = response.text().await.unwrap_or_default();
-            return Err(WorkflowError::ApiError {
-                message: format!("Anthropic API error: {} - {}", status, error_body),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: Some(status.as_u16()),
-                retry_count: 0,
-                source: None,
-            });
+            return Err(WorkflowError::api_error(
+                format!("Anthropic API error: {} - {}", status, error_body),
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                Some(status.as_u16()),
+            ));
         }
         
         let result = response
             .json::<serde_json::Value>()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Failed to parse Anthropic response: {}", e),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: None,
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Failed to parse Anthropic response: {}", e),
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                None,
+            ))?;
         
         result["content"][0]["text"]
             .as_str()
-            .ok_or_else(|| WorkflowError::ApiError {
-                message: "Invalid response structure from Anthropic".to_string(),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: None,
-                retry_count: 0,
-                source: None,
-            })
+            .ok_or_else(|| WorkflowError::api_error(
+                "Invalid response structure from Anthropic",
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                None,
+            ))
             .map(|s| s.to_string())
     }
     
@@ -615,12 +597,11 @@ impl ModelInstance for BedrockModelInstance {
         };
         
         let body = Blob::new(serde_json::to_vec(&request_body).map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to serialize request body: {}", e),
-                type_name: "BedrockRequestBody".to_string(),
-                context: "during API request preparation".to_string(),
-                source: Some(e),
-            }
+            WorkflowError::serialization_error(
+                format!("Failed to serialize request body: {}", e),
+                "BedrockRequestBody",
+                "during API request preparation",
+            )
         })?);
         
         let response = client
@@ -631,59 +612,50 @@ impl ModelInstance for BedrockModelInstance {
             .body(body)
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Bedrock API request failed: {}", e),
-                service: "AWS Bedrock".to_string(),
-                endpoint: format!("model/{}", self.model_name),
-                status_code: None,
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Bedrock API request failed: {}", e),
+                "AWS Bedrock",
+                &format!("model/{}", self.model_name),
+                None,
+            ))?;
         
         let response_body = response.body().as_ref();
         let response_json: serde_json::Value = serde_json::from_slice(response_body)
-            .map_err(|e| WorkflowError::DeserializationError {
-                message: format!("Failed to parse Bedrock response: {}", e),
-                expected_type: "serde_json::Value".to_string(),
-                context: "from Bedrock API response".to_string(),
-                raw_data: Some(String::from_utf8_lossy(response_body).to_string()),
-                source: Some(e),
-            })?;
+            .map_err(|e| WorkflowError::deserialization_error(
+                format!("Failed to parse Bedrock response: {}", e),
+                "serde_json::Value",
+                "from Bedrock API response",
+                Some(String::from_utf8_lossy(response_body).to_string()),
+            ))?;
         
         // Extract text based on model response format
         if self.model_name.starts_with("anthropic.claude") {
             response_json["content"][0]["text"]
                 .as_str()
-                .ok_or_else(|| WorkflowError::ApiError {
-                    message: "Invalid response structure from Bedrock Claude".to_string(),
-                    service: "AWS Bedrock".to_string(),
-                    endpoint: format!("model/{}", self.model_name),
-                    status_code: None,
-                    retry_count: 0,
-                    source: None,
-                })
+                .ok_or_else(|| WorkflowError::api_error(
+                    "Invalid response structure from Bedrock Claude",
+                    "AWS Bedrock",
+                    &format!("model/{}", self.model_name),
+                    None,
+                ))
                 .map(|s| s.to_string())
         } else if self.model_name.starts_with("amazon.titan") {
             response_json["results"][0]["outputText"]
                 .as_str()
-                .ok_or_else(|| WorkflowError::ApiError {
-                    message: "Invalid response structure from Bedrock Titan".to_string(),
-                    service: "AWS Bedrock".to_string(),
-                    endpoint: format!("model/{}", self.model_name),
-                    status_code: None,
-                    retry_count: 0,
-                    source: None,
-                })
+                .ok_or_else(|| WorkflowError::api_error(
+                    "Invalid response structure from Bedrock Titan",
+                    "AWS Bedrock",
+                    &format!("model/{}", self.model_name),
+                    None,
+                ))
                 .map(|s| s.to_string())
         } else {
-            Err(WorkflowError::ApiError {
-                message: "Unknown response format".to_string(),
-                service: "AWS Bedrock".to_string(),
-                endpoint: format!("model/{}", self.model_name),
-                status_code: None,
-                retry_count: 0,
-                source: None,
-            })
+            Err(WorkflowError::api_error(
+                "Unknown response format",
+                "AWS Bedrock",
+                &format!("model/{}", self.model_name),
+                None,
+            ))
         }
     }
     

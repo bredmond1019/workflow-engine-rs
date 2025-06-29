@@ -169,12 +169,11 @@ impl McpConfig {
                     reconnect_config: crate::transport::ReconnectConfig::default(),
                 })
             }
-            _ => Err(WorkflowError::MCPError {
-                message: "Invalid transport type for customer support server".to_string(),
-                server_name: "customer-support".to_string(),
-                operation: "load_transport".to_string(),
-                source: None,
-            }),
+            _ => Err(WorkflowError::mcp_error(
+                "Invalid transport type for customer support server",
+                "customer-support",
+                "load_transport",
+            )),
         }
     }
 
@@ -205,12 +204,11 @@ impl McpConfig {
         let uri_key = format!("MCP_EXTERNAL_SERVER_{}_URI", server_index);
         let transport_key = format!("MCP_EXTERNAL_SERVER_{}_TRANSPORT", server_index);
 
-        let uri = env::var(&uri_key).map_err(|_| WorkflowError::MCPError {
-            message: format!("Missing URI for external server {}", name),
-            server_name: name.to_string(),
-            operation: "load_external_server".to_string(),
-            source: None,
-        })?;
+        let uri = env::var(&uri_key).map_err(|_| WorkflowError::mcp_error(
+            &format!("Missing URI for external server {}", name),
+            &name,
+            "load_external_server",
+        ))?;
 
         let transport_str = env::var(&transport_key).unwrap_or_else(|_| "websocket".to_string());
         let transport =
@@ -259,15 +257,14 @@ impl McpConfig {
                 base_url: uri,
                 pool_config: crate::transport::HttpPoolConfig::default(),
             }),
-            _ => Err(WorkflowError::MCPError {
-                message: format!(
+            _ => Err(WorkflowError::mcp_error(
+                &format!(
                     "Invalid transport type '{}' for server {}",
                     transport_str, server_index
                 ),
-                server_name: format!("external-server-{}", server_index),
-                operation: "create_transport".to_string(),
-                source: None,
-            }),
+                &format!("external-server-{}", server_index),
+                "create_transport",
+            )),
         }
     }
 

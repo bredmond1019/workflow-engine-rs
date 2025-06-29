@@ -47,14 +47,12 @@ impl McpClient for WebSocketMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
-                    message: "Not connected".to_string(),
-                    server_name: self.url.clone(),
-                    transport_type: "websocket".to_string(),
-                    endpoint: self.url.clone(),
-                    retry_count: 0,
-                    source: None,
-                })?;
+                .ok_or_else(|| WorkflowError::mcp_connection_error(
+                    "Not connected",
+                    &self.url,
+                    "websocket",
+                    &self.url,
+                ))?;
 
         let request = McpRequest::Initialize {
             id: Uuid::new_v4().to_string(),
@@ -85,20 +83,18 @@ impl McpClient for WebSocketMcpClient {
 
                 Ok(())
             }
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("Initialize failed: {}", error.message),
-                server_name: self.url.clone(),
-                operation: "initialize".to_string(),
-                source: None,
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: "Unexpected response to initialize".to_string(),
-                server_name: self.url.clone(),
-                expected: "InitializeResult".to_string(),
-                received: "unknown response type".to_string(),
-                message_type: "response".to_string(),
-                source: None,
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                &format!("Initialize failed: {}", error.message),
+                &self.url,
+                "initialize",
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                "Unexpected response to initialize",
+                &self.url,
+                "InitializeResult",
+                "unknown response type",
+                "response",
+            )),
         }
     }
 
@@ -106,22 +102,19 @@ impl McpClient for WebSocketMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
-                    message: "Not connected".to_string(),
-                    server_name: self.url.clone(),
-                    transport_type: "websocket".to_string(),
-                    endpoint: self.url.clone(),
-                    retry_count: 0,
-                    source: None,
-                })?;
+                .ok_or_else(|| WorkflowError::mcp_connection_error(
+                    "Not connected",
+                    &self.url,
+                    "websocket",
+                    &self.url,
+                ))?;
 
         if !connection.is_initialized {
-            return Err(WorkflowError::MCPError {
-                message: "Client not initialized".to_string(),
-                server_name: self.url.clone(),
-                operation: "list_tools".to_string(),
-                source: None,
-            });
+            return Err(WorkflowError::mcp_error(
+                "Client not initialized",
+                &self.url,
+                "list_tools",
+            ));
         }
 
         let request = McpRequest::ListTools {
@@ -134,20 +127,18 @@ impl McpClient for WebSocketMcpClient {
                 result: ResponseResult::ListTools(tools_result),
                 ..
             } => Ok(tools_result.tools),
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("List tools failed: {}", error.message),
-                server_name: self.url.clone(),
-                operation: "list_tools".to_string(),
-                source: None,
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: "Unexpected response to list_tools".to_string(),
-                server_name: self.url.clone(),
-                expected: "ListToolsResult".to_string(),
-                received: "unknown response type".to_string(),
-                message_type: "response".to_string(),
-                source: None,
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                &format!("List tools failed: {}", error.message),
+                &self.url,
+                "list_tools",
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                "Unexpected response to list_tools",
+                &self.url,
+                "ListToolsResult",
+                "unknown response type",
+                "response",
+            )),
         }
     }
 
@@ -159,22 +150,19 @@ impl McpClient for WebSocketMcpClient {
         let connection =
             self.connection
                 .as_mut()
-                .ok_or_else(|| WorkflowError::MCPConnectionError {
-                    message: "Not connected".to_string(),
-                    server_name: self.url.clone(),
-                    transport_type: "websocket".to_string(),
-                    endpoint: self.url.clone(),
-                    retry_count: 0,
-                    source: None,
-                })?;
+                .ok_or_else(|| WorkflowError::mcp_connection_error(
+                    "Not connected",
+                    &self.url,
+                    "websocket",
+                    &self.url,
+                ))?;
 
         if !connection.is_initialized {
-            return Err(WorkflowError::MCPError {
-                message: "Client not initialized".to_string(),
-                server_name: self.url.clone(),
-                operation: "list_tools".to_string(),
-                source: None,
-            });
+            return Err(WorkflowError::mcp_error(
+                "Client not initialized",
+                &self.url,
+                "call_tool",
+            ));
         }
 
         let request = McpRequest::CallTool {
@@ -191,20 +179,18 @@ impl McpClient for WebSocketMcpClient {
                 result: ResponseResult::CallTool(call_result),
                 ..
             } => Ok(call_result),
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("Tool call failed: {}", error.message),
-                server_name: self.url.clone(),
-                operation: format!("call_tool:{}", name),
-                source: None,
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: "Unexpected response to call_tool".to_string(),
-                server_name: self.url.clone(),
-                expected: "CallToolResult".to_string(),
-                received: "unknown response type".to_string(),
-                message_type: "response".to_string(),
-                source: None,
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                &format!("Tool call failed: {}", error.message),
+                &self.url,
+                &format!("call_tool:{}", name),
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                "Unexpected response to call_tool",
+                &self.url,
+                "CallToolResult",
+                "unknown response type",
+                "response",
+            )),
         }
     }
 

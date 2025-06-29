@@ -33,13 +33,12 @@ impl Node for QueryRouterNode {
         let event_data: KnowledgeBaseEventData = task_context.get_event_data()?;
 
         if event_data.user_query.trim().is_empty() {
-            return Err(WorkflowError::ValidationError {
-                message: "User query cannot be empty".to_string(),
-                field: "user_query".to_string(),
-                value: Some(event_data.user_query.clone()),
-                constraint: "non-empty string".to_string(),
-                context: "in query_router node".to_string(),
-            });
+            return Err(WorkflowError::validation_error(
+                "User query cannot be empty",
+                "user_query",
+                "non-empty string",
+                "in query_router node",
+            ));
         }
 
         // Extract keywords for better search

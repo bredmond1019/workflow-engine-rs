@@ -78,12 +78,12 @@ impl TemplateAgentNode {
             // Render template
             self.template_manager
                 .render(template_id, &vars)
-                .map_err(|e| WorkflowError::ProcessingError {
-                    message: format!("Failed to render system prompt template: {}", e),
-                    node_id: None,
-                    node_type: "template_agent".to_string(),
-                    source: Some(Box::new(e)),
-                })
+                .map_err(|e| WorkflowError::processing_error_with_context(
+                    format!("Failed to render system prompt template: {}", e),
+                    "template_agent",
+                    None,
+                    Some(Box::new(e)),
+                ))
         } else {
             // Use static system prompt
             Ok(self.config.agent_config.system_prompt.clone())
@@ -116,12 +116,12 @@ impl TemplateAgentNode {
             // Render template
             self.template_manager
                 .render(template_id, &vars)
-                .map_err(|e| WorkflowError::ProcessingError {
-                    message: format!("Failed to render user message template: {}", e),
-                    node_id: None,
-                    node_type: "template_agent".to_string(),
-                    source: Some(Box::new(e)),
-                })
+                .map_err(|e| WorkflowError::processing_error_with_context(
+                    format!("Failed to render user message template: {}", e),
+                    "template_agent",
+                    None,
+                    Some(Box::new(e)),
+                ))
         } else {
             // Return prompt as-is
             Ok(prompt.to_string())
@@ -318,12 +318,12 @@ Current context:
 {{/if}}
 
 Always be helpful, accurate, and concise in your responses."#
-    ).map_err(|e| WorkflowError::ProcessingError {
-        message: format!("Failed to create system prompt template: {}", e),
-        node_id: None,
-        node_type: "template_agent".to_string(),
-        source: Some(Box::new(e)),
-    })?;
+    ).map_err(|e| WorkflowError::processing_error_with_context(
+        format!("Failed to create system prompt template: {}", e),
+        "template_agent",
+        None,
+        Some(Box::new(e)),
+    ))?;
     
     template_manager.register(system_prompt)?;
     
@@ -343,12 +343,12 @@ Current data:
 User request: {{prompt}}
 
 Timestamp: {{timestamp}}"#
-    ).map_err(|e| WorkflowError::ProcessingError {
-        message: format!("Failed to create user message template: {}", e),
-        node_id: None,
-        node_type: "template_agent".to_string(),
-        source: Some(Box::new(e)),
-    })?;
+    ).map_err(|e| WorkflowError::processing_error_with_context(
+        format!("Failed to create user message template: {}", e),
+        "template_agent",
+        None,
+        Some(Box::new(e)),
+    ))?;
     
     template_manager.register(user_message)?;
     
@@ -365,12 +365,12 @@ Available tools:
 {{/each}}
 
 List the tool names that would be most helpful for this request, one per line with a dash prefix:"#
-    ).map_err(|e| WorkflowError::ProcessingError {
-        message: format!("Failed to create tool selection template: {}", e),
-        node_id: None,
-        node_type: "template_agent".to_string(),
-        source: Some(Box::new(e)),
-    })?
+    ).map_err(|e| WorkflowError::processing_error_with_context(
+        format!("Failed to create tool selection template: {}", e),
+        "template_agent",
+        None,
+        Some(Box::new(e)),
+    ))?
     .with_context("tool_selection");
     
     template_manager.register(tool_selection)?;

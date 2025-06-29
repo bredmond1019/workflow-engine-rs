@@ -34,13 +34,12 @@ impl Node for SearchRouterNode {
         let is_spam = task_context.get_data::<bool>("is_spam")?.unwrap_or(true);
 
         if !is_valid || is_spam {
-            return Err(WorkflowError::ValidationError {
-                message: "Query failed validation or was detected as spam".to_string(),
-                field: "query".to_string(),
-                value: None,
-                constraint: "valid and non-spam query".to_string(),
-                context: "in search_router node".to_string(),
-            });
+            return Err(WorkflowError::validation_error(
+                "Query failed validation or was detected as spam",
+                "query",
+                "valid and non-spam query",
+                "in search_router node",
+            ));
         }
 
         // Prepare search context for search execution

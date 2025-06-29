@@ -171,20 +171,18 @@ impl McpClient for HttpMcpClient {
                 );
                 Ok(tools_result.tools)
             }
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("List tools failed: {}", error.message),
-                server_name: self.base_url.clone(),
-                operation: "list_tools".to_string(),
-                source: None,
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: "Unexpected response to list_tools".to_string(),
-                server_name: self.base_url.clone(),
-                expected: "ListToolsResult".to_string(),
-                received: "unknown response type".to_string(),
-                message_type: "response".to_string(),
-                source: None,
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                format!("List tools failed: {}", error.message),
+                &self.base_url,
+                "list_tools",
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                "Unexpected response to list_tools",
+                &self.base_url,
+                "ListToolsResult",
+                "unknown response type",
+                "response",
+            )),
         }
     }
 
@@ -214,20 +212,18 @@ impl McpClient for HttpMcpClient {
                 log::debug!("Tool '{}' called successfully via HTTP MCP", name);
                 Ok(call_result)
             }
-            McpResponse::Error { error, .. } => Err(WorkflowError::MCPError {
-                message: format!("Tool call '{}' failed: {}", name, error.message),
-                server_name: self.base_url.clone(),
-                operation: format!("call_tool:{}", name),
-                source: None,
-            }),
-            _ => Err(WorkflowError::MCPProtocolError {
-                message: format!("Unexpected response to call_tool '{}'", name),
-                server_name: self.base_url.clone(),
-                expected: "CallToolResult".to_string(),
-                received: "unknown response type".to_string(),
-                message_type: "response".to_string(),
-                source: None,
-            }),
+            McpResponse::Error { error, .. } => Err(WorkflowError::mcp_error(
+                format!("Tool call '{}' failed: {}", name, error.message),
+                &self.base_url,
+                &format!("call_tool:{}", name),
+            )),
+            _ => Err(WorkflowError::mcp_protocol_error(
+                format!("Unexpected response to call_tool '{}'", name),
+                &self.base_url,
+                "CallToolResult",
+                "unknown response type",
+                "response",
+            )),
         }
     }
 

@@ -478,15 +478,15 @@ impl Workflow {
     /// Helper method to acquire a read lock on the registry with proper error handling
     fn acquire_registry_read_lock(&self) -> Result<std::sync::RwLockReadGuard<'_, NodeRegistry>, WorkflowError> {
         self.registry.read().map_err(|e| {
-            WorkflowError::ProcessingError {
-                message: "Failed to acquire read lock on node registry".to_string(),
-                node_id: None,
-                node_type: "Registry".to_string(),
-                source: Some(Box::new(std::io::Error::new(
+            WorkflowError::processing_error_with_context(
+                "Failed to acquire read lock on node registry",
+                "Registry",
+                None,
+                Some(Box::new(std::io::Error::new(
                     std::io::ErrorKind::Other,
                     e.to_string()
                 ))),
-            }
+            )
         })
     }
     /// Creates a new `Workflow` instance from a given schema.
@@ -654,12 +654,12 @@ impl Workflow {
         let results: Result<Vec<TaskContext>, WorkflowError> =
             handles.into_iter().map(|h| {
                 h.join()
-                    .map_err(|e| WorkflowError::ProcessingError {
-                        message: format!("Parallel node execution thread panicked: {:?}", e),
-                        node_id: None,
-                        node_type: "ParallelNode".to_string(),
-                        source: None,
-                    })?
+                    .map_err(|e| WorkflowError::processing_error_with_context(
+                        format!("Parallel node execution thread panicked: {:?}", e),
+                        "ParallelNode",
+                        None,
+                        None,
+                    ))?
             }).collect();
 
         let parallel_results = results?;
@@ -756,15 +756,15 @@ fn acquire_arc_registry_read_lock<'a>(
     context: &str
 ) -> Result<std::sync::RwLockReadGuard<'a, NodeRegistry>, WorkflowError> {
     registry.read().map_err(|e| {
-        WorkflowError::ProcessingError {
-            message: format!("Failed to acquire read lock on node registry in {}", context),
-            node_id: None,
-            node_type: "Registry".to_string(),
-            source: Some(Box::new(std::io::Error::new(
+        WorkflowError::processing_error_with_context(
+            format!("Failed to acquire read lock on node registry in {}", context),
+            "Registry",
+            None,
+            Some(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 e.to_string()
             ))),
-        }
+        )
     })
 }
 

@@ -157,12 +157,10 @@ impl RecoveryStreamingProvider {
                 {
                     let mut cb = circuit_breaker.lock().await;
                     if !cb.can_execute() {
-                        yield Err(WorkflowError::ProcessingError {
-                            message: "Circuit breaker is open - streaming service unavailable".to_string(),
-                            node_id: None,
-                            node_type: "streaming_recovery".to_string(),
-                            source: None,
-                        });
+                        yield Err(WorkflowError::processing_error(
+                            "Circuit breaker is open - streaming service unavailable",
+                            "streaming_recovery",
+                        ));
                         return;
                     }
                 }
@@ -242,12 +240,12 @@ impl RecoveryStreamingProvider {
                                 );
 
                                 if retry_count >= recovery_config.max_retries {
-                                    yield Err(WorkflowError::ProcessingError {
-                                        message: format!("Streaming failed after {} retries: {}", retry_count, e),
-                                        node_id: None,
-                                        node_type: "streaming_recovery".to_string(),
-                                        source: Some(Box::new(e)),
-                                    });
+                                    yield Err(WorkflowError::processing_error_with_context(
+                                        format!("Streaming failed after {} retries: {}", retry_count, e),
+                                        "streaming_recovery",
+                                        None,
+                                        Some(Box::new(e)),
+                                    ));
                                     return;
                                 }
 
@@ -269,12 +267,10 @@ impl RecoveryStreamingProvider {
                         );
 
                         if retry_count >= recovery_config.max_retries {
-                            yield Err(WorkflowError::ProcessingError {
-                                message: format!("Streaming timed out after {} retries", retry_count),
-                                node_id: None,
-                                node_type: "streaming_recovery".to_string(),
-                                source: None,
-                            });
+                            yield Err(WorkflowError::processing_error(
+                                format!("Streaming timed out after {} retries", retry_count),
+                                "streaming_recovery",
+                            ));
                             return;
                         }
 

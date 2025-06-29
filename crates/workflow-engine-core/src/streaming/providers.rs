@@ -53,26 +53,22 @@ impl OpenAIStreamingProvider {
             }))
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("OpenAI streaming API request failed: {}", e),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: e.status().map(|s| s.as_u16()),
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("OpenAI streaming API request failed: {}", e),
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                e.status().map(|s| s.as_u16()),
+            ))?;
 
         let status = response.status();
         if !status.is_success() {
             let error_body = response.text().await.unwrap_or_default();
-            return Err(WorkflowError::ApiError {
-                message: format!("OpenAI streaming API error: {} - {}", status, error_body),
-                service: "OpenAI".to_string(),
-                endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
-                status_code: Some(status.as_u16()),
-                retry_count: 0,
-                source: None,
-            });
+            return Err(WorkflowError::api_error(
+                format!("OpenAI streaming API error: {} - {}", status, error_body),
+                "OpenAI",
+                "https://api.openai.com/v1/chat/completions",
+                Some(status.as_u16()),
+            ));
         }
 
         let byte_stream = response.bytes_stream();
@@ -178,26 +174,22 @@ impl AnthropicStreamingProvider {
             }))
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Anthropic streaming API request failed: {}", e),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: e.status().map(|s| s.as_u16()),
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Anthropic streaming API request failed: {}", e),
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                e.status().map(|s| s.as_u16()),
+            ))?;
 
         let status = response.status();
         if !status.is_success() {
             let error_body = response.text().await.unwrap_or_default();
-            return Err(WorkflowError::ApiError {
-                message: format!("Anthropic streaming API error: {} - {}", status, error_body),
-                service: "Anthropic".to_string(),
-                endpoint: "https://api.anthropic.com/v1/messages".to_string(),
-                status_code: Some(status.as_u16()),
-                retry_count: 0,
-                source: None,
-            });
+            return Err(WorkflowError::api_error(
+                format!("Anthropic streaming API error: {} - {}", status, error_body),
+                "Anthropic",
+                "https://api.anthropic.com/v1/messages",
+                Some(status.as_u16()),
+            ));
         }
 
         let byte_stream = response.bytes_stream();
@@ -329,12 +321,11 @@ impl BedrockStreamingProvider {
         };
         
         let body = Blob::new(serde_json::to_vec(&request_body).map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to serialize request body: {}", e),
-                type_name: "BedrockRequestBody".to_string(),
-                context: "during API request preparation".to_string(),
-                source: Some(e),
-            }
+            WorkflowError::serialization_error(
+                format!("Failed to serialize request body: {}", e),
+                "BedrockRequestBody",
+                "during API request preparation",
+            )
         })?);
         
         // Use streaming API
@@ -345,14 +336,12 @@ impl BedrockStreamingProvider {
             .body(body)
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Bedrock streaming API request failed: {}", e),
-                service: "AWS Bedrock".to_string(),
-                endpoint: format!("model/{}", self.model_name),
-                status_code: None,
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Bedrock streaming API request failed: {}", e),
+                "AWS Bedrock",
+                &format!("model/{}", self.model_name),
+                None,
+            ))?;
 
         let model_name = self.model_name.clone();
         
@@ -361,22 +350,20 @@ impl BedrockStreamingProvider {
         let mut event_receiver = response_stream.body;
         
         while let Some(event) = event_receiver.recv().await.map_err(|e| {
-            WorkflowError::ProcessingError {
-                message: format!("Failed to receive stream event: {}", e),
-                node_id: None,
-                node_type: "bedrock_stream".to_string(),
-                source: Some(Box::new(e)),
-            }
+            WorkflowError::processing_error_with_context(
+                format!("Failed to receive stream event: {}", e),
+                "bedrock_stream",
+                None,
+                Some(Box::new(e)),
+            )
         })? {
             match event {
                     aws_sdk_bedrockruntime::types::ResponseStream::Chunk(chunk_data) => {
                         let bytes = chunk_data.bytes().ok_or_else(|| {
-                            crate::error::WorkflowError::ProcessingError {
-                                message: "No bytes in chunk".to_string(),
-                                node_id: None,
-                                node_type: "bedrock_stream".to_string(),
-                                source: None,
-                            }
+                            crate::error::WorkflowError::processing_error(
+                                "No bytes in chunk",
+                                "bedrock_stream",
+                            )
                         })?;
                         let chunk_str = String::from_utf8_lossy(bytes.as_ref());
                         
@@ -507,12 +494,11 @@ impl BedrockStreamingProvider {
         };
         
         let body = Blob::new(serde_json::to_vec(&request_body).map_err(|e| {
-            WorkflowError::SerializationError {
-                message: format!("Failed to serialize request body: {}", e),
-                type_name: "BedrockRequestBody".to_string(),
-                context: "during API request preparation".to_string(),
-                source: Some(e),
-            }
+            WorkflowError::serialization_error(
+                format!("Failed to serialize request body: {}", e),
+                "BedrockRequestBody",
+                "during API request preparation",
+            )
         })?);
         
         let response = client
@@ -523,48 +509,41 @@ impl BedrockStreamingProvider {
             .body(body)
             .send()
             .await
-            .map_err(|e| WorkflowError::ApiError {
-                message: format!("Bedrock API request failed: {}", e),
-                service: "AWS Bedrock".to_string(),
-                endpoint: format!("model/{}", self.model_name),
-                status_code: None,
-                retry_count: 0,
-                source: Some(Box::new(e)),
-            })?;
+            .map_err(|e| WorkflowError::api_error(
+                format!("Bedrock API request failed: {}", e),
+                "AWS Bedrock",
+                &format!("model/{}", self.model_name),
+                None,
+            ))?;
         
         let response_body = response.body().as_ref();
         let response_json: serde_json::Value = serde_json::from_slice(response_body)
-            .map_err(|e| WorkflowError::DeserializationError {
-                message: format!("Failed to parse Bedrock response: {}", e),
-                expected_type: "serde_json::Value".to_string(),
-                context: "from Bedrock API response".to_string(),
-                raw_data: Some(String::from_utf8_lossy(response_body).to_string()),
-                source: Some(e),
-            })?;
+            .map_err(|e| WorkflowError::deserialization_error(
+                format!("Failed to parse Bedrock response: {}", e),
+                "serde_json::Value",
+                "from Bedrock API response",
+                Some(String::from_utf8_lossy(response_body).to_string()),
+            ))?;
 
         // Extract the text content based on model type
         let content = if self.model_name.starts_with("anthropic.claude") {
             response_json["content"][0]["text"]
                 .as_str()
-                .ok_or_else(|| WorkflowError::ApiError {
-                    message: "Invalid response structure from Bedrock Claude".to_string(),
-                    service: "AWS Bedrock".to_string(),
-                    endpoint: format!("model/{}", self.model_name),
-                    status_code: None,
-                    retry_count: 0,
-                    source: None,
-                })?
+                .ok_or_else(|| WorkflowError::api_error(
+                    "Invalid response structure from Bedrock Claude",
+                    "AWS Bedrock",
+                    &format!("model/{}", self.model_name),
+                    None,
+                ))?
         } else if self.model_name.starts_with("amazon.titan") {
             response_json["results"][0]["outputText"]
                 .as_str()
-                .ok_or_else(|| WorkflowError::ApiError {
-                    message: "Invalid response structure from Bedrock Titan".to_string(),
-                    service: "AWS Bedrock".to_string(),
-                    endpoint: format!("model/{}", self.model_name),
-                    status_code: None,
-                    retry_count: 0,
-                    source: None,
-                })?
+                .ok_or_else(|| WorkflowError::api_error(
+                    "Invalid response structure from Bedrock Titan",
+                    "AWS Bedrock",
+                    &format!("model/{}", self.model_name),
+                    None,
+                ))?
         } else {
             return Err(WorkflowError::configuration_error_simple(
                 format!("Unsupported Bedrock model for content extraction: {}", self.model_name)
