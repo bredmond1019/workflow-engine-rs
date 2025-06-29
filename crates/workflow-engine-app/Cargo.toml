@@ -38,5 +38,6 @@ actix-web = { workspace = true }
 actix-cors = { workspace = true }
 log = { workspace = true }
 env_logger = { workspace = true }
+thiserror = { workspace = true }
 
 # No dev-dependencies needed for app binary

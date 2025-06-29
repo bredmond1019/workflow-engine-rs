@@ -10,6 +10,9 @@ use workflow_engine_core::auth::JwtAuth;
 use workflow_engine_api::api::middleware::auth::JwtMiddleware;
 use workflow_engine_api::api::rate_limit::{RateLimitConfig, RateLimitMiddleware};
 
+mod config;
+use config::{AppConfig, ConfigError};
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Load environment variables from .env file first
@@ -21,43 +24,24 @@ async fn main() -> std::io::Result<()> {
     // Initialize logging
     env_logger::init();
 
-    // Get host and port from environment variables or use defaults
-    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let server_url = format!("{}:{}", host, port);
+    // Initialize application configuration with proper error handling
+    let config = match AppConfig::new().await {
+        Ok(config) => {
+            info!("Application configuration loaded successfully");
+            config
+        }
+        Err(e) => {
+            eprintln!("Configuration error: {}", e);
+            std::process::exit(1);
+        }
+    };
 
+    let server_url = config.server_address();
     info!("Starting server at http://{}", server_url);
 
-    // Initialize database pool
-    let pool: DbPool = workflow_engine_api::db::session::init_pool()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to initialize database pool: {}", e)))?;
-    let arc_pool = Arc::new(pool.clone());
-
-    // Initialize JWT auth
-    let jwt_secret = env::var("JWT_SECRET")
-        .expect("JWT_SECRET environment variable must be set");
-    let jwt_auth = web::Data::new(JwtAuth::new(jwt_secret.clone()));
-
-    // Configure rate limiting
-    let requests_per_minute = env::var("RATE_LIMIT_PER_MINUTE")
-        .unwrap_or_else(|_| "60".to_string())
-        .parse()
-        .unwrap_or_else(|e| {
-            log::warn!("Invalid RATE_LIMIT_PER_MINUTE value, using default 60: {}", e);
-            60
-        });
-    
-    let burst_size = env::var("RATE_LIMIT_BURST")
-        .unwrap_or_else(|_| "10".to_string())
-        .parse()
-        .unwrap_or_else(|e| {
-            log::warn!("Invalid RATE_LIMIT_BURST value, using default 10: {}", e);
-            10
-        });
-    
     let rate_limit_config = RateLimitConfig {
-        requests_per_minute,
-        burst_size,
+        requests_per_minute: config.rate_limit_per_minute,
+        burst_size: config.rate_limit_burst,
     };
 
     // Optional: Run demo workflows on startup (disabled by default for production)
@@ -66,6 +50,9 @@ async fn main() -> std::io::Result<()> {
     // workflow_engine_api::workflows::demos::run_all_demos().await;
 
     // Start HTTP server
+    let jwt_auth = config.jwt_auth.clone();
+    let database_pool = config.database_pool.clone();
+    
     HttpServer::new(move || {
         // Configure CORS
         let cors = Cors::default()
@@ -76,7 +63,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             // Add database pool to app data
-            .app_data(web::Data::new(arc_pool.clone()))
+            .app_data(web::Data::new(database_pool.clone()))
             // Add JWT auth to app data
             .app_data(jwt_auth.clone())
             // Enable logger middleware
