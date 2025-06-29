@@ -289,7 +289,15 @@ impl MCPMetricsCollector {
                 format!("Number of connections for server {}", server_id)
             );
             
-            let gauge = IntGauge::with_opts(opts).unwrap();
+            let gauge = match IntGauge::with_opts(opts) {
+                Ok(g) => g,
+                Err(e) => {
+                    log::error!("Failed to create server connections gauge for {}: {}", server_id, e);
+                    // Return a default gauge with basic options
+                    IntGauge::new("mcp_server_connections_default", "Default server connections gauge")
+                        .unwrap_or_else(|_| IntGauge::new("mcp_default", "Fallback gauge").expect("Basic gauge should always work"))
+                }
+            };
             
             // Register the new gauge
             if let Err(e) = self.registry.register(Box::new(gauge.clone())) {
@@ -312,7 +320,15 @@ impl MCPMetricsCollector {
                 format!("Circuit breaker state for server {} (0=closed, 1=open, 2=half-open)", server_id)
             );
             
-            let gauge = IntGauge::with_opts(opts).unwrap();
+            let gauge = match IntGauge::with_opts(opts) {
+                Ok(g) => g,
+                Err(e) => {
+                    log::error!("Failed to create server circuit state gauge for {}: {}", server_id, e);
+                    // Return a default gauge with basic options
+                    IntGauge::new("mcp_server_circuit_state_default", "Default circuit state gauge")
+                        .unwrap_or_else(|_| IntGauge::new("mcp_circuit_default", "Fallback circuit gauge").expect("Basic gauge should always work"))
+                }
+            };
             
             // Register the new gauge
             if let Err(e) = self.registry.register(Box::new(gauge.clone())) {

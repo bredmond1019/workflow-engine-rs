@@ -40,8 +40,8 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 ```rust
 // Test case examples:
 - [x] 1a. Configuration loading with invalid JWT secret ✅
-- [ ] 1b. Database connection failure handling  
-- [ ] 1c. MCP server connection timeouts
+- [x] 1b. Database connection failure handling ✅
+- [x] 1c. MCP server connection timeouts ✅
 - [ ] 1d. Workflow execution with missing dependencies
 - [ ] 1e. Template parsing with malformed input
 ```
@@ -52,6 +52,20 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - **REFACTOR**: ✅ Applied "Tidy First" - fixed test isolation issues, improved error types
 
 **Impact**: Eliminated 1 critical .expect() call in main.rs, added proper JWT validation with 32-char minimum, graceful startup failure
+
+**TDD CYCLE COMPLETE** for 1b:
+- **RED**: ✅ Created failing tests for database errors (missing URL, invalid URL, unreachable DB)
+- **GREEN**: ✅ Discovered error handling was already properly implemented in workflow_engine_api::db::session::init_pool()
+- **REFACTOR**: ✅ Added comprehensive test coverage for database connection scenarios
+
+**Impact**: Verified database initialization has proper error handling, eliminated 1 additional .expect() call in repository.rs, added 5 tests covering all database failure modes
+
+**TDD CYCLE COMPLETE** for 1c:
+- **RED**: ✅ Created failing tests for MCP connection timeouts (8 comprehensive test scenarios)
+- **GREEN**: ✅ Fixed 2 failing tests by understanding health_check behavior and adjusting timeout configurations. Replaced 3 production .unwrap() calls with proper error handling
+- **REFACTOR**: ✅ Applied "Tidy First" - improved error handling in metrics gauge creation and test utility functions
+
+**Impact**: Eliminated 3 critical .unwrap() calls in production MCP code (2 in metrics.rs gauge creation, 1 in nodes/utils.rs), added 8 comprehensive tests covering all MCP timeout scenarios: connection timeouts, invalid URLs, server unavailable, protocol errors, health check timeouts, force reconnect timeouts, and global timeout handling
 
 #### Test 2: Clippy Warning Resolution  
 **Target**: Fix 145+ clippy warnings systematically

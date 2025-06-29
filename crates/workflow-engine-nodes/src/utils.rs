@@ -50,7 +50,14 @@ impl NodeTestFixture {
     pub fn validate_output(&self, result: &TaskContext) {
         if let Ok(output) = result.get_event_data::<serde_json::Value>() {
             // Compare relevant fields
-            for (key, expected_value) in self.expected_output.as_object().unwrap() {
+            let expected_obj = match self.expected_output.as_object() {
+                Some(obj) => obj,
+                None => {
+                    panic!("Expected output is not a JSON object");
+                }
+            };
+            
+            for (key, expected_value) in expected_obj {
                 if let Some(actual_value) = output.get(key) {
                     assert_eq!(actual_value, expected_value, 
                         "Output mismatch for key '{}': expected {:?}, got {:?}", 
