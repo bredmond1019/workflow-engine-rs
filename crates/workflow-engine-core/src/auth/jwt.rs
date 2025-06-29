@@ -7,7 +7,14 @@ use thiserror::Error;
 
 /// JWT secret key loaded from environment
 static JWT_SECRET: Lazy<String> = Lazy::new(|| {
-    env::var("JWT_SECRET").unwrap_or_else(|_| "dev_secret_change_in_production".to_string())
+    env::var("JWT_SECRET").unwrap_or_else(|_| {
+        // Only allow default in test mode
+        if cfg!(test) {
+            "test_secret_key_for_testing_only".to_string()
+        } else {
+            panic!("JWT_SECRET environment variable must be set")
+        }
+    })
 });
 
 /// JWT validation errors

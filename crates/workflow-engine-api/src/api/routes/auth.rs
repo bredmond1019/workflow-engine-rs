@@ -109,6 +109,9 @@ mod tests {
 
     #[actix_web::test]
     async fn test_generate_token_endpoint() {
+        // Set JWT_SECRET for testing
+        std::env::set_var("JWT_SECRET", "test_secret_key");
+        
         let app = test::init_service(
             App::new().configure(configure)
         ).await;
@@ -132,6 +135,9 @@ mod tests {
 
     #[actix_web::test]
     async fn test_verify_token_endpoint() {
+        // Set JWT_SECRET for testing
+        std::env::set_var("JWT_SECRET", "test_secret_key");
+        
         let app = test::init_service(
             App::new().configure(configure)
         ).await;
@@ -167,6 +173,9 @@ mod tests {
 
     #[actix_web::test]
     async fn test_verify_invalid_token() {
+        // Set JWT_SECRET for testing
+        std::env::set_var("JWT_SECRET", "test_secret_key");
+        
         let app = test::init_service(
             App::new().configure(configure)
         ).await;

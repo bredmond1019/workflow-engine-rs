@@ -34,7 +34,8 @@ async fn main() -> std::io::Result<()> {
     let arc_pool = Arc::new(pool.clone());
 
     // Initialize JWT auth
-    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "your-secret-key".to_string());
+    let jwt_secret = env::var("JWT_SECRET")
+        .expect("JWT_SECRET environment variable must be set");
     let jwt_auth = web::Data::new(JwtAuth::new(jwt_secret.clone()));
 
     // Configure rate limiting

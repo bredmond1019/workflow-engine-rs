@@ -43,7 +43,7 @@ docker run -p 8080:8080 workflow-engine-app:latest
 ```bash
 # Required
 export DATABASE_URL=postgresql://user:pass@localhost/workflow_db
-export JWT_SECRET=your-secure-secret-key
+export JWT_SECRET=your-secure-secret-key  # Must be set - no default value
 
 # Optional
 export HOST=0.0.0.0

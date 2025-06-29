@@ -309,7 +309,7 @@ impl BudgetLimits {
         user_id: Option<&str>,
     ) -> TokenResult<ThrottleDecision> {
         let provider = self.parse_provider_from_string(&metadata.provider)?;
-        let model = self.parse_model_from_string(&metadata.model)?;
+        let _model = self.parse_model_from_string(&metadata.model)?;
         
         // Check if we're approaching limits
         let config = self.config.read().await;

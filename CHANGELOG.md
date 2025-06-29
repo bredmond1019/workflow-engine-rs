@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved all compilation warnings in workflow-engine-core
 - Fixed missing security vulnerability detection
 - Corrected documentation build warnings
+- Removed hardcoded JWT secret fallback - now requires JWT_SECRET environment variable
+- Fixed MCP configuration test race conditions (tests should run with --test-threads=1)
+- Updated auth route tests to properly set JWT_SECRET environment variable
 
 ## [0.6.0] - 2024-12-19
 

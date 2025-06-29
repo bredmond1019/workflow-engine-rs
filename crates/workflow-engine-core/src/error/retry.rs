@@ -185,7 +185,7 @@ where
     Fut: Future<Output = Result<T, WorkflowError>>,
 {
     let mut attempt = 0;
-    let mut last_error = None;
+    let mut _last_error = None;
     
     loop {
         match operation().await {
@@ -217,7 +217,7 @@ where
                     "Operation failed, retrying"
                 );
                 
-                last_error = Some(error);
+                _last_error = Some(error);
                 attempt += 1;
                 sleep(delay).await;
             }

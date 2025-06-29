@@ -492,7 +492,7 @@ mod tests {
                 ("MCP_EXTERNAL_SERVER_1_TRANSPORT", "websocket"),
             ], || {
                 let config = McpConfig::from_env().unwrap();
-
+                
                 assert!(config.is_server_enabled("test-server"));
                 let server_config = config.get_server_config("test-server").unwrap();
                 assert_eq!(server_config.name, "test-server");

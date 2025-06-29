@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt, TryStreamExt};
+use futures_util::{Stream, StreamExt};
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -75,7 +75,6 @@ impl OpenAIStreamingProvider {
             });
         }
 
-        use futures_util::TryStreamExt;
         let byte_stream = response.bytes_stream();
         Ok(Box::pin(byte_stream))
     }
@@ -201,7 +200,6 @@ impl AnthropicStreamingProvider {
             });
         }
 
-        use futures_util::TryStreamExt;
         let byte_stream = response.bytes_stream();
         Ok(Box::pin(byte_stream))
     }
@@ -284,7 +282,6 @@ impl BedrockStreamingProvider {
         prompt: &str,
     ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamChunk, WorkflowError>> + Send>>, WorkflowError> {
         use aws_sdk_bedrockruntime::{primitives::Blob, Client};
-        use futures_util::TryStreamExt;
         
         // Initialize AWS SDK
         let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
