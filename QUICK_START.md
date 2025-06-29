@@ -1,668 +1,554 @@
 # AI Workflow Engine - Quick Start Guide
 
-This guide helps you get started with the AI Workflow Engine crates in just a few minutes. Choose your path:
+Get up and running with the AI Workflow Engine in under 10 minutes! This guide covers everything you need to start building AI-powered workflows with GraphQL Federation support.
 
-- **[📦 Using the Crates](#-using-the-crates)** - Add to your Rust project (5 minutes)
-- **[🔧 Local Development](#-local-development)** - Full system setup (10 minutes)
+## 🚀 Quick Setup Options
 
-## 📦 Using the Crates
-
-The fastest way to add AI workflows to your existing Rust project.
-
-### 1. Add Dependencies
-
-```toml
-[dependencies]
-# Core workflow engine
-workflow-engine-core = "0.6.0"
-
-# Optional: MCP protocol support
-workflow-engine-mcp = { version = "0.6.0", optional = true }
-
-# Optional: Built-in nodes
-workflow-engine-nodes = { version = "0.6.0", optional = true }
-
-# Optional: API server
-workflow-engine-api = { version = "0.6.0", optional = true }
-
-# Core dependencies you'll need
-tokio = { version = "1.0", features = ["full"] }
-serde_json = "1.0"
-async-trait = "0.1"
-```
-
-### 2. Hello World Workflow
-
-```rust
-use workflow_engine_core::prelude::*;
-use serde_json::json;
-
-#[derive(Debug)]
-struct GreetingNode;
-
-impl Node for GreetingNode {
-    fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
-        let input: serde_json::Value = context.get_event_data()?;
-        let name = input.get("name").and_then(|v| v.as_str()).unwrap_or("World");
-        
-        context.update_node("greeting", json!({
-            "message": format!("Hello, {}!", name)
-        }));
-        
-        Ok(context)
-    }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), WorkflowError> {
-    // Build workflow
-    let workflow = TypedWorkflowBuilder::new("hello_workflow")
-        .start_with_node(NodeId::new("greeting"))
-        .build()?;
-    
-    // Register node
-    workflow.register_node(NodeId::new("greeting"), GreetingNode);
-    
-    // Run workflow
-    let result = workflow.run(json!({"name": "Alice"})).await?;
-    
-    if let Some(greeting) = result.get_node_data::<serde_json::Value>("greeting")? {
-        println!("{}", greeting["message"]); // "Hello, Alice!"
-    }
-    
-    Ok(())
-}
-```
-
-### 3. Async Nodes with External APIs
-
-```rust
-use workflow_engine_core::prelude::*;
-use async_trait::async_trait;
-
-#[derive(Debug)]
-struct ApiCallNode {
-    base_url: String,
-}
-
-#[async_trait]
-impl AsyncNode for ApiCallNode {
-    async fn process_async(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
-        let input: serde_json::Value = context.get_event_data()?;
-        
-        // Make HTTP request
-        let response = reqwest::get(&format!("{}/api/data", self.base_url))
-            .await
-            .map_err(|e| WorkflowError::ProcessingError { 
-                message: e.to_string() 
-            })?;
-            
-        let data: serde_json::Value = response.json().await
-            .map_err(|e| WorkflowError::ProcessingError { 
-                message: e.to_string() 
-            })?;
-        
-        context.update_node("api_response", data);
-        Ok(context)
-    }
-}
-
-// Use in async workflow
-let workflow = TypedWorkflowBuilder::new("api_workflow")
-    .start_with_node(NodeId::new("api_call"))
-    .build()?;
-
-workflow.register_async_node(
-    NodeId::new("api_call"), 
-    ApiCallNode { base_url: "https://api.example.com".to_string() }
-);
-
-let result = workflow.run_async(json!({})).await?;
-```
-
-### 4. Feature Flags
-
-Enable optional functionality:
-
-```toml
-[dependencies]
-workflow-engine-core = { version = "0.6.0", features = ["database", "monitoring"] }
-workflow-engine-mcp = { version = "0.6.0", features = ["websocket", "stdio"] }
-workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents", "external-mcp"] }
-workflow-engine-api = { version = "0.6.0", features = ["auth", "openapi"] }
-```
-
-**See [Feature Flags](#feature-flags) section below for complete list.**
-
-### 5. Complete Examples
-
-Check out the examples directory:
-
-```bash
-# Clone the repository for examples
-git clone https://github.com/bredmond1019/workflow-engine-rs
-cd workflow-engine-rs
-
-# Run examples
-cargo run --example 01_hello_world_workflow
-cargo run --example 02_async_external_api_workflow
-cargo run --example 03_custom_node_implementation
-cargo run --example 04_error_handling_best_practices
-```
+Choose your path:
+1. **[5-Minute Quick Start](#5-minute-quick-start)** - Get the system running fast
+2. **[Using as a Rust Library](#using-as-a-rust-library)** - Add to your existing project
+3. **[Full Development Setup](#full-development-setup)** - Complete environment with all features
 
 ---
 
-## 🔧 Local Development
+## 🎯 5-Minute Quick Start
 
-**For experienced developers who want to get the full system running quickly.**
-
-This guide gets you from zero to running AI workflows in under 10 minutes. For detailed setup instructions, see [DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md).
-
-## Prerequisites
+### Prerequisites
 
 **System Requirements:**
 - CPU: 2+ cores, RAM: 8+ GB, Storage: 4+ GB
 - macOS 11+, Ubuntu 20.04+, or Windows 11+ (WSL2)
 
 **Required Software:**
-- Rust 1.75+ (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
-- PostgreSQL 15+ (running on port 5432)
-- Python 3.11+ with `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Docker + Docker Compose (for Dgraph and monitoring stack)
-- Git 2.30+
-
-## 2-Minute Automated Setup
-
 ```bash
-# Clone and enter directory
-git clone <repository-url>
-cd ai-system-rust
-
-# One-command setup (installs everything)
-chmod +x scripts/setup.sh && ./scripts/setup.sh
-
-# ✓ Installs Rust, PostgreSQL, Python, uv
-# ✓ Sets up database with schema
-# ✓ Configures environment variables
-# ✓ Builds main application + microservices
-# ✓ Installs Python MCP server dependencies
-# ✓ Creates development helper scripts
-# ✓ Validates complete setup
+# Check if you have these installed
+rustc --version    # Need: 1.75+
+node --version     # Need: 18+
+psql --version     # Need: PostgreSQL 15+
+docker --version   # Need: Docker 20+
+python --version   # Need: Python 3.11+
 ```
 
-## Manual Setup (5 minutes)
+### Step 1: Clone and Setup
 
-### 1. Prerequisites
 ```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
+# Clone repository
+git clone <repository-url>
+cd workflow-engine-rs
 
-# Install uv (Python package manager)
+# Switch to GraphQL Federation branch
+git checkout graphql-federation
+
+# Install uv (fast Python package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install PostgreSQL (platform-specific)
-# macOS: brew install postgresql && brew services start postgresql
-# Ubuntu: sudo apt install postgresql postgresql-contrib
-```
+# Setup database
+createdb ai_workflow_db
+psql ai_workflow_db < scripts/init-db.sql
 
-### 2. Database Setup
-```bash
-# PostgreSQL setup (assumes postgres is running)
-sudo -u postgres createuser -s aiworkflow
-sudo -u postgres createdb -O aiworkflow ai_workflow
-psql -U aiworkflow -d ai_workflow -f scripts/init-db.sql
-
-# Start Dgraph (for knowledge graph service)
-cd services/knowledge_graph/dgraph && docker-compose up -d && cd ../../..
-```
-
-### 3. Environment and Build
-```bash
+# Copy environment file
 cp .env.example .env
 # Edit .env with your DATABASE_URL and JWT_SECRET
-
-# Build everything
-cargo build                              # Main application
-cd scripts && uv sync && cd ..           # MCP servers
-for service in content_processing knowledge_graph realtime_communication; do
-    cd services/$service && cargo build && cd ../..
-done
 ```
 
-### 4. Start Services
+### Step 2: Start Services with Docker
+
 ```bash
-# Option A: Full Docker stack (recommended)
+# Start all services (recommended)
 docker-compose up -d
 
-# Option B: Local development
-./scripts/start_test_servers.sh &  # MCP servers
-cargo run --bin backend            # Main application
+# Wait for services to be ready (about 30 seconds)
+sleep 30
 
-# Option C: Individual microservices
-# cd services/content_processing && cargo run &
-# cd services/knowledge_graph && cargo run &
-# cd services/realtime_communication && cargo run &
+# Verify services are running
+docker-compose ps
 ```
 
-## Verification
+### Step 3: Start Frontend (Optional)
 
 ```bash
-# Health check (main application)
-curl http://localhost:8080/api/v1/health
-# Expected: {"status":"healthy","timestamp":"..."}
-
-# Detailed health (all components)
-curl http://localhost:8080/api/v1/health/detailed
-
-# API documentation
-open http://localhost:8080/swagger-ui/
-
-# Run tests
-cargo test                    # Unit tests
-cargo test -- --ignored      # Integration tests (requires MCP servers)
-
-# Check microservices (if running locally)
-curl http://localhost:8081/health  # Content Processing
-curl http://localhost:8082/health  # Knowledge Graph
-curl http://localhost:8083/health  # Realtime Communication
+# In a new terminal
+cd frontend
+npm install
+npm run dev
 ```
 
-## Key Services
+### Step 4: Verify Your Setup ✅
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Main API** | http://localhost:8080 | REST API + Workflow Engine |
-| **Swagger UI** | http://localhost:8080/swagger-ui/ | Interactive API Documentation |
-| **PostgreSQL** | localhost:5432 | Primary Database + Event Store |
-| **Content Processing** | http://localhost:8081 | Document Analysis & AI Integration |
-| **Knowledge Graph** | http://localhost:8082 | Graph Database & Algorithms |
-| **Realtime Communication** | http://localhost:8083 | WebSocket & Actor System |
-| **Dgraph UI** | http://localhost:8000 | Graph Database Interface |
-| **Prometheus** | http://localhost:9090 | Metrics Collection |
-| **Grafana** | http://localhost:3000 | Monitoring Dashboards (admin/admin) |
-| **Jaeger** | http://localhost:16686 | Distributed Tracing |
-
-## Essential Commands
-
+Run the verification script:
 ```bash
-# Development (auto-reload)
-cargo watch -x "run --bin backend"  # Main app with auto-restart
-./scripts/start_test_servers.sh     # Start MCP servers
-cargo fmt && cargo clippy           # Format and lint code
-
-# Testing
-cargo test                               # Unit tests
-cargo test -- --ignored                 # Integration tests
-cargo test --test end_to_end_workflow_test  # E2E scenarios
-cargo test --test load_test -- --ignored   # Performance tests
-
-# Microservices
-cd services/content_processing && cargo run     # Document analysis
-cd services/knowledge_graph && cargo run        # Graph operations
-cd services/realtime_communication && cargo run # WebSocket server
-
-# Database Operations
-psql $DATABASE_URL                    # Connect to main DB
-./scripts/database-setup.sh           # Reset PostgreSQL
-cd services/knowledge_graph/dgraph && docker-compose up -d  # Start Dgraph
-
-# Docker Stack
-docker-compose up -d                  # Start everything
-docker-compose logs -f ai-workflow-system  # View main app logs
-docker-compose down                   # Stop all services
-docker-compose down -v                # Stop and remove data
-
-# Helper Scripts
-./dev.sh start    # Start development servers
-./dev.sh test     # Run all tests
-./dev.sh logs     # Tail logs
-./dev.sh clean    # Clean builds
+./scripts/verify-setup.sh
 ```
 
-## Architecture Overview
+Or manually check each service:
 
-### Core System
-- **Main API Server**: Actix-web REST API with JWT auth, rate limiting, OpenAPI docs
-- **Workflow Engine**: Node-based workflow execution with type safety
-- **Event Store**: PostgreSQL-backed event sourcing with projections
-- **MCP Framework**: Model Context Protocol for AI service integration
-
-### Microservices
-- **Content Processing**: Document analysis, AI integration, WASM plugins (SQLx + PostgreSQL)
-- **Knowledge Graph**: Graph algorithms, Dgraph integration, complex querying
-- **Realtime Communication**: WebSocket server, actor model, session management
-
-### External Integration
-- **Python MCP Servers**: Notion, Slack, HelpScout integration via stdio protocol
-- **AI Providers**: OpenAI, Anthropic integration with token management
-- **Monitoring Stack**: Prometheus metrics, Grafana dashboards, Jaeger tracing
-
-## Common Issues
-
-1. **Database connection failed**: 
-   ```bash
-   pg_isready && ./scripts/database-setup.sh
-   ```
-
-2. **Compilation errors**: 
-   ```bash
-   # macOS: xcode-select --install
-   # Ubuntu: sudo apt install build-essential pkg-config libssl-dev
-   ```
-
-3. **Port conflicts**: 
-   ```bash
-   lsof -i :8080  # Find what's using the port
-   # Or change PORT=8081 in .env
-   ```
-
-4. **MCP server failures**: 
-   ```bash
-   cd scripts && uv sync && cd ..
-   ./scripts/start_test_servers.sh
-   ```
-
-5. **Dgraph connection issues**: 
-   ```bash
-   cd services/knowledge_graph/dgraph
-   docker-compose up -d
-   curl http://localhost:8080/health
-   ```
-
-6. **Microservice build failures**: 
-   ```bash
-   # Build individually to isolate issues
-   cd services/content_processing && cargo check
-   ```
-
-## Next Steps
-
-### Explore the System
-- **API Playground**: http://localhost:8080/swagger-ui/
-- **Monitor Performance**: http://localhost:3000 (Grafana dashboards)
-- **View Traces**: http://localhost:16686 (Jaeger)
-- **Query Knowledge Graph**: http://localhost:8000 (Dgraph Ratel)
-
-### Run Examples
-```bash
-# Rust examples
-cargo run --example basic-workflow
-cargo run --example knowledge_base_example
-cargo run --example ai-research-workflow
-
-# Python client examples
-cd examples/python_client
-python ai_workflow_client.py
-python ai_tutor_service.py
-```
-
-### Learn More
-- **[DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md)**: Comprehensive setup guide
-- **[CLAUDE.md](CLAUDE.md)**: Architecture and development guidelines
-- **[docs/tutorials/](docs/tutorials/)**: Step-by-step learning guides
-- **Service READMEs**: Documentation for each microservice
-
-### Development Workflow
-```bash
-# Start development environment
-./dev.sh start
-
-# Make changes, tests run automatically with:
-cargo watch -x test
-
-# Before committing:
-cargo fmt && cargo clippy
-cargo test -- --ignored  # Run integration tests
-```
+| Service | URL | Expected Response |
+|---------|-----|-------------------|
+| **Main API** | http://localhost:8080/health | `{"status":"healthy"}` |
+| **GraphQL Gateway** | http://localhost:4000/graphql | GraphQL Playground UI |
+| **Frontend** | http://localhost:5173 | React Application |
+| **Swagger UI** | http://localhost:8080/swagger-ui/ | API Documentation |
 
 ---
 
-**Need help?** 
-1. Run `./scripts/validate-environment.sh` to diagnose issues
-2. Check service health: `curl http://localhost:8080/api/v1/health/detailed`
-3. View logs: `./dev.sh logs` or `docker-compose logs -f`
+## 📦 Using as a Rust Library
 
----
+Add AI workflow capabilities to your existing Rust project:
 
-## Feature Flags
-
-### workflow-engine-core
-
-Controls core functionality of the workflow engine:
+### Basic Setup
 
 ```toml
 [dependencies]
-workflow-engine-core = { version = "0.6.0", features = ["database", "monitoring", "aws", "full"] }
-```
-
-| Feature | Description | Dependencies |
-|---------|-------------|--------------|
-| `database` | Database integration with Diesel ORM | `diesel` |
-| `monitoring` | Prometheus metrics collection | `prometheus`, `lazy_static` |
-| `aws` | AWS Bedrock AI integration | `aws-config`, `aws-sdk-bedrockruntime` |
-| `full` | Enables all optional features | All above |
-
-**Default:** None (minimal core functionality)
-
-### workflow-engine-mcp
-
-Controls MCP (Model Context Protocol) transport types:
-
-```toml
-[dependencies]
-workflow-engine-mcp = { version = "0.6.0", features = ["http", "websocket", "stdio", "all"] }
-```
-
-| Feature | Description | Dependencies |
-|---------|-------------|--------------|
-| `http` | HTTP transport for MCP clients | `reqwest` |
-| `websocket` | WebSocket transport for MCP clients | `tokio-tungstenite` |
-| `stdio` | Standard I/O transport for MCP clients | `tokio-util` |
-| `all` | All transport types | All above |
-
-**Default:** `http`, `websocket`
-
-### workflow-engine-nodes
-
-Controls built-in node implementations:
-
-```toml
-[dependencies]
-workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents", "external-mcp", "research", "template", "all"] }
-```
-
-| Feature | Description | Dependencies |
-|---------|-------------|--------------|
-| `ai-agents` | AI service integration nodes (OpenAI, Anthropic) | AI provider SDKs |
-| `external-mcp` | External MCP server integration nodes | `workflow-engine-mcp` |
-| `research` | Research and analysis nodes | Text processing libraries |
-| `template` | Template processing nodes | `handlebars` |
-| `all` | All node types | All above |
-
-**Default:** `ai-agents`, `external-mcp`
-
-### workflow-engine-api
-
-Controls API server features:
-
-```toml
-[dependencies]
-workflow-engine-api = { version = "0.6.0", features = ["openapi", "auth", "monitoring", "database"] }
-```
-
-| Feature | Description | Dependencies |
-|---------|-------------|--------------|
-| `openapi` | OpenAPI documentation generation | `utoipa`, `utoipa-swagger-ui` |
-| `auth` | JWT authentication support | `jsonwebtoken` |
-| `monitoring` | Prometheus metrics endpoints | `prometheus` |
-| `database` | Database integration | `diesel` |
-
-**Default:** `openapi`, `auth`, `monitoring`
-
-### Common Feature Combinations
-
-**Minimal Setup** (just core workflow engine):
-```toml
+# Core workflow engine
 workflow-engine-core = "0.6.0"
-```
+workflow-engine-nodes = "0.6.0"
 
-**AI-Powered Workflows** (core + AI nodes):
-```toml
-workflow-engine-core = "0.6.0"
-workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents"] }
-```
-
-**Full MCP Integration** (core + MCP + all transports):
-```toml
-workflow-engine-core = "0.6.0"
-workflow-engine-mcp = { version = "0.6.0", features = ["all"] }
-workflow-engine-nodes = { version = "0.6.0", features = ["external-mcp"] }
-```
-
-**Complete API Server** (everything for web service):
-```toml
-workflow-engine-core = { version = "0.6.0", features = ["full"] }
-workflow-engine-mcp = { version = "0.6.0", features = ["all"] }
-workflow-engine-nodes = { version = "0.6.0", features = ["all"] }
-workflow-engine-api = { version = "0.6.0", features = ["openapi", "auth", "monitoring", "database"] }
-```
-
----
-
-## Troubleshooting
-
-### Common Build Issues
-
-**1. Missing System Dependencies**
-```bash
-# macOS
-xcode-select --install
-brew install openssl
-
-# Ubuntu/Debian
-sudo apt update
-sudo apt install build-essential pkg-config libssl-dev
-
-# Alpine Linux
-apk add build-base openssl-dev
-```
-
-**2. Diesel Database Errors**
-```bash
-# Install diesel CLI
-cargo install diesel_cli --no-default-features --features postgres
-
-# Set database URL
-export DATABASE_URL=postgresql://username:password@localhost/database_name
-
-# Run migrations
-diesel migration run
-```
-
-**3. Feature Flag Conflicts**
-```toml
-# Avoid conflicting features - use specific combinations
-workflow-engine-core = { version = "0.6.0", features = ["database"] }
-# Not: features = ["database", "full"] - full already includes database
-```
-
-**4. Async Runtime Issues**
-```rust
-// Ensure you have tokio runtime
-[dependencies]
+# Required async runtime
 tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+async-trait = "0.1"
+```
 
-// In main.rs
+### Hello World Example
+
+```rust
+use workflow_engine_core::prelude::*;
+use workflow_engine_nodes::prelude::*;
+use serde_json::json;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Your code here
+async fn main() -> Result<(), WorkflowError> {
+    // Create a simple workflow
+    let workflow = TypedWorkflowBuilder::new("hello_workflow")
+        .start_with_node(NodeId::new("greeting"))
+        .build()?;
+    
+    // Register a greeting node
+    workflow.register_node(
+        NodeId::new("greeting"), 
+        GreetingNode::new("Hello from AI Workflow!")
+    );
+    
+    // Run the workflow
+    let result = workflow.run(json!({"name": "Developer"})).await?;
+    println!("Workflow completed: {:?}", result);
+    
     Ok(())
 }
 ```
 
-### Performance Optimization
+### AI-Powered Workflow Example
 
-**1. Minimal Feature Set**
-Only enable features you need:
-```toml
-# Instead of "all", be specific
-workflow-engine-nodes = { version = "0.6.0", features = ["ai-agents"] }
-```
-
-**2. Compile Time Optimization**
-```toml
-# In Cargo.toml
-[profile.dev]
-opt-level = 1  # Faster debug builds
-
-[profile.release]
-lto = true     # Link-time optimization
-codegen-units = 1  # Better optimization
-```
-
-**3. Runtime Performance**
 ```rust
-// Use async nodes for I/O operations
-#[async_trait]
-impl AsyncNode for MyNode {
-    async fn process_async(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
-        // Non-blocking operations
-        Ok(context)
-    }
+use workflow_engine_nodes::ai_agents::{OpenAIAgent, AgentConfig};
+
+#[tokio::main]
+async fn main() -> Result<(), WorkflowError> {
+    // Configure AI agent
+    let ai_config = AgentConfig {
+        api_key: std::env::var("OPENAI_API_KEY")?,
+        model: "gpt-4".to_string(),
+        ..Default::default()
+    };
+    
+    // Build AI workflow
+    let workflow = TypedWorkflowBuilder::new("ai_analysis")
+        .start_with_node(NodeId::new("analyze"))
+        .build()?;
+    
+    // Register AI node
+    workflow.register_async_node(
+        NodeId::new("analyze"),
+        OpenAIAgent::new(ai_config)
+    );
+    
+    // Run with input
+    let result = workflow.run_async(json!({
+        "prompt": "Analyze this customer feedback and suggest improvements"
+    })).await?;
+    
+    Ok(())
 }
 ```
 
-### Documentation and Examples
+---
 
-**1. View Local Documentation**
+## 🔧 Full Development Setup
+
+### Automated Setup (Recommended)
+
 ```bash
-# Generate and open docs
-cargo doc --open --all-features
+# One-command setup
+chmod +x scripts/setup.sh && ./scripts/setup.sh
 
-# Specific crate docs
-cargo doc -p workflow-engine-core --open
+# This will:
+# ✓ Install all dependencies
+# ✓ Setup databases
+# ✓ Build all services
+# ✓ Configure environment
+# ✓ Start MCP servers
+# ✓ Verify installation
 ```
 
-**2. Run Examples**
-```bash
-# List available examples
-cargo run --example
+### Manual Setup
 
-# Run specific example
+#### 1. Install Dependencies
+
+```bash
+# Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Node.js (for frontend)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# PostgreSQL
+# macOS
+brew install postgresql && brew services start postgresql
+
+# Ubuntu
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+
+# Python with uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+#### 2. Database Setup
+
+```bash
+# Create database and user
+sudo -u postgres createuser -s aiworkflow
+sudo -u postgres createdb -O aiworkflow ai_workflow_db
+
+# Run initial schema
+psql -U aiworkflow -d ai_workflow_db -f scripts/init-db.sql
+
+# Start Dgraph (for Knowledge Graph service)
+cd services/knowledge_graph/dgraph
+docker-compose up -d
+cd ../../..
+```
+
+#### 3. Build Everything
+
+```bash
+# Build main application
+cargo build --release
+
+# Build GraphQL Gateway
+cargo build --bin graphql-gateway --release
+
+# Build microservices
+for service in content_processing knowledge_graph realtime_communication; do
+    cd services/$service && cargo build --release && cd ../..
+done
+
+# Setup Python MCP servers
+cd scripts && uv sync && cd ..
+
+# Build frontend
+cd frontend && npm install && npm run build && cd ..
+```
+
+#### 4. Start Services
+
+```bash
+# Option A: Use provided start script
+./scripts/start-all-services.sh
+
+# Option B: Start individually
+# Terminal 1: Main API
+cargo run --bin workflow-engine
+
+# Terminal 2: GraphQL Gateway
+cargo run --bin graphql-gateway
+
+# Terminal 3: MCP Servers
+./scripts/start_test_servers.sh
+
+# Terminal 4: Frontend
+cd frontend && npm run dev
+```
+
+---
+
+## 🧪 Running Tests
+
+### Quick Test Suite
+
+```bash
+# Run all unit tests
+cargo test
+
+# Run frontend tests (174+ tests)
+cd frontend && npm test
+
+# Visual test dashboard
+./test-dashboard.sh
+open frontend/test-dashboard/index.html
+```
+
+### Integration Tests
+
+```bash
+# Setup test environment
+./scripts/setup-test-environment.sh
+
+# Run integration tests
+cargo test -- --ignored
+
+# GraphQL Federation tests
+./validate_federation.sh
+cargo run --example federated_query
+```
+
+### Test Categories
+
+| Test Type | Command | Description |
+|-----------|---------|-------------|
+| Unit Tests | `cargo test` | Fast, isolated tests |
+| Frontend Tests | `cd frontend && npm test` | React component tests |
+| Integration Tests | `cargo test -- --ignored` | External service tests |
+| Federation Tests | `./validate_federation.sh` | GraphQL gateway tests |
+| Load Tests | `cargo test --test load_test -- --ignored` | Performance tests |
+| E2E Tests | `cargo test --test end_to_end_workflow_test -- --ignored` | Full workflow tests |
+
+---
+
+## 📍 Service Map
+
+### Core Services
+
+| Service | Port | Purpose | Health Check |
+|---------|------|---------|--------------|
+| **Main API** | 8080 | REST API + Workflow Engine | `/health` |
+| **GraphQL Gateway** | 4000 | Federated GraphQL endpoint | `/health` |
+| **PostgreSQL** | 5432 | Primary database | `pg_isready` |
+| **Frontend** | 5173 | React UI (dev mode) | Browser |
+
+### Microservices
+
+| Service | Port | Purpose | Health Check |
+|---------|------|---------|--------------|
+| **Content Processing** | 8082 | Document analysis & AI | `/health` |
+| **Knowledge Graph** | 3002 | Graph database operations | `/health` |
+| **Realtime Communication** | 8081 | WebSocket & messaging | `/health` |
+
+### MCP Servers (Python)
+
+| Service | Type | Purpose |
+|---------|------|---------|
+| **HelpScout** | stdio | Customer support integration |
+| **Notion** | stdio | Knowledge base integration |
+| **Slack** | stdio | Team communication |
+| **Customer Support** | stdio | Unified support workflows |
+
+### Monitoring Stack
+
+| Service | Port | Purpose | Credentials |
+|---------|------|---------|-------------|
+| **Grafana** | 3000 | Metrics dashboards | admin/admin |
+| **Prometheus** | 9090 | Metrics collection | None |
+| **Jaeger** | 16686 | Distributed tracing | None |
+| **Redis** | 6379 | Caching layer | redis123 |
+
+---
+
+## 🔍 Verify Your Setup
+
+### Automated Verification
+
+Create and run this verification script:
+
+```bash
+#!/bin/bash
+# Save as scripts/verify-setup.sh
+
+echo "🔍 Verifying AI Workflow Engine Setup..."
+
+# Check core services
+echo "✓ Checking core services..."
+curl -sf http://localhost:8080/health || echo "❌ Main API not responding"
+curl -sf http://localhost:4000/health || echo "❌ GraphQL Gateway not responding"
+curl -sf http://localhost:5173 || echo "❌ Frontend not responding"
+
+# Check microservices
+echo "✓ Checking microservices..."
+curl -sf http://localhost:8082/health || echo "❌ Content Processing not responding"
+curl -sf http://localhost:3002/health || echo "❌ Knowledge Graph not responding"
+curl -sf http://localhost:8081/health || echo "❌ Realtime Communication not responding"
+
+# Check database
+echo "✓ Checking database..."
+psql -h localhost -U aiworkflow -d ai_workflow_db -c "SELECT 1" || echo "❌ Database not accessible"
+
+# Check monitoring
+echo "✓ Checking monitoring stack..."
+curl -sf http://localhost:3000 || echo "❌ Grafana not responding"
+curl -sf http://localhost:9090 || echo "❌ Prometheus not responding"
+
+echo "✅ Verification complete!"
+```
+
+### Manual Verification Checklist
+
+- [ ] **Main API**: `curl http://localhost:8080/api/v1/health`
+- [ ] **GraphQL Playground**: Open http://localhost:4000/graphql
+- [ ] **Frontend**: Open http://localhost:5173
+- [ ] **Swagger Docs**: Open http://localhost:8080/swagger-ui/
+- [ ] **GraphQL Query**: Run test query in playground:
+  ```graphql
+  {
+    workflows {
+      id
+      name
+      status
+    }
+  }
+  ```
+
+---
+
+## 🔧 Common Issues & Solutions
+
+### Issue: Port Already in Use
+
+```bash
+# Find what's using port 8080
+lsof -i :8080
+
+# Kill process or change port in .env
+PORT=8081 cargo run --bin workflow-engine
+```
+
+### Issue: Database Connection Failed
+
+```bash
+# Check PostgreSQL is running
+pg_isready
+
+# Check connection
+psql -h localhost -U aiworkflow -d ai_workflow_db
+
+# Reset database if needed
+./scripts/database-setup.sh
+```
+
+### Issue: MCP Servers Not Starting
+
+```bash
+# Ensure Python and uv are installed
+python --version  # Should be 3.11+
+uv --version
+
+# Reinstall dependencies
+cd scripts && uv sync && cd ..
+
+# Start servers manually
+cd scripts && uv run python customer_support_server.py
+```
+
+### Issue: Frontend Build Errors
+
+```bash
+# Clear cache and reinstall
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+### Issue: Docker Services Failing
+
+```bash
+# Check Docker is running
+docker info
+
+# Reset Docker stack
+docker-compose down -v
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f [service-name]
+```
+
+---
+
+## 🎓 Next Steps
+
+### 1. Explore the UI
+- Open http://localhost:5173 for the chat-based workflow builder
+- Try creating workflows through natural language
+- Test the 174+ component tests: `cd frontend && npm test`
+
+### 2. Try Example Workflows
+```bash
+# Basic workflow
 cargo run --example 01_hello_world_workflow
 
-# Run with features
-cargo run --example ai_integration --features "ai-agents"
+# AI-powered workflow
+cargo run --example ai-research-workflow
+
+# GraphQL Federation example
+cargo run --example federated_query
 ```
 
-**3. Testing Your Integration**
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_my_workflow() {
-        let workflow = TypedWorkflowBuilder::new("test")
-            .start_with_node(NodeId::new("test_node"))
-            .build()
-            .unwrap();
-            
-        workflow.register_node(NodeId::new("test_node"), MyTestNode);
-        
-        let result = workflow.run(json!({"test": "data"})).await.unwrap();
-        assert!(result.get_node_data::<serde_json::Value>("test_result").unwrap().is_some());
-    }
-}
+### 3. Build Your First Workflow
+```typescript
+// In the frontend chat interface
+"Create a customer support workflow that monitors HelpScout 
+for urgent tickets and notifies the team on Slack"
 ```
 
-### Getting Help
+### 4. Access Development Tools
+- **API Documentation**: http://localhost:8080/swagger-ui/
+- **GraphQL Playground**: http://localhost:4000/graphql
+- **Metrics Dashboard**: http://localhost:3000 (admin/admin)
+- **Trace Analysis**: http://localhost:16686
 
-1. **Check Documentation**: `cargo doc --open --all-features`
-2. **Run Examples**: Examples in the repository demonstrate patterns
-3. **Enable Logging**: Use `RUST_LOG=debug` for detailed output
-4. **Check Feature Flags**: Ensure you have the right features enabled
-5. **Review Tests**: Integration tests show real usage patterns
+### 5. Read Component Documentation
+- [Main API Guide](crates/workflow-engine-api/CLAUDE.md)
+- [GraphQL Gateway Guide](crates/workflow-engine-gateway/README.md)
+- [Frontend Development](frontend/README.md)
+- [Testing Guide](frontend/USER_TESTING.md)
 
-**Ready to build AI workflows! 🚀**
+---
+
+## 📚 Additional Resources
+
+### Documentation
+- **Architecture Overview**: [CLAUDE.md](CLAUDE.md)
+- **Development Setup**: [DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md)
+- **Testing Guide**: [SYSTEM_TESTING.md](SYSTEM_TESTING.md)
+- **API Reference**: http://localhost:8080/swagger-ui/
+
+### Commands Reference
+```bash
+# Development
+./dev.sh start    # Start all services
+./dev.sh test     # Run all tests
+./dev.sh logs     # View logs
+./dev.sh clean    # Clean build artifacts
+
+# Testing
+./test-dashboard.sh              # Visual test dashboard
+./scripts/setup-test-environment.sh  # Setup test env
+./validate_federation.sh         # Validate GraphQL
+
+# Docker
+docker-compose up -d             # Start stack
+docker-compose logs -f           # View logs
+docker-compose down -v           # Stop and clean
+```
+
+---
+
+**🎉 Congratulations!** You now have a fully functional AI Workflow Engine with:
+- ✅ GraphQL Federation support
+- ✅ 174+ passing frontend tests
+- ✅ Chat-based workflow builder
+- ✅ Multiple AI integrations
+- ✅ Real-time monitoring
+
+Need help? Check the logs: `docker-compose logs -f` or `./dev.sh logs`
