@@ -122,7 +122,8 @@ impl TemplateParser {
         
         Self {
             helpers,
-            variable_pattern: regex::Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap(),
+            variable_pattern: regex::Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+                .expect("Failed to compile variable pattern regex - this is a bug"),
         }
     }
     
@@ -333,6 +334,21 @@ impl<'a> TokenParser<'a> {
         Self { tokens, position: 0 }
     }
     
+    /// Helper to convert a vector of AST nodes into a single AST node
+    fn statements_to_ast(statements: Vec<TemplateAst>) -> TemplateAst {
+        match statements.len() {
+            0 => TemplateAst::Text(String::new()),
+            1 => statements.into_iter().next()
+                .expect("statements.len() == 1 but no element found - this is a bug"),
+            _ => TemplateAst::Block(statements),
+        }
+    }
+    
+    /// Helper to convert a vector of AST nodes into a boxed AST node
+    fn statements_to_boxed_ast(statements: Vec<TemplateAst>) -> Box<TemplateAst> {
+        Box::new(Self::statements_to_ast(statements))
+    }
+    
     fn parse(&mut self) -> Result<TemplateAst, ParseError> {
         let mut statements = Vec::new();
         
@@ -340,11 +356,7 @@ impl<'a> TokenParser<'a> {
             statements.push(self.parse_statement()?);
         }
         
-        if statements.len() == 1 {
-            Ok(statements.into_iter().next().unwrap())
-        } else {
-            Ok(TemplateAst::Block(statements))
-        }
+        Ok(Self::statements_to_ast(statements))
     }
     
     fn parse_statement(&mut self) -> Result<TemplateAst, ParseError> {
@@ -402,19 +414,9 @@ impl<'a> TokenParser<'a> {
                 Token::IfEnd => {
                     self.position += 1;
                     
-                    let then_branch = if then_statements.len() == 1 {
-                        Box::new(then_statements.into_iter().next().unwrap())
-                    } else {
-                        Box::new(TemplateAst::Block(then_statements))
-                    };
+                    let then_branch = Self::statements_to_boxed_ast(then_statements);
                     
-                    let else_branch = else_statements.map(|stmts: Vec<TemplateAst>| {
-                        if stmts.len() == 1 {
-                            Box::new(stmts.into_iter().next().unwrap())
-                        } else {
-                            Box::new(TemplateAst::Block(stmts))
-                        }
-                    });
+                    let else_branch = else_statements.map(Self::statements_to_boxed_ast);
                     
                     return Ok(TemplateAst::Conditional {
                         condition: Box::new(TemplateAst::Variable {
@@ -433,7 +435,14 @@ impl<'a> TokenParser<'a> {
                 _ => {
                     let stmt = self.parse_statement()?;
                     if in_else {
-                        else_statements.as_mut().unwrap().push(stmt);
+                        if let Some(ref mut else_stmts) = else_statements {
+                            else_stmts.push(stmt);
+                        } else {
+                            return Err(ParseError::InvalidSyntax {
+                                position: self.position,
+                                message: "Else branch without else token".to_string(),
+                            });
+                        }
                     } else {
                         then_statements.push(stmt);
                     }
@@ -456,11 +465,7 @@ impl<'a> TokenParser<'a> {
                 Token::EachEnd => {
                     self.position += 1;
                     
-                    let body = if body_statements.len() == 1 {
-                        Box::new(body_statements.into_iter().next().unwrap())
-                    } else {
-                        Box::new(TemplateAst::Block(body_statements))
-                    };
+                    let body = Self::statements_to_boxed_ast(body_statements);
                     
                     return Ok(TemplateAst::Loop { variable, body });
                 }

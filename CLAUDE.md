@@ -4,516 +4,164 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a production-ready AI workflow orchestration system built in Rust with Python MCP (Model Context Protocol) servers and **GraphQL Federation support**. The system provides a foundation for building AI-powered applications with external service integrations.
+Production-ready AI workflow orchestration platform built in Rust with GraphQL Federation, featuring event sourcing, microservices architecture, and Model Context Protocol (MCP) integration. The system includes a React frontend with 174+ TDD tests and comprehensive monitoring.
 
-**Current Branch**: `graphql-federation` - This branch contains the GraphQL Federation implementation that unifies multiple services under a single GraphQL gateway.
-
-### Recent Major Changes
-- Added GraphQL Gateway (`workflow-engine-gateway`) with Apollo Federation v2 support
-- Enhanced Workflow API with federation compliance
-- Implemented entity resolution and query planning
-- Added GraphQL playground interfaces
-- **NEW**: Built comprehensive testing infrastructure with 100% pass rate
-- **NEW**: Created chat-based UI with TDD methodology (129/129 tests passing)
-- **NEW**: Implemented visual test dashboard with real-time monitoring
-- **NEW**: Added automated MCP server startup for integration tests
-
-## Component-Specific Documentation
-
-Each crate and service has its own CLAUDE.md file with detailed guidance. Navigate to these files for component-specific information:
-
-### Core Crates
-- **[workflow-engine-api](crates/workflow-engine-api/CLAUDE.md)**: Main HTTP API server with authentication, workflow endpoints, service bootstrap, and **GraphQL federation subgraph support**
-- **[workflow-engine-core](crates/workflow-engine-core/CLAUDE.md)**: Core workflow engine logic, AI integration, error handling, and shared types
-- **[workflow-engine-mcp](crates/workflow-engine-mcp/CLAUDE.md)**: Model Context Protocol implementation with multi-transport support
-- **[workflow-engine-nodes](crates/workflow-engine-nodes/CLAUDE.md)**: Built-in workflow nodes for AI agents, external MCP, and templates
-- **[workflow-engine-app](crates/workflow-engine-app/CLAUDE.md)**: Main binary entry point that integrates all components
-- **[workflow-engine-gateway](crates/workflow-engine-gateway/)**: **NEW** - GraphQL Federation gateway with schema composition and query planning
-
-### Microservices
-- **[content_processing](services/content_processing/CLAUDE.md)**: Document analysis service with WASM plugin support
-- **[knowledge_graph](services/knowledge_graph/CLAUDE.md)**: Graph database service with Dgraph integration
-- **[realtime_communication](services/realtime_communication/CLAUDE.md)**: WebSocket-based real-time messaging with actor model
-
-## Where to Search for Features
-
-### Authentication & Authorization
-- **JWT Implementation**: See `workflow-engine-core` CLAUDE.md (auth module)
-- **API Authentication Middleware**: See `workflow-engine-api` CLAUDE.md (middleware section)
-- **Service-Level Auth**: See `realtime_communication` CLAUDE.md (JWT validation)
-
-### Database & Persistence
-- **Main PostgreSQL/Diesel**: See `workflow-engine-api` CLAUDE.md (database layer)
-- **Content Storage (SQLx)**: See `content_processing` CLAUDE.md (database schema)
-- **Graph Database (Dgraph)**: See `knowledge_graph` CLAUDE.md (Dgraph integration)
-- **Event Sourcing**: See `workflow-engine-api` CLAUDE.md (event-driven architecture)
-
-### API Development
-- **REST Endpoints**: See `workflow-engine-api` CLAUDE.md (API endpoints)
-- **WebSocket APIs**: See `realtime_communication` CLAUDE.md (WebSocket protocol)
-- **GraphQL Federation**: See `workflow-engine-gateway` for gateway implementation and `workflow-engine-api` for subgraph support
-- **GraphQL Support**: See `knowledge_graph` CLAUDE.md (GraphQL parsing) and services for individual GraphQL APIs
-- **OpenAPI/Swagger**: See `workflow-engine-api` CLAUDE.md (OpenAPI section)
-
-### GraphQL Federation Features
-- **Schema Composition**: `crates/workflow-engine-gateway/src/federation/schema_registry.rs` 
-- **Query Planning**: `crates/workflow-engine-gateway/src/federation/query_planner.rs`
-- **Entity Resolution**: `crates/workflow-engine-gateway/src/federation/entities.rs`
-- **Federation Directives**: `crates/workflow-engine-gateway/src/federation/directives.rs`
-- **Subgraph Client**: `crates/workflow-engine-gateway/src/subgraph.rs`
-- **Federation Support in API**: `crates/workflow-engine-api/src/api/graphql/` (schema.rs, handlers.rs)
-- **Federation Documentation**: See [FEDERATION.md](FEDERATION.md) for complete architecture and testing guide
-
-### Workflow & Node Development
-- **Core Workflow Engine**: See `workflow-engine-core` CLAUDE.md (workflow module)
-- **Built-in Nodes**: See `workflow-engine-nodes` CLAUDE.md (available nodes)
-- **Custom Node Creation**: See both `workflow-engine-core` and `workflow-engine-nodes` CLAUDE.md
-- **Node Registration**: See `workflow-engine-api` CLAUDE.md (bootstrap section)
-
-### MCP (Model Context Protocol)
-- **Protocol Implementation**: See `workflow-engine-mcp` CLAUDE.md (protocol details)
-- **Transport Layers**: See `workflow-engine-mcp` CLAUDE.md (HTTP/WebSocket/stdio)
-- **External MCP Clients**: See `workflow-engine-nodes` CLAUDE.md (external MCP)
-- **MCP Servers**: See Python MCP servers in `mcp-servers/`
-
-### AI Integration
-- **AI Providers**: See `workflow-engine-nodes` CLAUDE.md (OpenAI/Anthropic agents)
-- **Token Management**: See `workflow-engine-core` CLAUDE.md (AI token section)
-- **Templates**: See `workflow-engine-core` CLAUDE.md (template engine)
-- **Content Analysis**: See `content_processing` CLAUDE.md (AI integration)
-
-### Real-time Features
-- **WebSocket Communication**: See `realtime_communication` CLAUDE.md
-- **Actor Model**: See `realtime_communication` CLAUDE.md (actor system)
-- **Presence Tracking**: See `realtime_communication` CLAUDE.md (presence features)
-- **Message Routing**: See `realtime_communication` CLAUDE.md (routing section)
-
-### Monitoring & Observability
-- **Metrics Collection**: See `workflow-engine-api` CLAUDE.md (monitoring section)
-- **Structured Logging**: See `workflow-engine-api` CLAUDE.md (correlation tracking)
-- **Health Checks**: See individual service CLAUDE.md files
-- **Performance Monitoring**: See `workflow-engine-mcp` CLAUDE.md (metrics section)
-
-### Testing
-- **Unit Testing Patterns**: See individual crate CLAUDE.md files
-- **Integration Testing**: See `workflow-engine-api` CLAUDE.md (testing section)
-- **MCP Testing**: See `workflow-engine-mcp` CLAUDE.md (test servers)
-- **Load Testing**: See root testing commands below
-- **Frontend Testing**: TDD-based React components with 129/129 tests passing
-- **Visual Test Dashboard**: Real-time monitoring at `frontend/test-dashboard/`
-- **Automated Test Environment**: `scripts/setup-test-environment.sh` for MCP server startup
-- **UV-based Test Runner**: Fast Python package management in `test-runner/`
-
-### Microservice Patterns
-- **Service Discovery**: See `workflow-engine-api` CLAUDE.md (bootstrap/discovery)
-- **Circuit Breakers**: See `realtime_communication` CLAUDE.md (protection mechanisms)
-- **Rate Limiting**: See both `workflow-engine-api` and `realtime_communication` CLAUDE.md
-- **Connection Pooling**: See `workflow-engine-mcp` CLAUDE.md (connection pool)
+**Key Architecture**: Microservices connected via GraphQL Federation gateway (port 4000), with separate services for content processing, knowledge graphs, and real-time communication.
 
 ## Essential Commands
 
-### Building and Running
+### Running the System
 
 ```bash
-# Build the project
-cargo build
-cargo build --release
-
-# Run the main server (subgraph)
-cargo run --bin workflow-engine
-
-# Run the GraphQL Gateway (NEW)
-cargo run --bin graphql-gateway
-
-# Run with Docker Compose (recommended for full stack)
+# Quick start - Full stack with Docker
 docker-compose up -d
 
-# View logs
-docker-compose logs -f ai-workflow-system
+# Development - Run individual components
+cargo run --bin workflow-engine          # Main API (8080)
+cargo run --bin graphql-gateway          # Federation Gateway (4000)
+cd frontend && npm run dev               # Frontend (5173)
+
+# Start all services for federation
+./scripts/run-federation-stack.sh
 ```
 
 ### Testing
 
 ```bash
-# Run all tests
+# Run all Rust tests
 cargo test
 
-# Frontend tests (129/129 passing)
-cd frontend && npm test
+# Run single test
+cargo test test_name -- --exact
 
-# Visual test dashboard (NEW)
-./test-dashboard.sh
-open frontend/test-dashboard/index.html
-
-# Automated test environment setup (NEW)
-./scripts/setup-test-environment.sh
-
-# UV-based test runner (NEW)
-cd test-runner && uv run python -m test_runner.cli
-
-# Integration tests (requires MCP servers)
+# Integration tests (requires external services)
 ./scripts/start_test_servers.sh
 cargo test -- --ignored
 
-# Run new integration test suites
-cargo test --test end_to_end_workflow_test -- --ignored
-cargo test --test mcp_communication_test -- --ignored
-cargo test --test workflow_external_tools_test -- --ignored
-cargo test --test load_test -- --ignored --nocapture
-cargo test --test chaos_test -- --ignored --nocapture
+# MCP tests (run sequentially to avoid race conditions)
+cargo test mcp_config -- --test-threads=1
 
-# Test GraphQL Federation (NEW)
-./scripts/run-federation-stack.sh    # Start all services
-./scripts/test-federation.sh         # Test federation connectivity
+# Frontend tests (174+ TDD tests)
+cd frontend && npm test
+cd frontend && npm test -- --coverage
+
+# Federation tests
+./scripts/test-federation.sh
 cargo test graphql_federation_integration_test -- --ignored
-./validate_federation.sh
-./test-gateway-health.sh
-
-# Run specific test categories
-cargo test mcp_client
-cargo test external_mcp_integration -- --ignored
-cargo test --test workflow_test
-
-# Python MCP server tests
-cd mcp-servers && python -m pytest tests/
 ```
 
-### Code Quality
+### Development
 
 ```bash
-# Format code
+# Format and lint
 cargo fmt
-
-# Run linter
 cargo clippy -- -D warnings
 
-# Check for vulnerabilities
-cargo audit
-```
-
-### Database Setup
-
-```bash
-# Create database
+# Database setup
 createdb ai_workflow_db
+diesel migration run
 
-# Initialize schema
-psql ai_workflow_db < scripts/init-db.sql
+# Check federation health
+curl http://localhost:4000/health/detailed
 
-# Run migrations (if using Diesel CLI)
-diesel setup && diesel migration run
-
-# Service-specific database setup (if using services)
-# Content Processing service (uses SQLx)
-cd services/content_processing && sqlx migrate run
-# Knowledge Graph service (uses Dgraph)
-cd services/knowledge_graph/dgraph && docker-compose up -d
+# Environment setup
+export JWT_SECRET="your-secure-secret"  # Required - no default
+export DATABASE_URL="postgresql://user:pass@localhost/ai_workflow_db"
 ```
 
-### Development Servers
+## High-Level Architecture
 
-```bash
-# Start MCP test servers
-./scripts/start_test_servers.sh
+### Core System Design
 
-# Start individual services (if working with microservices)
-# Content Processing service
-cd services/content_processing && cargo run
-# Knowledge Graph service
-cd services/knowledge_graph && cargo run
-# Realtime Communication service
-cd services/realtime_communication && cargo run
-
-# Access services
-# GraphQL Gateway: http://localhost:4000/graphql (NEW - Federation endpoint)
-# Main API: http://localhost:8080
-# GraphQL Subgraph API: http://localhost:8080/api/v1/graphql (NEW)
-# Swagger UI: http://localhost:8080/swagger-ui/
-# Grafana: http://localhost:3000 (admin/admin)
-# Prometheus: http://localhost:9090
-# MCP Test Servers: HelpScout (8001), Notion (8002), Slack (8003)
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Frontend  │────▶│ GraphQL Gateway  │────▶│   Microservices │
+│   (React)   │     │   (Port 4000)    │     │  (8080-8084)   │
+└─────────────┘     └──────────────────┘     └─────────────────┘
+                            │
+                    ┌───────┴────────┐
+                    │                │
+              Federation      Entity Resolution
 ```
 
-## Architecture Overview
+### Service Architecture
 
-This section provides a high-level overview. For detailed component information, refer to the individual CLAUDE.md files linked above.
+1. **GraphQL Gateway** (`workflow-engine-gateway`): Apollo Federation v2 gateway that unifies all services
+2. **Main API** (`workflow-engine-api`): Core workflow management, auth, event sourcing
+3. **Content Processing** (port 8082): Document analysis with WASM plugins
+4. **Knowledge Graph** (port 3002): Dgraph-backed graph database
+5. **Realtime Communication** (port 8081): WebSocket messaging with actor model
 
-### Core Components
+### Key Patterns
 
-1. **HTTP API Server** - Main REST API gateway
-   - Details in: [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md)
-   - Key features: Actix-web, JWT auth, rate limiting, OpenAPI docs
+- **Event Sourcing**: PostgreSQL-backed with CQRS, snapshots, and replay (`crates/workflow-engine-api/src/db/events/`)
+- **Service Bootstrap**: Dependency injection container (`crates/workflow-engine-api/src/bootstrap/`)
+- **MCP Protocol**: Multi-transport (HTTP/WebSocket/stdio) with connection pooling
+- **Federation**: Schema composition and query planning across services
+- **Multi-tenancy**: Schema, row-level, and hybrid isolation modes
 
-2. **MCP Framework** - Model Context Protocol implementation
-   - Details in: [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md)
-   - Key features: Multi-transport support, connection pooling, load balancing
+### AI Integration Points
 
-3. **Workflow Engine** - Core orchestration logic
-   - Details in: [workflow-engine-core CLAUDE.md](crates/workflow-engine-core/CLAUDE.md)
-   - Key features: Node-based execution, type-safe registry, AI integration
+- **Providers**: OpenAI, Anthropic, AWS Bedrock (with `aws` feature)
+- **Token Management**: Usage tracking, budgets, analytics (`workflow-engine-core/src/ai/tokens/`)
+- **Node System**: Type-safe workflow nodes with AI agents (`workflow-engine-nodes/`)
+- **Template Engine**: Handlebars with AI context injection
 
-4. **Node Library** - Pre-built workflow nodes
-   - Details in: [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
-   - Key features: AI agents, external MCP clients, templates
+## Critical Implementation Details
 
-5. **GraphQL Gateway** - Federation orchestration layer
-   - Details in: [workflow-engine-gateway README](crates/workflow-engine-gateway/README.md)
-   - Key features: Schema composition, query planning, entity resolution, multi-subgraph coordination
+### Authentication
+- JWT-based auth requires `JWT_SECRET` environment variable (no default for security)
+- Token validation middleware in `workflow-engine-api/src/middleware/auth.rs`
+- Multi-tenant context in `workflow-engine-api/src/db/tenant.rs`
 
-6. **Microservices** - Specialized processing services
-   - **Content Processing**: Details in [content_processing CLAUDE.md](services/content_processing/CLAUDE.md)
-   - **Knowledge Graph**: Details in [knowledge_graph CLAUDE.md](services/knowledge_graph/CLAUDE.md)
-   - **Realtime Communication**: Details in [realtime_communication CLAUDE.md](services/realtime_communication/CLAUDE.md)
+### GraphQL Federation
+- Subgraph implementations must include `_service` and `_entities` resolvers
+- Entity resolution uses `@key` directives for cross-service queries
+- Gateway handles partial failures gracefully
+- See `FEDERATION.md` for complete guide
 
-### External Services
+### Database Migrations
+- Main app: Diesel migrations in `crates/workflow-engine-api/migrations/`
+- Content service: SQLx migrations in `services/content_processing/migrations/`
+- Always run migrations before starting services
 
-MCP servers are implemented in Python (`mcp-servers/`):
-- **HelpScout** (port 8001): Customer support integration
-- **Notion** (port 8002): Knowledge base integration  
-- **Slack** (port 8003): Team communication
+### Testing Infrastructure
+- Frontend: TDD with React Testing Library, 174+ tests
+- Backend: Unit + integration tests, some require `--ignored` flag
+- MCP tests: May have race conditions, use `--test-threads=1`
+- Visual dashboard: `frontend/test-dashboard/`
 
-### Key Design Patterns
+## Service-Specific Notes
 
-1. **GraphQL Federation**: Apollo Federation v2 with schema composition and entity resolution
-2. **Service Bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/`
-3. **Repository Pattern**: Database access through repositories
-4. **Middleware Architecture**: Auth, rate limiting, correlation tracking
-5. **Protocol Abstraction**: Multi-transport support for MCP
-6. **Type-Safe Node System**: Compile-time checked workflow nodes
+### Frontend
+- Vite 4.4.0 (pinned for Node.js 18 compatibility)
+- Zustand for state management
+- GraphQL client with federation support
+- TDD methodology throughout
 
-### Environment Configuration
+### MCP Servers
+- Python-based in `mcp-servers/`
+- HelpScout (8001), Notion (8002), Slack (8003)
+- Use stdio protocol for communication
+- Start with `./scripts/start_test_servers.sh`
 
-Required environment variables:
-```
-DATABASE_URL=postgresql://username:password@localhost/ai_workflow_db
-JWT_SECRET=your-secure-jwt-secret-key
-```
+### Monitoring Stack
+- Prometheus metrics at `:9090`
+- Grafana dashboards at `:3000` (admin/admin)
+- Jaeger tracing included
+- Health endpoints on all services
 
-Optional AI provider keys:
-```
-OPENAI_API_KEY=your_key
-ANTHROPIC_API_KEY=your_key
-```
+## Current Branch Context
 
-### Testing Strategy
-
-- **Unit tests**: Alongside source code with `mockall` for mocking
-- **Integration tests**: In `/tests` directory, use `--ignored` for external dependencies
-- **Frontend TDD**: 129/129 React component tests using Jest and Testing Library
-- **MCP protocol tests**: Require Python servers (`./scripts/setup-test-environment.sh`)
-- **Service tests**: Each service has its own test commands
-- **External integrations**: Use `cargo test external_mcp_integration -- --ignored`
-- **End-to-end tests**: Complete workflow scenarios in `tests/end_to_end_workflow_test.rs`
-- **Load tests**: Performance and scalability tests in `tests/load_test.rs`
-- **Chaos tests**: Resilience and failure testing in `tests/chaos_test.rs`
-- **Visual testing**: Real-time dashboard with HTML/JS interface
-- **Automated setup**: MCP servers start automatically for integration tests
-
-#### Service-Specific Testing
-
-```bash
-# Content Processing service tests
-cd services/content_processing && cargo test
-
-# Knowledge Graph service tests
-cd services/knowledge_graph && cargo test
-
-# Realtime Communication service tests
-cd services/realtime_communication && cargo test
-```
-
-### Common Development Tasks
-
-For detailed step-by-step instructions, see the relevant component CLAUDE.md files:
-
-1. **Adding a new API endpoint**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#common-development-tasks)
-2. **Creating a workflow node**: See [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md#common-development-tasks)
-3. **Adding MCP integration**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#common-development-tasks)
-4. **Database changes**: 
-   - Main app: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#database-interactions)
-   - Services: See individual service CLAUDE.md files
-5. **Monitoring metrics**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md#monitoring-module)
-6. **Adding GraphQL Federation subgraph**: Follow patterns in `workflow-engine-api` GraphQL implementation
-7. **Adding microservice**: Follow patterns in existing service CLAUDE.md files
-8. **Testing external integrations**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md#testing-approach)
-9. **Frontend development with TDD**: Follow patterns in `frontend/src/` using Jest and Testing Library
-10. **Visual testing**: Use `frontend/test-dashboard/` for real-time test monitoring
-
-### Debugging Tips
-
-- **Correlation tracking**: Check correlation IDs in logs for request tracing
-- **Health checks**: Use `/health/detailed` endpoint for system status
-- **GraphQL Gateway health**: Use `./test-gateway-health.sh` to verify federation status
-- **Metrics**: Monitor Prometheus metrics at `http://localhost:9090`
-- **Dashboards**: View Grafana dashboards for performance insights
-- **Visual test monitoring**: Open `frontend/test-dashboard/index.html` for real-time test results
-- **MCP testing**: Test servers individually with `scripts/test_mcp_server.py`
-- **Automated test environment**: Use `./scripts/setup-test-environment.sh` for consistent setup
-- **Frontend test debugging**: Run `cd frontend && npm test -- --verbose` for detailed output
-- **Service debugging**: Each service logs independently, check service-specific ports
-- **Integration failures**: Ensure external MCP servers are running before integration tests
-
-### Key Architecture Patterns
-
-1. **GraphQL Federation**: Schema composition and query planning in `crates/workflow-engine-gateway/src/federation/`
-2. **Multi-transport MCP**: HTTP, WebSocket, and stdio support in `crates/workflow-engine-mcp/src/transport.rs`
-3. **Connection pooling**: MCP client connections managed in `crates/workflow-engine-mcp/src/connection_pool.rs`
-4. **Service bootstrap**: Dependency injection container in `crates/workflow-engine-api/src/bootstrap/service.rs`
-5. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
-6. **Microservice isolation**: Each service in `services/` has independent database and configuration
-7. **Federated entities**: Entity resolution across subgraphs with `@key` directives
-
-## GraphQL Federation Development Guide
-
-### Working with the Federation
-
-#### Starting the Federation Stack
-```bash
-# Terminal 1: Start the main API (subgraph)
-cargo run --bin workflow-engine
-
-# Terminal 2: Start the GraphQL Gateway
-cargo run --bin graphql-gateway
-
-# Access GraphQL Playground
-# Gateway: http://localhost:4000/graphql
-# Subgraph: http://localhost:8080/api/v1/graphql
-```
-
-#### Example Federation Queries
-```graphql
-# Simple workflow query
-{
-  workflow(id: "123") {
-    id
-    name
-    status
-  }
-}
-
-# Federation service query
-{
-  _service {
-    sdl
-  }
-}
-
-# Entity resolution
-query ResolveEntities($representations: [_Any!]!) {
-  _entities(representations: $representations) {
-    ... on Workflow {
-      id
-      name
-      status
-    }
-  }
-}
-```
-
-#### Adding New Subgraphs
-1. Implement federation directives (`@key`, `@extends`)
-2. Add `_service` and `_entities` resolvers
-3. Register subgraph in gateway configuration
-4. Update schema composition
-
-#### Federation Testing
-```bash
-# Validate federation setup
-./validate_federation.sh
-
-# Run federation examples
-cargo run --example federated_query
-cargo run --example test_federation
-
-# Test gateway independently
-cd crates/workflow-engine-gateway && cargo test
-```
-
-### Code Quality Requirements
-
-**Rust Version**: 1.75.0+ (MSRV)
-
-**Code Style**:
-```bash
-# Format code
-cargo fmt
-
-# Run linter (must pass)
-cargo clippy -- -D warnings
-
-# Security audit
-cargo audit
-```
-
-**Testing Requirements**:
-- Unit tests for all new functionality
-- Integration tests for API endpoints
-- Federation tests for GraphQL gateway
-- External service integration tests with `--ignored` flag
-
-**Commit Convention**:
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `refactor:` - Code refactoring
-- `test:` - Test additions/changes
-- `chore:` - Maintenance tasks
-
-## Testing Infrastructure Achievements
-
-The project now features a **world-class testing infrastructure** with 100% pass rate:
-
-### **Frontend Testing Excellence**
-- **174+ tests passing** ✅ using Test-Driven Development (TDD)
-- React components with Jest and Testing Library
-- Complete coverage of chat UI, workflow analysis, dynamic forms, and multi-step workflow builder
-- Real-time visual test dashboard with HTML/CSS/JS interface
-- Comprehensive component testing following Kent Beck's TDD principles
-- **NEW**: Multi-Step Workflow Builder with 27+ tests covering progress tracking, navigation, validation, and persistence
-- **NEW**: Enhanced GraphQL integration with 30/30 tests passing
-- **NEW**: FormField component with comprehensive validation testing
-
-### **Backend Testing Robustness**
-- All MCP (Model Context Protocol) configuration tests passing
-- GraphQL Gateway health monitoring with subgraph status
-- Automated test environment setup with MCP server management
-- Integration test suite with external service support
-- Load and chaos testing capabilities
-
-### **Innovation in Test Tooling**
-- **UV-based Python test runner** (10-100x faster than pip)
-- Visual test dashboard with real-time progress monitoring
-- Automated MCP server startup for integration tests
-- Cross-platform bash script compatibility
-- Comprehensive test reporting with HTML dashboards
-
-### **Development Methodology**
-- **Red-Green-Refactor cycle** faithfully followed
-- Test specifications written before implementation
-- Continuous test monitoring and immediate feedback
-- 100% test reliability with no flaky tests
-- Test-first approach for all new features
-
-This testing infrastructure serves as a **model for production-ready systems** and demonstrates best practices in modern software testing.
+Working on `graphql-federation` branch with completed:
+- GraphQL Federation gateway implementation
+- Frontend TDD implementation (174+ tests)
+- Security hardening (removed hardcoded secrets)
+- Open source preparation (95% ready)
 
 ## Testing Documentation
 
-### User Testing Guides
-- **[USER_TESTING.md](USER_TESTING.md)** - Step-by-step validation guide for all system components
-- **[QUICK_TEST_REFERENCE.md](QUICK_TEST_REFERENCE.md)** - Essential test commands quick reference
+- **[USER_TESTING.md](USER_TESTING.md)** - Step-by-step validation guide
+- **[QUICK_TEST_REFERENCE.md](QUICK_TEST_REFERENCE.md)** - Essential test commands
+- **[TEST_COVERAGE_REPORT.md](TEST_COVERAGE_REPORT.md)** - Detailed coverage analysis
 - **[FEDERATION.md](FEDERATION.md)** - GraphQL Federation architecture and testing
-
-### Test Coverage Status
-- **Frontend**: 174+ tests passing (100% TDD coverage)
-- **GraphQL Federation**: 9/9 tests passing (full integration)
-- **Backend Services**: All unit and integration tests passing
-- **End-to-End**: Complete workflow creation validated
-
-## How to Use This Documentation
-
-### Navigation Tips
-1. Start with this guide for GraphQL Federation and overall architecture
-2. Use "Where to Search for Features" to find the right component
-3. Navigate to component-specific CLAUDE.md files for detailed work
-4. Check recent commits and federation documentation for latest changes
-5. **For testing**: Use `SYSTEM_TESTING.md` and `frontend/USER_TESTING.md` for testing guides

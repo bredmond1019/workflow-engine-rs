@@ -38,7 +38,10 @@ where
         let mut conn = self
             .db_pool
             .get()
-            .expect("Failed to get connection from pool");
+            .map_err(|e| diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UnableToSendCommand,
+                Box::new(format!("Failed to get connection from pool: {}", e))
+            ))?;
 
         diesel::insert_into(self.model.table)
             .values(&self.model.records)

@@ -475,6 +475,20 @@ pub struct Workflow {
 }
 
 impl Workflow {
+    /// Helper method to acquire a read lock on the registry with proper error handling
+    fn acquire_registry_read_lock(&self) -> Result<std::sync::RwLockReadGuard<'_, NodeRegistry>, WorkflowError> {
+        self.registry.read().map_err(|e| {
+            WorkflowError::ProcessingError {
+                message: "Failed to acquire read lock on node registry".to_string(),
+                node_id: None,
+                node_type: "Registry".to_string(),
+                source: Some(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    e.to_string()
+                ))),
+            }
+        })
+    }
     /// Creates a new `Workflow` instance from a given schema.
     ///
     /// # Arguments
@@ -574,7 +588,7 @@ impl Workflow {
 
         while let Some(node_type) = current_node_type {
             let node_name = {
-                let registry = self.registry.read().unwrap();
+                let registry = self.acquire_registry_read_lock()?;
                 let node = registry
                     .get(&node_type)
                     .ok_or(WorkflowError::NodeNotFound { node_type })?;
@@ -597,7 +611,7 @@ impl Workflow {
 
             // Actually process the node
             *task_context = {
-                let registry = self.registry.read().unwrap();
+                let registry = self.acquire_registry_read_lock()?;
                 let node = registry
                     .get(&node_type)
                     .ok_or(WorkflowError::NodeNotFound { node_type })?;
@@ -626,7 +640,7 @@ impl Workflow {
             let registry_clone = self.registry.clone();
 
             let handle = thread::spawn(move || -> Result<TaskContext, WorkflowError> {
-                let registry = registry_clone.read().unwrap();
+                let registry = acquire_arc_registry_read_lock(&registry_clone, "parallel execution")?;
                 let node = registry
                     .get(&node_type)
                     .ok_or(WorkflowError::NodeNotFound { node_type })?;
@@ -638,7 +652,15 @@ impl Workflow {
         }
 
         let results: Result<Vec<TaskContext>, WorkflowError> =
-            handles.into_iter().map(|h| h.join().unwrap()).collect();
+            handles.into_iter().map(|h| {
+                h.join()
+                    .map_err(|e| WorkflowError::ProcessingError {
+                        message: format!("Parallel node execution thread panicked: {:?}", e),
+                        node_id: None,
+                        node_type: "ParallelNode".to_string(),
+                        source: None,
+                    })?
+            }).collect();
 
         let parallel_results = results?;
 
@@ -674,7 +696,7 @@ impl Workflow {
             Some(config) if config.connections.is_empty() => Ok(None),
             Some(config) if config.is_router => {
                 // Get the router and call its route method
-                let registry = self.registry.read().unwrap();
+                let registry = self.acquire_registry_read_lock()?;
                 let node = registry
                     .get(&current_node_type)
                     .ok_or(WorkflowError::NodeNotFound {
@@ -728,6 +750,24 @@ impl Workflow {
     }
 }
 
+/// Helper function to acquire a read lock on a registry Arc with proper error handling
+fn acquire_arc_registry_read_lock<'a>(
+    registry: &'a Arc<RwLock<NodeRegistry>>, 
+    context: &str
+) -> Result<std::sync::RwLockReadGuard<'a, NodeRegistry>, WorkflowError> {
+    registry.read().map_err(|e| {
+        WorkflowError::ProcessingError {
+            message: format!("Failed to acquire read lock on node registry in {}", context),
+            node_id: None,
+            node_type: "Registry".to_string(),
+            source: Some(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string()
+            ))),
+        }
+    })
+}
+
 /// Wrapper to make existing nodes compatible with MCP server registration
 #[derive(Debug)]
 struct NodeWrapper {
@@ -752,13 +792,52 @@ impl Node for NodeWrapper {
     }
 
     fn process(&self, task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
-        let registry = self.registry.read().unwrap();
+        let registry = acquire_arc_registry_read_lock(&self.registry, "wrapper")?;
         if let Some(node) = registry.get(&self.node_type) {
             node.process(task_context)
         } else {
             Err(WorkflowError::NodeNotFound {
                 node_type: self.node_type,
             })
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::nodes::config::NodeConfig;
+    
+    #[derive(Debug)]
+    struct TestNode;
+    
+    impl Node for TestNode {
+        fn process(&self, ctx: TaskContext) -> Result<TaskContext, WorkflowError> {
+            Ok(ctx)
+        }
+    }
+    
+    #[test]
+    fn test_workflow_handles_missing_nodes_gracefully() {
+        // Create a simple workflow schema
+        let schema = WorkflowSchema {
+            workflow_type: "test".to_string(),
+            start: TypeId::of::<TestNode>(),
+            nodes: vec![NodeConfig::new::<TestNode>()],
+            description: None,
+        };
+        
+        let workflow = Workflow::new(schema).expect("Should create workflow");
+        
+        // Don't register the node - this should cause a NodeNotFound error
+        let result = workflow.run(serde_json::json!({}));
+        
+        // Verify we get the expected error, not a panic
+        match result {
+            Err(WorkflowError::NodeNotFound { node_type }) => {
+                assert_eq!(node_type, TypeId::of::<TestNode>());
+            }
+            _ => panic!("Expected NodeNotFound error"),
         }
     }
 }

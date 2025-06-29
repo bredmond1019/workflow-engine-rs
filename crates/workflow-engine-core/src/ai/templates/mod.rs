@@ -182,6 +182,9 @@ pub mod storage;
 pub mod types;
 pub mod validator;
 
+#[cfg(test)]
+mod malformed_input_tests;
+
 // Re-export core types
 pub use engine::{TemplateEngine, EngineConfig, TemplateRenderContext};
 pub use parser::{TemplateParser, ParseError, TemplateAst};

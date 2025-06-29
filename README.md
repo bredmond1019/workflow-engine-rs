@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/bredmond1019/workflow-engine-rs/actions)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
 
-A cutting-edge AI workflow orchestration platform built in Rust, featuring event sourcing, microservices architecture, Model Context Protocol (MCP) integration, and advanced AI capabilities. Designed for production environments with enterprise-grade scalability, observability, and reliability.
+A cutting-edge AI workflow orchestration platform built in Rust, featuring **GraphQL Federation**, event sourcing, microservices architecture, React frontend, and Model Context Protocol (MCP) integration. Designed for production environments with enterprise-grade scalability, observability, and reliability.
 
 ## 🚀 Overview
 
@@ -13,10 +13,12 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring event
 
 ### Key Capabilities
 
-- **🧠 AI Integration**: Native support for OpenAI, Anthropic, and AWS Bedrock with intelligent token management and cost optimization
+- **🌐 GraphQL Federation**: Apollo Federation v2 gateway unifying all microservices with schema composition
+- **⚛️ React Frontend**: Modern TypeScript frontend with 174+ TDD tests and comprehensive UI components
+- **🧠 AI Integration**: Native support for OpenAI, Anthropic, and AWS Bedrock with intelligent token management
 - **⚡ Event-Driven Architecture**: PostgreSQL-backed event sourcing with snapshots, projections, and replay capabilities
 - **🔄 Model Context Protocol (MCP)**: Complete MCP implementation with multi-transport support (HTTP, WebSocket, stdio)
-- **🏗️ Microservices Platform**: Three specialized services for content processing, knowledge graphs, and real-time communication
+- **🏗️ Microservices Platform**: Four specialized services with federation gateway for unified API access
 - **📊 Production Monitoring**: Comprehensive observability with Prometheus, Grafana, and distributed tracing
 - **🔧 Service Bootstrap System**: Advanced dependency injection, service discovery, and lifecycle management
 - **🧪 Enterprise Testing**: Load testing, chaos engineering, and comprehensive integration test suites
@@ -41,32 +43,32 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring event
 
 ## 📦 Installation
 
-### Using Crates.io
+### From Source (Recommended)
 
-Add the workflow engine to your Rust project:
+```bash
+# Clone the repository
+git clone https://github.com/bredmond1019/workflow-engine-rs.git
+cd workflow-engine-rs
 
-```toml
-[dependencies]
-workflow-engine-core = "0.6.0"
-workflow-engine-mcp = "0.6.0"      # For MCP protocol support
-workflow-engine-nodes = "0.6.0"    # For pre-built nodes
-workflow-engine-api = "0.6.0"      # For REST API server
+# Build all components
+cargo build --release
 
-# Or use the complete application
-workflow-engine-app = "0.6.0"
+# Build specific components
+cargo build --bin workflow-engine        # Main API server
+cargo build --bin graphql-gateway        # GraphQL Federation gateway
 ```
 
-### Feature Flags
+### Using Crates.io (Coming Soon)
+
+*Note: Packages will be published to crates.io in the next release*
 
 ```toml
 [dependencies]
-workflow-engine-core = { version = "0.6.0", features = ["full"] }
-# Available features:
-# - "database" - PostgreSQL integration
-# - "monitoring" - Prometheus metrics (default)
-# - "aws" - AWS Bedrock AI support
-# - "streaming" - Real-time streaming
-# - "full" - All features
+workflow-engine-core = "0.6.0"      # Core workflow engine
+workflow-engine-mcp = "0.6.0"       # MCP protocol support
+workflow-engine-nodes = "0.6.0"     # Pre-built workflow nodes
+workflow-engine-api = "0.6.0"       # REST API server
+workflow-engine-gateway = "0.6.0"   # GraphQL Federation gateway
 ```
 
 ## 🚀 Quick Start
@@ -84,11 +86,17 @@ cd workflow-engine-rs
 docker-compose up -d
 
 # Check system health
-curl http://localhost:8080/health/detailed
+curl http://localhost:4000/health/detailed  # GraphQL Federation Gateway
+curl http://localhost:8080/health/detailed  # Main API
 
 # Access the services:
+# - GraphQL Federation Gateway: http://localhost:4000
+# - React Frontend: http://localhost:5173
 # - Main API: http://localhost:8080
 # - Swagger UI: http://localhost:8080/swagger-ui/
+# - Content Processing: http://localhost:8082
+# - Knowledge Graph: http://localhost:3002
+# - Realtime Communication: http://localhost:8081
 # - Grafana: http://localhost:3000 (admin/admin)
 # - Prometheus: http://localhost:9090
 ```
@@ -110,8 +118,17 @@ export DATABASE_URL="postgresql://localhost/ai_workflow_db"
 export JWT_SECRET="your-secure-jwt-secret"
 export OPENAI_API_KEY="your-openai-key"  # Optional
 
-# Run the main server
-cargo run
+# Start the GraphQL Federation gateway (required)
+cargo run --bin graphql-gateway              # Port 4000
+
+# Start the main API server
+cargo run --bin workflow-engine              # Port 8080
+
+# Start the React frontend
+cd frontend && npm install && npm run dev    # Port 5173
+
+# Or run all services with federation
+./scripts/run-federation-stack.sh
 
 # Or run microservices independently
 cd services/content_processing && cargo run    # Port 8082
@@ -119,19 +136,70 @@ cd services/knowledge_graph && cargo run      # Port 3002
 cd services/realtime_communication && cargo run # Port 8081
 ```
 
-### Programming with the Platform
+### Programming with GraphQL Federation
+
+```typescript
+// Frontend GraphQL queries through federation gateway
+import { gql } from '@apollo/client';
+
+// Query across multiple services via federation
+const GET_WORKFLOW_WITH_CONTENT = gql`
+  query GetWorkflowWithContent($id: ID!) {
+    workflow(id: $id) {
+      id
+      name
+      status
+      # From content processing service
+      processedContent {
+        id
+        concepts
+        sentiment
+      }
+      # From knowledge graph service
+      knowledgeGraph {
+        nodes
+        relationships
+      }
+      # From realtime service
+      collaborators {
+        userId
+        presence
+      }
+    }
+  }
+`;
+
+// React component with federation data
+function WorkflowDashboard({ workflowId }) {
+  const { data, loading } = useQuery(GET_WORKFLOW_WITH_CONTENT, {
+    variables: { id: workflowId }
+  });
+  
+  if (loading) return <Spin />;
+  
+  return (
+    <Card>
+      <h2>{data.workflow.name}</h2>
+      <ContentAnalysis data={data.workflow.processedContent} />
+      <KnowledgeGraphView graph={data.workflow.knowledgeGraph} />
+      <CollaboratorsList users={data.workflow.collaborators} />
+    </Card>
+  );
+}
+```
+
+### Backend Workflow Programming
 
 ```rust
 use workflow_engine_core::workflow::builder::WorkflowBuilder;
 use workflow_engine_core::nodes::{config::NodeConfig, agent::AgentNode};
-use workflow_engine_mcp::clients::http::HttpMCPClient;
 use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create an AI-powered research workflow
     let workflow = WorkflowBuilder::new::<AgentNode>("ai_research".to_string())
-        .description("AI research with external knowledge integration".to_string())
+        .description("AI research with GraphQL federation integration".to_string())
         .add_node(
             NodeConfig::new::<AgentNode>()
                 .with_description("Research and analyze content with AI".to_string())
@@ -144,14 +212,115 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "model": "gpt-4",
         "max_tokens": 2000,
         "temperature": 0.7,
-        "enable_external_search": true
+        "federation_enabled": true
     });
     
     let result = workflow.run(context)?;
     println!("AI research completed: {:?}", result);
     
-    Ok(())
+    Ok()
 }
+```
+
+## 🌐 GraphQL Federation Architecture
+
+### Unified API Gateway
+
+The platform uses **Apollo Federation v2** to create a unified GraphQL API that seamlessly combines all microservices:
+
+```
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│   React App     │────▶│ GraphQL Gateway      │────▶│   Microservices     │
+│   (Port 5173)   │     │   (Port 4000)        │     │   (Ports 8080+)     │
+└─────────────────┘     └──────────────────────┘     └─────────────────────┘
+                                │
+                      ┌─────────┴─────────┐
+                      │         │         │
+                 ┌────▼────┐ ┌──▼───┐ ┌───▼────┐
+                 │ Main   │ │Content│ │ Knowledge│
+                 │ API    │ │Process│ │ Graph   │
+                 │ (8080) │ │(8082) │ │ (3002)  │
+                 └────────┘ └──────┘ └────────┘
+```
+
+### Federation Features
+
+- **Schema Composition**: Automatic schema stitching across services
+- **Entity Resolution**: Cross-service data fetching with `@key` directives
+- **Query Planning**: Intelligent query optimization and execution
+- **Type Safety**: Full TypeScript support with generated types
+- **Error Handling**: Graceful partial failure handling
+- **Caching**: Query-level caching with federation-aware invalidation
+
+### Federation Gateway Health
+
+```bash
+# Check federation gateway status
+curl http://localhost:4000/health/detailed
+
+# View composed schema
+curl http://localhost:4000/_service/schema
+
+# Test federation queries
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ workflows { id name status } }"}'
+```
+
+## ⚛️ React Frontend
+
+### Modern TypeScript Frontend
+
+Built with enterprise-grade tooling and comprehensive testing:
+
+- **Technology Stack**: React 18, TypeScript, Vite 4.4.0, Ant Design
+- **State Management**: Zustand for global state, React Query for server state
+- **GraphQL Client**: Apollo Client with federation support
+- **Testing**: 174+ TDD tests with Jest and React Testing Library
+- **Styling**: CSS-in-JS with Ant Design components
+- **Development**: Hot module replacement, TypeScript checking
+
+### Frontend Features
+
+- **Multi-Step Workflow Builder**: Visual workflow creation with drag-and-drop
+- **Real-time Dashboard**: Live updates via GraphQL subscriptions
+- **Content Analysis Views**: AI-powered content insights and visualizations
+- **Knowledge Graph Explorer**: Interactive graph visualization
+- **Collaboration Tools**: Real-time presence and commenting
+- **Dark/Light Theme**: User preference with system detection
+
+### Frontend Development
+
+```bash
+# Install dependencies
+cd frontend && npm install
+
+# Start development server
+npm run dev                    # http://localhost:5173
+
+# Run tests (174+ TDD tests)
+npm test                       # Interactive test runner
+npm run test:coverage          # Coverage report
+npm run test:ci               # CI test run
+
+# Build for production
+npm run build
+npm run preview               # Preview production build
+```
+
+### Testing Strategy
+
+- **Test-Driven Development**: 174+ tests written before implementation
+- **Component Testing**: React Testing Library for user interaction testing
+- **Integration Testing**: Full GraphQL federation testing
+- **E2E Testing**: Playwright for critical user journeys
+- **Visual Testing**: Storybook for component documentation
+
+```bash
+# Run specific test suites
+npm test -- --testNamePattern="WorkflowBuilder"
+npm run test:e2e              # End-to-end tests
+npm run storybook             # Component documentation
 ```
 
 ## 🎯 Core Features
@@ -180,30 +349,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Connection Pooling**: Advanced connection management with health checks
 - **Load Balancing**: Multiple strategies for high availability
 - **Client Library**: Ready-to-use HTTP, WebSocket, and stdio clients
+- **Federation Integration**: MCP servers accessible via GraphQL gateway
 - **Server Tools**: Customer support and knowledge base MCP servers
 
-### 🏗️ Microservices Platform
+### 🏗️ Federated Microservices Platform
 
-#### Content Processing Service
+#### GraphQL Federation Gateway (Port 4000)
+- **Apollo Federation v2**: Modern schema composition and query planning
+- **Service Discovery**: Automatic subgraph registration and health monitoring
+- **Query Optimization**: Intelligent query planning across services
+- **Error Handling**: Graceful partial failure handling
+- **Caching**: Federation-aware query caching
+- **Schema Introspection**: Live schema exploration and documentation
+
+#### Main API Service (Port 8080)
+- **Workflow Engine**: Core workflow orchestration and execution
+- **Event Sourcing**: Complete event store with CQRS implementation
+- **Authentication**: JWT-based auth with multi-tenant support
+- **REST + GraphQL**: Both REST endpoints and GraphQL subgraph
+- **Service Bootstrap**: Dependency injection and lifecycle management
+
+#### Content Processing Service (Port 8082)
 - **Multi-Format Support**: HTML, PDF, Markdown, JSON, XML parsing
 - **AI Analysis**: Concept extraction, sentiment analysis, difficulty assessment
 - **WASM Plugins**: Extensible processing with WebAssembly sandbox
 - **Vector Embeddings**: pgvector integration for semantic search
-- **Batch Processing**: Queue-based processing with Redis backend
+- **GraphQL Subgraph**: Federation-enabled schema with `@key` directives
 
-#### Knowledge Graph Service
+#### Knowledge Graph Service (Port 3002)
 - **Dgraph Integration**: High-performance graph database backend
 - **Graph Algorithms**: PageRank, shortest path, topological sorting
 - **Learning Paths**: Automated curriculum generation from concept graphs
-- **GraphQL API**: Flexible querying with full GraphQL support
+- **GraphQL Federation**: Native federation support with entity resolution
 - **Similarity Search**: Vector-based concept relationship discovery
 
-#### Realtime Communication Service
+#### Realtime Communication Service (Port 8081)
 - **WebSocket Server**: 10,000+ concurrent connection support
 - **Actor Model**: Isolated actors with supervision and fault tolerance
 - **Message Routing**: Rule-based routing with filtering and transformation
 - **Presence System**: Real-time user presence and connection tracking
-- **Rate Limiting**: Multi-level protection against abuse
+- **GraphQL Subscriptions**: Federation-compatible real-time subscriptions
 
 ### 🔧 Enterprise Infrastructure
 
@@ -228,13 +413,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **CORS Support**: Configurable cross-origin resource sharing
 - **Input Validation**: Comprehensive request validation and sanitization
 
-## 🏛️ System Architecture
+## 🏛️ Federation Architecture
 
-### High-Level Architecture
+### GraphQL Federation Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              AI Workflow Engine Platform                               │
+│                         AI Workflow Engine - GraphQL Federation                        │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
                                            │
            ┌───────────────────────────────┼───────────────────────────────┐
@@ -899,9 +1084,25 @@ cargo test
 cargo test --test integration_tests -- --ignored
 ```
 
+#### GraphQL Federation Tests
+```bash
+# Federation integration tests
+cargo test graphql_federation_integration_test -- --ignored
+./scripts/test-federation.sh
+
+# Gateway health and schema validation
+curl http://localhost:4000/health/detailed
+curl http://localhost:4000/_service/schema
+
+# Frontend federation tests (174+ TDD tests)
+cd frontend && npm test
+cd frontend && npm run test:federation
+```
+
 #### MCP Protocol Tests
 ```bash
-# Test MCP protocol implementations
+# Test MCP protocol implementations (run sequentially)
+cargo test mcp_config -- --test-threads=1
 cargo test mcp_integration_test -- --ignored
 cargo test mcp_agent_integration_test -- --ignored
 

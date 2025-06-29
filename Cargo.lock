@@ -5550,6 +5550,7 @@ dependencies = [
  "env_logger",
  "log",
  "thiserror 2.0.12",
+ "tokio",
  "workflow-engine-api",
  "workflow-engine-core",
 ]

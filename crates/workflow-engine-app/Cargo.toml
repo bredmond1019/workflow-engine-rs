@@ -40,4 +40,6 @@ log = { workspace = true }
 env_logger = { workspace = true }
 thiserror = { workspace = true }
 
-# No dev-dependencies needed for app binary
+[dev-dependencies]
+# For async tests
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
