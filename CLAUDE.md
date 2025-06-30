@@ -1,215 +1,315 @@
-# CLAUDE.md
+# CLAUDE.md - Federation-UI Branch (Enterprise Edition)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the enterprise federation-ui branch of the AI Workflow Engine.
 
-## Project Overview
+## 🎯 Branch Context
 
-Production-ready AI workflow orchestration platform built in Rust with GraphQL Federation, featuring event sourcing, microservices architecture, and Model Context Protocol (MCP) integration. The system includes a React frontend with 174+ TDD tests and comprehensive monitoring.
+> **You are working on the `federation-ui` branch** - the enterprise, production-ready version with GraphQL Federation, microservices, React frontend, and comprehensive testing.
+> 
+> For the simpler, learning-focused version, see the `main` branch.
 
-**Key Architecture**: Microservices connected via GraphQL Federation gateway (port 4000), with separate services for content processing, knowledge graphs, and real-time communication.
+## 🏢 Project Overview
 
-## Project Status
+**AI Workflow Engine (Federation-UI)** is a production-ready AI workflow orchestration platform featuring:
 
-**Publication Readiness: 95% Complete**
+- **GraphQL Federation Gateway** - Unified API across all microservices (Apollo Federation v2)
+- **Microservices Architecture** - Independent, scalable services with dedicated databases
+- **React Frontend** - Modern UI with 174+ TDD tests and real-time updates
+- **Enterprise Security** - JWT auth, multi-tenancy, rate limiting, 70+ vulnerabilities prevented
+- **Production Monitoring** - Prometheus, Grafana, Jaeger, distributed tracing
+- **Event Sourcing** - PostgreSQL-based with CQRS, snapshots, and replay capabilities
+- **AI Integration** - OpenAI, Anthropic, AWS Bedrock with token management
+- **Model Context Protocol** - Multi-transport MCP implementation
 
-### Major Achievements
-- ✅ **All 224 compilation errors resolved** - Project builds cleanly
-- ✅ **TDD methodology successfully implemented** - Tests 1-3 & 7 complete with 174+ frontend tests
-- ✅ **Comprehensive security validation** - 70+ vulnerabilities prevented, hardcoded secrets removed
-- ✅ **GraphQL Federation gateway operational** - Running on port 4000 with entity resolution
-- ✅ **Full microservices architecture** - All services independently deployable
-- ✅ **Production-ready monitoring** - Prometheus, Grafana, Jaeger integrated
+## 📊 Project Status
 
-### Remaining Items (5%)
-- [ ] Final crates.io metadata validation
-- [ ] Dependency version pinning for publication
-- [ ] Open source license selection
-- [ ] README files for each publishable crate
+**95% Ready for Open Source Publication**
 
-## Essential Commands
+### ✅ Completed
+- All 224 compilation errors resolved
+- TDD implementation with 174+ frontend tests
+- GraphQL Federation gateway operational
+- Security hardening complete
+- Production monitoring integrated
+- Comprehensive documentation
 
-### Running the System
+### 🔄 Remaining (5%)
+- Final crates.io metadata validation
+- Dependency version pinning
+- Open source license finalization
+- Crate-specific README files
 
+## 🏗️ Architecture Overview
+
+### System Architecture
+```
+Frontend (React:5173) → GraphQL Gateway (4000) → Microservices (8080-8084)
+                                ↓
+                        Schema Composition
+                        Query Planning
+                        Entity Resolution
+```
+
+### Core Services
+
+1. **GraphQL Gateway** (`workflow-engine-gateway`)
+   - Port: 4000
+   - Apollo Federation v2
+   - Schema composition across all services
+   - Intelligent query planning
+
+2. **Main API Server** (`workflow-engine-api`)
+   - Port: 8080
+   - Authentication & authorization
+   - Workflow management
+   - Event sourcing
+   - MCP integration
+
+3. **Content Processing Service**
+   - Port: 8082
+   - Document analysis
+   - WASM plugin support
+   - Vector embeddings (pgvector)
+   - Batch processing
+
+4. **Knowledge Graph Service**
+   - Port: 3002
+   - Dgraph integration
+   - Graph algorithms
+   - Learning path generation
+   - GraphQL API
+
+5. **Realtime Communication Service**
+   - Port: 8081
+   - WebSocket server
+   - Actor model
+   - Presence tracking
+   - Message routing
+
+## 🚀 Essential Commands
+
+### Quick Start
 ```bash
-# Quick start - Full stack with Docker
+# Full stack with Docker
 docker-compose up -d
 
-# Development - Run individual components
-cargo run --bin workflow-engine          # Main API (8080)
-cargo run --bin graphql-gateway          # Federation Gateway (4000)
-cd frontend && npm run dev               # Frontend (5173)
-
-# Start all services for federation
+# Development mode
 ./scripts/run-federation-stack.sh
+
+# Individual services
+cargo run --bin workflow-engine       # Main API (8080)
+cargo run --bin graphql-gateway       # Federation (4000)
+cd frontend && npm run dev            # React UI (5173)
 ```
 
 ### Testing
-
 ```bash
-# Run all Rust tests
+# All tests
 cargo test
+cd frontend && npm test
 
-# Run single test
-cargo test test_name -- --exact
-
-# Integration tests (requires external services)
+# Integration tests
 ./scripts/start_test_servers.sh
 cargo test -- --ignored
-
-# MCP tests (run sequentially to avoid race conditions)
-cargo test mcp_config -- --test-threads=1
-
-# Frontend tests (174+ TDD tests)
-cd frontend && npm test
-cd frontend && npm test -- --coverage
 
 # Federation tests
 ./scripts/test-federation.sh
 cargo test graphql_federation_integration_test -- --ignored
+
+# Frontend TDD tests
+cd frontend && npm test -- --coverage
+
+# E2E tests
+cd frontend && npm run test:e2e
 ```
 
-### Development
-
+### Health Checks
 ```bash
-# Format and lint
-cargo fmt
-cargo clippy -- -D warnings
-
-# Database setup
-createdb ai_workflow_db
-diesel migration run
-
-# Check federation health
+# Federation gateway health
 curl http://localhost:4000/health/detailed
 
-# Environment setup
-export JWT_SECRET="your-secure-secret"  # Required - no default
-export DATABASE_URL="postgresql://user:pass@localhost/ai_workflow_db"
+# Individual services
+curl http://localhost:8080/health
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+curl http://localhost:3002/health
 ```
 
-## High-Level Architecture
+## 💡 Development Guidelines
 
-### Core System Design
+### Working with GraphQL Federation
 
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Frontend  │────▶│ GraphQL Gateway  │────▶│   Microservices │
-│   (React)   │     │   (Port 4000)    │     │  (8080-8084)   │
-└─────────────┘     └──────────────────┘     └─────────────────┘
-                            │
-                    ┌───────┴────────┐
-                    │                │
-              Federation      Entity Resolution
-```
+1. **Adding New Subgraphs**
+   ```rust
+   // Implement _service and _entities resolvers
+   #[Object]
+   impl Query {
+       async fn _service(&self) -> Service { ... }
+       async fn _entities(&self, representations: Vec<Any>) -> Vec<Entity> { ... }
+   }
+   ```
 
-### Service Architecture
+2. **Entity Resolution**
+   - Use `@key` directives for cross-service queries
+   - Implement entity resolvers in each service
+   - Gateway handles query planning automatically
 
-1. **GraphQL Gateway** (`workflow-engine-gateway`): Apollo Federation v2 gateway that unifies all services
-2. **Main API** (`workflow-engine-api`): Core workflow management, auth, event sourcing
-3. **Content Processing** (port 8082): Document analysis with WASM plugins
-4. **Knowledge Graph** (port 3002): Dgraph-backed graph database
-5. **Realtime Communication** (port 8081): WebSocket messaging with actor model
+### Frontend Development
 
-### Key Patterns
+1. **TDD Approach**
+   - Write tests first
+   - Use React Testing Library
+   - Maintain >80% coverage
+   - See `frontend/src/**/*.test.tsx` for examples
 
-- **Event Sourcing**: PostgreSQL-backed with CQRS, snapshots, and replay (`crates/workflow-engine-api/src/db/events/`)
-- **Service Bootstrap**: Dependency injection container (`crates/workflow-engine-api/src/bootstrap/`)
-- **MCP Protocol**: Multi-transport (HTTP/WebSocket/stdio) with connection pooling
-- **Federation**: Schema composition and query planning across services
-- **Multi-tenancy**: Schema, row-level, and hybrid isolation modes
+2. **State Management**
+   - Zustand for global state
+   - React Query for server state
+   - Local state for component-specific data
 
-### AI Integration Points
+### Microservice Communication
 
-- **Providers**: OpenAI, Anthropic, AWS Bedrock (with `aws` feature)
-- **Token Management**: Usage tracking, budgets, analytics (`workflow-engine-core/src/ai/tokens/`)
-- **Node System**: Type-safe workflow nodes with AI agents (`workflow-engine-nodes/`)
-- **Template Engine**: Handlebars with AI context injection
+1. **Internal APIs**
+   - Service discovery via bootstrap system
+   - Circuit breakers for resilience
+   - Correlation IDs for tracing
 
-## Critical Implementation Details
+2. **Event-Driven**
+   - Events published to PostgreSQL event store
+   - Services subscribe to relevant events
+   - Eventual consistency model
+
+## 🔒 Security Considerations
 
 ### Authentication
-- JWT-based auth requires `JWT_SECRET` environment variable (no default for security)
-- Token validation middleware in `workflow-engine-api/src/middleware/auth.rs`
-- Multi-tenant context in `workflow-engine-api/src/db/tenant.rs`
+- JWT tokens required (no defaults)
+- Set `JWT_SECRET` environment variable
+- Token validation in all services
+- Multi-tenant context propagation
 
-### GraphQL Federation
-- Subgraph implementations must include `_service` and `_entities` resolvers
-- Entity resolution uses `@key` directives for cross-service queries
-- Gateway handles partial failures gracefully
-- See `FEDERATION.md` for complete guide
+### Data Protection
+- SQL injection prevention
+- XSS protection in React
+- CSRF tokens
+- Rate limiting on all endpoints
 
-### Database Migrations
-- Main app: Diesel migrations in `crates/workflow-engine-api/migrations/`
-- Content service: SQLx migrations in `services/content_processing/migrations/`
-- Always run migrations before starting services
+## 📁 Key File Locations
 
-### Testing Infrastructure
-- Frontend: TDD with React Testing Library, 174+ tests
-- Backend: Unit + integration tests, some require `--ignored` flag
-- MCP tests: May have race conditions, use `--test-threads=1`
-- Visual dashboard: `frontend/test-dashboard/`
+### Configuration
+- `docker-compose.yml` - Service orchestration
+- `.env.example` - Environment template
+- `federation_test_config.toml` - Test configuration
 
-## Service-Specific Notes
+### Documentation
+- `FEDERATION.md` - GraphQL Federation guide
+- `frontend/README.md` - Frontend documentation
+- `docs/` - Comprehensive documentation
+- Service-specific docs in each service directory
 
-### Frontend
-- Vite 4.4.0 (pinned for Node.js 18 compatibility)
-- Zustand for state management
-- GraphQL client with federation support
-- TDD methodology throughout
+### Testing
+- `tests/` - Integration tests
+- `frontend/src/**/*.test.tsx` - Frontend tests
+- `frontend/e2e/` - End-to-end tests
 
-### MCP Servers
-- Python-based in `mcp-servers/`
-- HelpScout (8001), Notion (8002), Slack (8003)
-- Use stdio protocol for communication
-- Start with `./scripts/start_test_servers.sh`
+## 🐛 Common Issues & Solutions
 
-### Monitoring Stack
-- Prometheus metrics at `:9090`
-- Grafana dashboards at `:3000` (admin/admin)
-- Jaeger tracing included
-- Health endpoints on all services
+### Federation Gateway Not Starting
+```bash
+# Check all services are running
+docker-compose ps
 
-## TDD Achievements
+# Verify subgraph health
+curl http://localhost:8080/graphql
+curl http://localhost:8082/graphql
+```
 
-### Test Coverage Summary
-- **Frontend**: 174+ tests with comprehensive component coverage
-- **Backend Integration**: Complete test suites for:
-  - End-to-end workflows (`tests/end_to_end_workflow_test.rs`)
-  - MCP communication (`tests/mcp_communication_test.rs`)
-  - External tool integration (`tests/workflow_external_tools_test.rs`)
-  - Load testing (`tests/load_test.rs`)
-  - Chaos engineering (`tests/chaos_test.rs`)
-- **GraphQL Federation**: Full integration test suite
-- **Security Validation**: 70+ vulnerability prevention tests
+### Frontend Build Issues
+```bash
+# Node.js 18 required
+nvm use 18
 
-### Security Improvements
-1. **Authentication Hardening**
-   - Removed all hardcoded secrets
-   - JWT_SECRET now required from environment (no defaults)
-   - Enhanced token validation middleware
-   
-2. **Data Protection**
-   - SQL injection prevention via parameterized queries
-   - XSS protection in frontend components
-   - CSRF token validation
-   
-3. **Infrastructure Security**
-   - Rate limiting on all endpoints
-   - Connection pooling with limits
-   - Circuit breakers for service resilience
+# Clean install
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
 
-## Current Branch Context
+### Test Failures
+```bash
+# MCP tests may have race conditions
+cargo test mcp_config -- --test-threads=1
 
-Working on `federation-ui` branch with completed:
-- GraphQL Federation gateway implementation
-- Frontend TDD implementation (174+ tests)
-- Comprehensive security hardening
-- Open source preparation (95% ready)
-- Full documentation suite
+# Start test servers for integration tests
+./scripts/start_test_servers.sh
+```
 
-## Testing Documentation
+## 🎯 Current Priorities
 
-- **[USER_TESTING.md](USER_TESTING.md)** - Step-by-step validation guide
-- **[QUICK_TEST_REFERENCE.md](QUICK_TEST_REFERENCE.md)** - Essential test commands
-- **[TEST_COVERAGE_REPORT.md](TEST_COVERAGE_REPORT.md)** - Detailed coverage analysis
-- **[FEDERATION.md](FEDERATION.md)** - GraphQL Federation architecture and testing
+1. **Documentation Polish**
+   - Ensure all services have comprehensive docs
+   - Update examples for federation features
+   - Complete API documentation
+
+2. **Testing Coverage**
+   - Maintain frontend coverage >80%
+   - Add missing integration tests
+   - Performance benchmarks
+
+3. **Production Readiness**
+   - Kubernetes manifests
+   - Monitoring dashboards
+   - Deployment guides
+
+## 📚 Learning Path
+
+For developers new to this branch:
+
+1. **Start with Frontend**
+   - Run `cd frontend && npm run dev`
+   - Explore the UI at http://localhost:5173
+   - Review TDD tests in `*.test.tsx` files
+
+2. **Understand Federation**
+   - Read `FEDERATION.md`
+   - Explore gateway at http://localhost:4000/graphql
+   - Trace a query through multiple services
+
+3. **Explore Microservices**
+   - Each service has its own README
+   - Start with main API (port 8080)
+   - Understand event sourcing patterns
+
+4. **Advanced Features**
+   - Real-time updates via WebSocket
+   - AI integration examples
+   - MCP protocol implementation
+
+## 🔧 Useful Development Scripts
+
+```bash
+# Run complete federation stack
+./scripts/run-federation-stack.sh
+
+# Test federation health
+./scripts/test-federation.sh
+
+# Generate GraphQL schema
+./scripts/generate-schema.sh
+
+# Run all tests with coverage
+./scripts/test-all.sh
+
+# Clean and rebuild
+./scripts/clean-build.sh
+```
+
+## 🌟 Key Differentiators from Main Branch
+
+1. **GraphQL Federation** - Unified API gateway vs REST only
+2. **React Frontend** - Full UI vs CLI only
+3. **Microservices** - Distributed vs monolithic
+4. **Production Stack** - Complete monitoring vs basic
+5. **Advanced Testing** - TDD + E2E vs unit tests only
+6. **Enterprise Features** - Multi-tenancy, scaling, etc.
+
+Remember: This branch is for **production deployments**. Use the main branch for learning and prototyping.

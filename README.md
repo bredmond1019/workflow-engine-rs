@@ -20,11 +20,16 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring **Gra
 |---------|-------------|---------------------|
 | **Architecture** | Monolithic | Microservices + GraphQL Federation |
 | **Frontend** | Basic/None | React with 174+ TDD tests |
-| **Security** | Basic | Enterprise-grade (70+ vulnerabilities prevented) |
-| **Testing** | Unit tests | Comprehensive TDD methodology |
-| **Deployment** | Simple Docker | Production-ready with monitoring |
-| **Documentation** | Getting started | Comprehensive API docs + examples |
-| **Use Case** | Learning, prototypes | Production, enterprise |
+| **GraphQL Support** | None | Apollo Federation v2 |
+| **Security** | Basic JWT | Enterprise-grade (70+ vulnerabilities prevented) |
+| **Testing** | Unit tests | Comprehensive TDD + E2E + Load tests |
+| **Monitoring** | Basic health checks | Full observability stack (Prometheus/Grafana/Jaeger) |
+| **Deployment** | Simple Docker | Production Kubernetes + monitoring |
+| **Scaling** | Vertical only | Horizontal + auto-scaling |
+| **Documentation** | Getting started | Complete API docs + architecture guides |
+| **Multi-tenancy** | Basic | Advanced with isolation modes |
+| **Real-time** | Basic WebSocket | Actor model with presence tracking |
+| **Use Case** | Learning, prototypes | Production, enterprise, SaaS |
 
 👨‍💻 **Choose `main` for**: Learning Rust workflows, simple prototypes, getting started quickly  
 🏢 **Choose `federation-ui` for**: Production deployments, enterprise features, scalable architecture
@@ -48,6 +53,66 @@ A cutting-edge AI workflow orchestration platform built in Rust, featuring **Gra
 **AI Workflow Engine** is a comprehensive platform for building, deploying, and managing AI-powered workflows at scale. It combines modern distributed systems patterns with AI-first design principles to deliver unparalleled performance and flexibility.
 
 ### 🏗️ System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                     AI Workflow Engine - Federation-UI Architecture                     │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                            │
+                    ┌───────────────────────┼───────────────────────────┐
+                    │                       │                           │
+                    ▼                       ▼                           ▼
+         ┌─────────────────┐     ┌─────────────────┐        ┌─────────────────┐
+         │  React Frontend │     │   Mobile Apps   │        │  External APIs  │
+         │   (Port 5173)   │     │   (Optional)    │        │   (Partners)    │
+         └─────────────────┘     └─────────────────┘        └─────────────────┘
+                    │                       │                           │
+                    └───────────────────────┼───────────────────────────┘
+                                            │
+                                            ▼
+                               ┌────────────────────────┐
+                               │  GraphQL Federation    │
+                               │  Gateway (Port 4000)   │
+                               │  • Schema Composition  │
+                               │  • Query Planning      │
+                               │  • Entity Resolution   │
+                               └────────────────────────┘
+                                            │
+           ┌────────────────────────────────┼────────────────────────────────┐
+           │                                │                                │
+           ▼                                ▼                                ▼
+┌─────────────────────┐        ┌─────────────────────┐        ┌─────────────────────┐
+│   Main API Server   │        │  Content Processing │        │   Knowledge Graph   │
+│    (Port 8080)      │        │   Service (8082)    │        │   Service (3002)    │
+│                     │        │                     │        │                     │
+│ • Authentication    │        │ • Document Analysis │        │ • Graph Database    │
+│ • Workflow Engine   │        │ • WASM Plugins      │        │ • Learning Paths    │
+│ • Event Sourcing    │        │ • Vector Embeddings │        │ • GraphQL Queries   │
+│ • MCP Integration   │        │ • Batch Processing  │        │ • Recommendations   │
+└─────────────────────┘        └─────────────────────┘        └─────────────────────┘
+           │                                │                                │
+           │                    ┌───────────┴───────────┐                   │
+           │                    │                       │                   │
+           ▼                    ▼                       ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐    ┌─────────────────┐  ┌─────────────────┐
+│  Realtime Comm  │  │   PostgreSQL    │    │     Dgraph      │  │  Redis Cache    │
+│  Service (8081) │  │  Event Store    │    │  Graph Store    │  │  & Pub/Sub      │
+│                 │  │                 │    │                 │  │                 │
+│ • WebSockets    │  │ • Events        │    │ • Concepts      │  │ • Sessions      │
+│ • Actor Model   │  │ • Snapshots     │    │ • Relations     │  │ • Rate Limits   │
+│ • Presence      │  │ • Projections   │    │ • Algorithms    │  │ • Message Queue │
+└─────────────────┘  └─────────────────┘    └─────────────────┘  └─────────────────┘
+                                │
+                                ▼
+                    ┌───────────────────────┐
+                    │   External Services   │
+                    │                       │
+                    │ • OpenAI API          │
+                    │ • Anthropic Claude    │
+                    │ • AWS Bedrock         │
+                    │ • MCP Servers         │
+                    └───────────────────────┘
+```
 
 ```mermaid
 graph TB
