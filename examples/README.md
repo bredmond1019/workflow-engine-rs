@@ -1,240 +1,383 @@
-# AI Workflow System - Example Integrations
+# AI Workflow System - Examples & Tutorials
 
-This directory contains example integrations demonstrating various use cases for the AI Workflow System.
+This directory contains comprehensive working examples and tutorials demonstrating the AI Workflow System capabilities, including GraphQL Federation, event sourcing, security features, and MCP integration.
 
-## Examples Overview
+## Quick Start Examples
 
-### 1. Blog Content Pipeline (`1_blog_content_pipeline.py`)
+### Core Examples Index
 
-A complete content creation workflow that demonstrates:
-- Topic research using AI
-- Blog post outline generation
-- Full content creation
-- Publishing to Notion
-- Template usage
+1. **[Basic Workflow](01_basic_workflow/)** - Simple workflow creation and execution
+2. **[MCP Integration](02_mcp_integration/)** - Model Context Protocol usage patterns  
+3. **[GraphQL Federation](03_graphql_federation/)** - Federation queries and subgraph interaction
+4. **[Event Sourcing](04_event_sourcing/)** - Event-driven architecture patterns
+5. **[Security Features](05_security_features/)** - JWT validation and input sanitization
 
-**Use Case**: Content marketing teams, technical writers, documentation automation
+### Legacy Python Examples (Maintained for Compatibility)
 
-### 2. Customer Support Automation (`2_customer_support_automation.py`)
+- **[Blog Content Pipeline](1_blog_content_pipeline.py)** - Complete content creation workflow
+- **[Customer Support Automation](2_customer_support_automation.py)** - Automated support system
+- **[Knowledge Base Search](3_knowledge_base_search.py)** - Multi-source knowledge search
 
-An automated customer support system that shows:
-- Support ticket processing
-- Intelligent categorization and routing
-- Automated response generation
-- Spam detection
-- Escalation handling
-- Real-time updates via WebSocket
+## Architecture Overview
 
-**Use Case**: Customer support teams, help desk automation, ticket triage
+The examples demonstrate the full system architecture:
 
-### 3. Knowledge Base Search (`3_knowledge_base_search.py`)
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Examples  │────▶│ GraphQL Gateway  │────▶│   Microservices │
+│   (Clients) │     │   (Port 4000)    │     │  (8080-8084)   │
+└─────────────┘     └──────────────────┘     └─────────────────┘
+                            │
+                    ┌───────┴────────┐
+                    │                │
+              Federation      Entity Resolution
+```
 
-A multi-source knowledge search system featuring:
-- Cross-platform search (Notion, Slack, HelpScout)
-- Result aggregation and ranking
-- Unified response generation
-- Search caching for performance
-- Advanced filtering options
+## Key Features Demonstrated
 
-**Use Case**: Internal knowledge management, documentation search, support agent assistance
+### 🔧 **Core Functionality**
+- Workflow creation and execution
+- Node-based processing pipeline
+- Type-safe error handling with boxed errors
+- Event sourcing with CQRS patterns
+
+### 🌐 **GraphQL Federation**
+- Subgraph schema composition
+- Cross-service entity resolution
+- Query planning and execution
+- Partial failure handling
+
+### 🔒 **Security & Validation**
+- JWT authentication patterns
+- Input sanitization and validation
+- Rate limiting examples
+- Multi-tenant support
+
+### 🔗 **Integration Patterns**
+- MCP server communication
+- External API integrations
+- WebSocket real-time updates
+- Database event storage
+
+### 🏗️ **Architecture Patterns**
+- Microservices coordination
+- Event-driven communication
+- Circuit breaker patterns
+- Graceful degradation
 
 ## Prerequisites
 
-1. **AI Workflow System Running**
+### System Requirements
+
+1. **Full System Stack** (recommended)
    ```bash
-   cd ..
-   cargo run
+   # Quick start with Docker
+   docker-compose up -d
+   
+   # Or start individual components
+   cargo run --bin workflow-engine          # Main API (8080)
+   cargo run --bin graphql-gateway          # Federation Gateway (4000) 
+   cd frontend && npm run dev               # Frontend (5173)
    ```
 
-2. **Authentication Token**
+2. **Development Environment**
    ```bash
-   export AUTH_TOKEN="your-jwt-token"
+   # Rust toolchain
+   rustc --version  # 1.70+ required
+   
+   # Node.js for frontend examples
+   node --version   # 18+ required
+   
+   # Environment variables
+   export JWT_SECRET="your-secure-jwt-secret"  # Required - no default
+   export DATABASE_URL="postgresql://user:pass@localhost/ai_workflow_db"
    ```
 
-3. **Python Dependencies**
+3. **Optional: MCP Test Servers**
    ```bash
-   pip install requests websockets asyncio
+   # Start Python MCP servers for integration examples
+   ./scripts/start_test_servers.sh
+   
+   # HelpScout (8001), Notion (8002), Slack (8003)
    ```
-
-4. **Optional: MCP Servers**
-   - Notion MCP Server (for blog publishing)
-   - Slack MCP Server (for knowledge search)
-   - HelpScout MCP Server (for support tickets)
 
 ## Running the Examples
 
-### Basic Usage
+### Core Examples (Structured Tutorials)
 
-Run any example directly:
+Navigate to each example directory for complete instructions:
 
 ```bash
-python 1_blog_content_pipeline.py
+# Basic workflow patterns
+cd 01_basic_workflow && cargo run --example basic_workflow
+
+# MCP integration patterns  
+cd 02_mcp_integration && cargo run --example mcp_client
+
+# GraphQL federation queries
+cd 03_graphql_federation && npm run demo
+
+# Event sourcing patterns
+cd 04_event_sourcing && cargo run --example event_replay  
+
+# Security feature demonstrations
+cd 05_security_features && cargo run --example jwt_validation
 ```
 
-### With Environment Variables
+### Legacy Python Examples
 
-Configure the API endpoint and token:
-
-```bash
-export API_BASE_URL="http://localhost:8080/api/v1"
-export AUTH_TOKEN="your-jwt-token"
-python 2_customer_support_automation.py
-```
-
-### Using Docker
-
-If running the system in Docker:
+Run Python examples directly (maintained for compatibility):
 
 ```bash
-export API_BASE_URL="http://localhost:8080/api/v1"
+# Set up environment
+export API_BASE_URL="http://localhost:8080/api/v1" 
 export WS_URL="ws://localhost:8080/ws"
+export AUTH_TOKEN="your-jwt-token"
+
+# Run individual examples
+python 1_blog_content_pipeline.py
+python 2_customer_support_automation.py  
 python 3_knowledge_base_search.py
 ```
 
-## Example Output
+## Example Outputs
 
-### Blog Content Pipeline
+### Basic Workflow (01_basic_workflow)
 ```
-=== Blog Content Pipeline Example ===
+$ cargo run --example basic_workflow
 
-Step 1: Researching topic...
-Triggered workflow: 550e8400-e29b-41d4-a716-446655440000
-Status: running - Progress: 33%
-Status: running - Progress: 66%
-Status: completed - Progress: 100%
-Research completed. Summary: AI is revolutionizing software development...
+=== Basic Workflow Example ===
+✅ Workflow created: simple_text_processor
+✅ Node registered: text_input 
+✅ Node registered: text_processor
+✅ Node registered: text_output
 
-Step 2: Generating blog content...
-Blog post generated. Title: The AI Revolution in Software Development
-
-Step 3: Saving to Notion...
-Successfully published to Notion!
-Page URL: https://notion.so/ai-revolution-software-dev
-
-=== Pipeline Complete ===
+Executing workflow...
+Step 1: text_input - Processing input: "Hello, World!"
+Step 2: text_processor - Transforming text to uppercase
+Step 3: text_output - Result: "HELLO, WORLD!"
+✅ Workflow completed successfully in 45ms
 ```
 
-### Customer Support Automation
+### MCP Integration (02_mcp_integration)
 ```
-=== Customer Support Automation Example ===
+$ cargo run --example mcp_client
 
-Processing ticket: TICKET-001 - Cannot login to my account
-Workflow triggered: 650e8400-e29b-41d4-a716-446655440001
+=== MCP Integration Example ===
+🔗 Connecting to HelpScout MCP server (localhost:8001)...
+✅ Connection established via stdio transport
 
-Ticket TICKET-001 processed:
-  Category: technical_support
-  Intent: login_issue
-  Spam Score: 0.02
-  Escalated: False
-  Response: I understand you're having trouble logging in...
+📋 Available tools:
+- search_tickets: Search support tickets
+- create_ticket: Create new ticket
+- update_ticket: Update existing ticket
 
-=== Customer Support Automation Report ===
-Total tickets: 4
-Successfully processed: 4
-Category Distribution:
-  technical_support: 1 (25.0%)
-  feature_request: 1 (25.0%)
-  billing: 1 (25.0%)
-  spam: 1 (25.0%)
-```
+🔧 Calling tool: search_tickets
+Parameters: {"query": "login issues", "status": "open"}
 
-### Knowledge Base Search
-```
-=== Basic Knowledge Base Search Demo ===
+📊 Results:
+Found 3 tickets matching "login issues":
+- #12345: User cannot access dashboard
+- #12346: Login form validation error  
+- #12347: SSO integration failing
 
-🔍 Searching for: 'How to set up authentication in our API?'
-Searching in: notion, slack, helpscout
-
-📊 Search Results (8 total)
-Sources searched: notion, slack
-Search time: 2.45 seconds
-
-1. API Authentication Guide
-   Source: notion | Relevance: 0.95
-   This comprehensive guide covers JWT authentication setup...
-
-2. Auth Implementation Discussion
-   Source: slack | Relevance: 0.87
-   Thread from #engineering about best practices for API auth...
-
-🤖 Generating unified response...
-To set up authentication in our API, follow these steps...
+✅ MCP operation completed in 234ms
 ```
 
-## Customization
+### GraphQL Federation (03_graphql_federation)
+```
+$ npm run demo
 
-### Modifying Workflows
+=== GraphQL Federation Example ===
+🌐 Querying federation gateway (localhost:4000)...
 
-Edit the workflow names and inputs to match your setup:
-
-```python
-# Change workflow name
-response = requests.post(
-    f"{API_BASE_URL}/workflows/trigger",
-    json={
-        "workflow_name": "your_custom_workflow",  # Your workflow
-        "inputs": {
-            "custom_field": "value"
-        }
+Query: {
+  workflows {
+    id
+    name
+    status
+    events {
+      id
+      type
+      timestamp
     }
-)
+  }
+}
+
+Response:
+{
+  "data": {
+    "workflows": [
+      {
+        "id": "wf_001",
+        "name": "customer_support_automation",
+        "status": "running",
+        "events": [
+          {
+            "id": "evt_001", 
+            "type": "workflow_started",
+            "timestamp": "2024-12-18T10:30:00Z"
+          }
+        ]
+      }
+    ]
+  }
+}
+✅ Federated query resolved across 3 subgraphs
 ```
 
-### Adding New Sources
+## Development Best Practices
 
-Register new MCP servers and add them to searches:
+### Error Handling Patterns
 
-```python
-# Register new source
-kb = KnowledgeBaseSearch()
-results = kb.search(
-    query="your query",
-    sources=["notion", "slack", "your_new_source"]
-)
-```
+All examples demonstrate the new boxed error handling:
 
-### Custom Templates
+```rust
+use workflow_engine_core::error::WorkflowError;
 
-Use your own workflow templates:
+// Use specific error constructors
+let validation_error = WorkflowError::validation_error(
+    "Input must be positive",
+    "amount", 
+    "must be > 0",
+    "in payment processing"
+);
 
-```python
-# Trigger custom template
-response = requests.post(
-    f"{API_BASE_URL}/templates/trigger",
-    json={
-        "template_id": "your_template_id",
-        "inputs": {...}
+// Handle errors with proper categorization
+match workflow.execute(input) {
+    Ok(result) => println!("Success: {:?}", result),
+    Err(WorkflowError::ValidationError(details)) => {
+        eprintln!("Validation failed: {}", details);
     }
-)
+    Err(WorkflowError::ProcessingError(details)) => {
+        eprintln!("Processing error in {}: {}", details.node_type, details.message);
+    }
+    Err(e) => eprintln!("Unexpected error: {}", e),
+}
+```
+
+### Security Implementation
+
+Examples demonstrate JWT authentication and input validation:
+
+```rust
+// JWT validation pattern
+let token_data = auth::validate_jwt(&token)
+    .map_err(|e| WorkflowError::validation_error(
+        "Invalid JWT token",
+        "authorization_header",
+        "valid JWT required", 
+        "in API authentication"
+    ))?;
+
+// Input sanitization
+let sanitized_input = sanitize_input(&user_input)
+    .map_err(|e| WorkflowError::validation_error(
+        "Input contains invalid characters",
+        "user_input",
+        "alphanumeric only",
+        "in user data processing"
+    ))?;
+```
+
+## Testing the Examples
+
+### Unit Tests
+```bash
+# Test individual examples
+cargo test --package examples basic_workflow
+cargo test --package examples mcp_integration
+cargo test --package examples federation_queries
+```
+
+### Integration Tests
+```bash
+# Start test environment
+./scripts/start_test_servers.sh
+
+# Run integration tests
+cargo test --test examples_integration -- --ignored
+```
+
+### End-to-End Tests
+```bash
+# Test complete workflows
+cargo test --test examples_e2e -- --ignored --nocapture
 ```
 
 ## Troubleshooting
 
-### Connection Errors
-- Verify the AI Workflow System is running
-- Check API_BASE_URL is correct
-- Ensure authentication token is valid
+### Common Issues
 
-### Missing Sources
-- Verify MCP servers are running
-- Check agent registration status
-- Review available sources in the system
+1. **Connection Errors**
+   - Verify GraphQL gateway is running on port 4000
+   - Check main API server is running on port 8080
+   - Ensure JWT_SECRET environment variable is set
 
-### Timeout Issues
-- Increase timeout values in the examples
-- Check system logs for errors
-- Verify external services are responsive
+2. **Authentication Failures**
+   - Verify JWT token is not expired
+   - Check token has required claims
+   - Ensure token is passed in Authorization header
 
-## Next Steps
+3. **MCP Integration Issues**
+   - Start MCP test servers: `./scripts/start_test_servers.sh`
+   - Check MCP server logs for connection errors
+   - Verify stdio transport is working
 
-1. **Modify Examples**: Adapt these examples for your use cases
-2. **Create New Workflows**: Build custom workflows for your needs
-3. **Add Integrations**: Connect your own services via MCP
-4. **Production Setup**: See deployment guide for production use
+4. **Federation Query Failures**
+   - Check subgraph services are running
+   - Verify schema composition is valid
+   - Review gateway logs for resolution errors
 
-## Support
+### Debug Commands
 
-For questions or issues:
-- Check the [API Documentation](../docs/API_REFERENCE.md)
-- Review the [Getting Started Guide](../docs/GETTING_STARTED.md)
-- Submit issues on GitHub
+```bash
+# Check system health
+curl http://localhost:4000/health/detailed
+
+# Test individual services
+curl http://localhost:8080/health
+curl http://localhost:8081/health  # Realtime service
+curl http://localhost:8082/health  # Content processing
+
+# View federation introspection
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ __schema { types { name } } }"}'
+```
+
+## Contributing
+
+### Adding New Examples
+
+1. Create a new directory following the naming pattern
+2. Include a comprehensive README.md
+3. Add both Rust and Python examples where applicable
+4. Ensure all examples use the new error handling patterns
+5. Test thoroughly with the full system stack
+
+### Example Structure
+
+```
+05_new_example/
+├── README.md           # Comprehensive documentation
+├── Cargo.toml         # Rust dependencies
+├── src/
+│   ├── main.rs        # Main Rust example
+│   └── lib.rs         # Shared utilities
+├── examples/
+│   └── basic.rs       # Simple example
+├── python/
+│   ├── client.py      # Python client example
+│   └── requirements.txt
+└── tests/
+    └── integration_test.rs
+```
+
+## Further Reading
+
+- **[System Architecture](../docs/ARCHITECTURE.md)** - Complete system design
+- **[GraphQL Federation Guide](../FEDERATION.md)** - Federation implementation details
+- **[Security Documentation](../SECURITY.md)** - Security best practices
+- **[API Reference](../docs/API_REFERENCE.md)** - Complete API documentation
+- **[Testing Guide](../TEST_COVERAGE_REPORT.md)** - Testing methodology and coverage
