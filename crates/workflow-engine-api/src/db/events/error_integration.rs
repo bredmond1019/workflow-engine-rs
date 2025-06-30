@@ -183,9 +183,9 @@ impl EventStore for ResilientEventStore {
         }
 
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::SerializationError { message, .. } => EventError::SerializationError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::SerializationError(details) => EventError::SerializationError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -205,9 +205,9 @@ impl EventStore for ResilientEventStore {
         }
 
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::SerializationError { message, .. } => EventError::SerializationError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::SerializationError(details) => EventError::SerializationError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -218,8 +218,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         }).or_else(|_| Ok(Vec::new()))
     }
@@ -236,8 +236,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events_from_version", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -256,8 +256,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events_by_type", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -270,8 +270,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events_by_correlation_id", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -282,8 +282,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_aggregate_version", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -294,8 +294,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("aggregate_exists", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -306,9 +306,9 @@ impl EventStore for ResilientEventStore {
         self.execute_with_resilience("save_snapshot", operation)
             .await
             .map_err(|e| match e {
-                WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-                WorkflowError::SerializationError { message, .. } => EventError::SerializationError { message },
-                WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+                WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+                WorkflowError::SerializationError(details) => EventError::SerializationError { message: details.message.clone() },
+                WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
                 _ => EventError::HandlerError { message: e.to_string() },
             })
     }
@@ -319,8 +319,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_snapshot", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -333,8 +333,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events_from_position", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -345,8 +345,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_current_position", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -364,8 +364,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("replay_events", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -378,8 +378,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_events_for_aggregates", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -392,8 +392,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("cleanup_old_snapshots", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -411,8 +411,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("get_aggregate_ids_by_type", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }
@@ -425,8 +425,8 @@ impl EventStore for ResilientEventStore {
         let result = self.execute_with_resilience("optimize_storage", operation).await;
         
         result.map_err(|e| match e {
-            WorkflowError::DatabaseError { message, .. } => EventError::DatabaseError { message },
-            WorkflowError::ProcessingError { message, .. } => EventError::HandlerError { message },
+            WorkflowError::DatabaseError(details) => EventError::DatabaseError { message: details.message.clone() },
+            WorkflowError::ProcessingError(details) => EventError::HandlerError { message: details.message.clone() },
             _ => EventError::HandlerError { message: e.to_string() },
         })
     }

@@ -571,11 +571,11 @@ pub async fn get_workflow_status(
             );
             Ok(HttpResponse::Ok().json(response))
         }
-        Err(WorkflowError::InvalidInput { message, .. }) => {
-            log::warn!("Workflow instance not found: {}", message);
+        Err(WorkflowError::InvalidInput(details)) => {
+            log::warn!("Workflow instance not found: {}", details.message);
             Ok(HttpResponse::NotFound().json(serde_json::json!({
                 "error": "workflow_not_found",
-                "message": message
+                "message": details.message
             })))
         }
         Err(e) => {

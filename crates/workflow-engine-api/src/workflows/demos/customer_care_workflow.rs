@@ -552,13 +552,13 @@ async fn handle_workflow_execution_error(e: &WorkflowError) {
             println!("   💡 Tip: Make sure all nodes are registered with workflow.register_node()");
             println!("   🔍 Missing node type: {:?}", node_type);
         }
-        WorkflowError::ProcessingError { message, .. } => {
+        WorkflowError::ProcessingError(details) => {
             println!("   💡 Tip: Check node implementation for error handling");
-            println!("   🔍 Error details: {}", message);
+            println!("   🔍 Error details: {}", details.message);
         }
-        WorkflowError::DeserializationError { message, .. } => {
+        WorkflowError::DeserializationError(details) => {
             println!("   💡 Tip: Verify event data matches expected structure");
-            println!("   🔍 Deserialization error: {}", message);
+            println!("   🔍 Deserialization error: {}", details.message);
         }
         _ => {
             println!("   🔍 Error type: {:?}", e);
