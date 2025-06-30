@@ -1,0 +1,36 @@
+[package]
+name = "ai-integration-examples"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+workflow-engine-core = { path = "../../crates/workflow-engine-core" }
+workflow-engine-nodes = { path = "../../crates/workflow-engine-nodes", features = ["ai-agents"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+regex = "1.0"
+
+[[bin]]
+name = "openai-agent"
+path = "openai-agent.rs"
+
+[[bin]]
+name = "anthropic-agent"
+path = "anthropic-agent.rs"
+
+[[bin]]
+name = "multi-model"
+path = "multi-model.rs"
+
+[[bin]]
+name = "prompt-engineering"
+path = "prompt-engineering.rs"
+
+[[bin]]
+name = "token-management"
+path = "token-management.rs"

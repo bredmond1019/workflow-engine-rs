@@ -1,240 +1,252 @@
-# AI Workflow System - Example Integrations
+# AI Workflow Engine - Examples & Tutorials
 
-This directory contains example integrations demonstrating various use cases for the AI Workflow System.
+Welcome to the comprehensive examples collection for the AI Workflow Engine! This directory provides a structured learning path from basic concepts to advanced production-ready applications.
 
-## Examples Overview
+## 📚 Learning Path
 
-### 1. Blog Content Pipeline (`1_blog_content_pipeline.py`)
+### Phase 1: Foundation (Start Here!)
+- **[01-getting-started](01-getting-started/)** - Basic workflow concepts and first steps
+- **[02-core-concepts](02-core-concepts/)** - Essential patterns and node development
 
-A complete content creation workflow that demonstrates:
-- Topic research using AI
-- Blog post outline generation
-- Full content creation
-- Publishing to Notion
-- Template usage
+### Phase 2: Integration
+- **[03-ai-integration](03-ai-integration/)** - OpenAI, Anthropic, and AI agent patterns
+- **[04-mcp-integration](04-mcp-integration/)** - Model Context Protocol and external tools
 
-**Use Case**: Content marketing teams, technical writers, documentation automation
+### Phase 3: Advanced Patterns
+- **[05-advanced-patterns](05-advanced-patterns/)** - Parallel processing, error handling, and optimization
+- **[06-microservices](06-microservices/)** - Multi-service architectures and integration
 
-### 2. Customer Support Automation (`2_customer_support_automation.py`)
+### Phase 4: Production
+- **[07-production-ready](07-production-ready/)** - Monitoring, scaling, and deployment
+- **[08-real-world-applications](08-real-world-applications/)** - Complete end-to-end solutions
 
-An automated customer support system that shows:
-- Support ticket processing
-- Intelligent categorization and routing
-- Automated response generation
-- Spam detection
-- Escalation handling
-- Real-time updates via WebSocket
+## 🚀 Quick Start
 
-**Use Case**: Customer support teams, help desk automation, ticket triage
-
-### 3. Knowledge Base Search (`3_knowledge_base_search.py`)
-
-A multi-source knowledge search system featuring:
-- Cross-platform search (Notion, Slack, HelpScout)
-- Result aggregation and ranking
-- Unified response generation
-- Search caching for performance
-- Advanced filtering options
-
-**Use Case**: Internal knowledge management, documentation search, support agent assistance
-
-## Prerequisites
-
-1. **AI Workflow System Running**
+1. **Prerequisites**: Ensure you have Rust installed and the main server running:
    ```bash
-   cd ..
-   cargo run
+   # In the project root
+   cargo run --bin workflow-engine
    ```
 
-2. **Authentication Token**
+2. **Start with Hello World**:
    ```bash
-   export AUTH_TOKEN="your-jwt-token"
+   cd examples/01-getting-started
+   cargo run --bin hello-world
    ```
 
-3. **Python Dependencies**
+3. **Follow the progression**: Each directory has its own README with specific instructions.
+
+## 📖 Example Categories
+
+### 01-getting-started/
+- **hello-world** - Your first workflow
+- **basic-nodes** - Understanding the Node trait
+- **data-flow** - How data moves through workflows
+- **simple-pipeline** - Chaining nodes together
+
+### 02-core-concepts/
+- **async-nodes** - Asynchronous processing patterns
+- **error-handling** - Robust error management
+- **routing** - Conditional workflow paths
+- **parallel-processing** - Concurrent node execution
+- **state-management** - Working with TaskContext
+
+### 03-ai-integration/
+- **openai-agent** - OpenAI API integration
+- **anthropic-agent** - Claude API integration
+- **multi-model** - Using multiple AI providers
+- **prompt-engineering** - Effective prompt patterns
+- **token-management** - Cost optimization
+
+### 04-mcp-integration/
+- **basic-mcp-client** - Simple MCP server connection
+- **external-tools** - Using external MCP tools
+- **custom-mcp-server** - Building your own MCP server
+- **multi-source-search** - Querying multiple knowledge bases
+
+### 05-advanced-patterns/
+- **circuit-breakers** - Resilience patterns
+- **caching** - Performance optimization
+- **streaming** - Real-time data processing
+- **batch-processing** - Bulk operations
+- **workflow-composition** - Dynamic workflow building
+
+### 06-microservices/
+- **content-processing** - Document analysis service
+- **knowledge-graph** - Graph database integration  
+- **realtime-communication** - WebSocket messaging
+- **service-orchestration** - Coordinating multiple services
+
+### 07-production-ready/
+- **monitoring** - Metrics and observability
+- **logging** - Structured logging patterns
+- **deployment** - Docker and Kubernetes
+- **scaling** - Performance optimization
+- **security** - Authentication and authorization
+
+### 08-real-world-applications/
+- **customer-support** - Complete support automation
+- **content-pipeline** - Content creation workflow
+- **knowledge-assistant** - AI-powered search and Q&A
+- **document-processing** - End-to-end document analysis
+
+## 🛠 Development Setup
+
+### Running Examples Locally
+
+1. **Start Dependencies**:
    ```bash
-   pip install requests websockets asyncio
+   # Start PostgreSQL (if using database features)
+   docker-compose up -d postgres
+   
+   # Start MCP test servers (for MCP examples)
+   ./scripts/start_test_servers.sh
    ```
 
-4. **Optional: MCP Servers**
-   - Notion MCP Server (for blog publishing)
-   - Slack MCP Server (for knowledge search)
-   - HelpScout MCP Server (for support tickets)
+2. **Environment Variables**:
+   ```bash
+   export DATABASE_URL="postgresql://user:pass@localhost/workflow_db"
+   export OPENAI_API_KEY="your-openai-key"
+   export ANTHROPIC_API_KEY="your-anthropic-key"
+   ```
 
-## Running the Examples
+3. **Run Examples**:
+   ```bash
+   # Individual examples
+   cargo run --bin hello-world
+   
+   # With specific features
+   cargo run --bin ai-agent --features="ai-integration"
+   
+   # Integration tests
+   cargo test --test mcp_integration -- --ignored
+   ```
 
-### Basic Usage
+### Creating New Examples
 
-Run any example directly:
+1. **Choose the Right Directory**: Place examples in the appropriate learning phase
+2. **Follow Naming Conventions**: Use descriptive, kebab-case names
+3. **Include Documentation**: Add comprehensive README files
+4. **Add Tests**: Include unit and integration tests
+5. **Update Main README**: Add your example to the appropriate section
 
-```bash
-python 1_blog_content_pipeline.py
-```
+### Example Template
 
-### With Environment Variables
+```rust
+//! # Example Title
+//!
+//! Brief description of what this example demonstrates.
+//!
+//! ## Features Demonstrated
+//! - Feature 1
+//! - Feature 2
+//!
+//! ## Usage
+//! ```bash
+//! cargo run --bin example-name
+//! ```
 
-Configure the API endpoint and token:
+use workflow_engine_core::prelude::*;
+use serde_json::json;
 
-```bash
-export API_BASE_URL="http://localhost:8080/api/v1"
-export AUTH_TOKEN="your-jwt-token"
-python 2_customer_support_automation.py
-```
+#[derive(Debug)]
+struct ExampleNode;
 
-### Using Docker
-
-If running the system in Docker:
-
-```bash
-export API_BASE_URL="http://localhost:8080/api/v1"
-export WS_URL="ws://localhost:8080/ws"
-python 3_knowledge_base_search.py
-```
-
-## Example Output
-
-### Blog Content Pipeline
-```
-=== Blog Content Pipeline Example ===
-
-Step 1: Researching topic...
-Triggered workflow: 550e8400-e29b-41d4-a716-446655440000
-Status: running - Progress: 33%
-Status: running - Progress: 66%
-Status: completed - Progress: 100%
-Research completed. Summary: AI is revolutionizing software development...
-
-Step 2: Generating blog content...
-Blog post generated. Title: The AI Revolution in Software Development
-
-Step 3: Saving to Notion...
-Successfully published to Notion!
-Page URL: https://notion.so/ai-revolution-software-dev
-
-=== Pipeline Complete ===
-```
-
-### Customer Support Automation
-```
-=== Customer Support Automation Example ===
-
-Processing ticket: TICKET-001 - Cannot login to my account
-Workflow triggered: 650e8400-e29b-41d4-a716-446655440001
-
-Ticket TICKET-001 processed:
-  Category: technical_support
-  Intent: login_issue
-  Spam Score: 0.02
-  Escalated: False
-  Response: I understand you're having trouble logging in...
-
-=== Customer Support Automation Report ===
-Total tickets: 4
-Successfully processed: 4
-Category Distribution:
-  technical_support: 1 (25.0%)
-  feature_request: 1 (25.0%)
-  billing: 1 (25.0%)
-  spam: 1 (25.0%)
-```
-
-### Knowledge Base Search
-```
-=== Basic Knowledge Base Search Demo ===
-
-🔍 Searching for: 'How to set up authentication in our API?'
-Searching in: notion, slack, helpscout
-
-📊 Search Results (8 total)
-Sources searched: notion, slack
-Search time: 2.45 seconds
-
-1. API Authentication Guide
-   Source: notion | Relevance: 0.95
-   This comprehensive guide covers JWT authentication setup...
-
-2. Auth Implementation Discussion
-   Source: slack | Relevance: 0.87
-   Thread from #engineering about best practices for API auth...
-
-🤖 Generating unified response...
-To set up authentication in our API, follow these steps...
-```
-
-## Customization
-
-### Modifying Workflows
-
-Edit the workflow names and inputs to match your setup:
-
-```python
-# Change workflow name
-response = requests.post(
-    f"{API_BASE_URL}/workflows/trigger",
-    json={
-        "workflow_name": "your_custom_workflow",  # Your workflow
-        "inputs": {
-            "custom_field": "value"
-        }
+impl Node for ExampleNode {
+    fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        // Implementation here
+        Ok(context)
     }
-)
-```
+}
 
-### Adding New Sources
+#[tokio::main]
+async fn main() -> Result<(), WorkflowError> {
+    println!("🚀 Starting Example");
+    
+    // Example implementation
+    
+    println!("✅ Example completed!");
+    Ok(())
+}
 
-Register new MCP servers and add them to searches:
-
-```python
-# Register new source
-kb = KnowledgeBaseSearch()
-results = kb.search(
-    query="your query",
-    sources=["notion", "slack", "your_new_source"]
-)
-```
-
-### Custom Templates
-
-Use your own workflow templates:
-
-```python
-# Trigger custom template
-response = requests.post(
-    f"{API_BASE_URL}/templates/trigger",
-    json={
-        "template_id": "your_template_id",
-        "inputs": {...}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_example_node() {
+        // Test implementation
     }
-)
+}
 ```
 
-## Troubleshooting
+## 🧪 Testing Examples
 
-### Connection Errors
-- Verify the AI Workflow System is running
-- Check API_BASE_URL is correct
-- Ensure authentication token is valid
+### Unit Tests
+```bash
+# Test individual examples
+cargo test --bin hello-world
 
-### Missing Sources
-- Verify MCP servers are running
-- Check agent registration status
-- Review available sources in the system
+# Test all examples
+cargo test --workspace
+```
 
-### Timeout Issues
-- Increase timeout values in the examples
-- Check system logs for errors
-- Verify external services are responsive
+### Integration Tests
+```bash
+# Requires external services
+cargo test --test integration_examples -- --ignored
 
-## Next Steps
+# Specific integration test
+cargo test --test mcp_integration -- --ignored
+```
 
-1. **Modify Examples**: Adapt these examples for your use cases
-2. **Create New Workflows**: Build custom workflows for your needs
-3. **Add Integrations**: Connect your own services via MCP
-4. **Production Setup**: See deployment guide for production use
+### End-to-End Tests
+```bash
+# Full system tests
+cargo test --test e2e_examples -- --ignored
+```
 
-## Support
+## 📊 Performance Benchmarks
 
-For questions or issues:
-- Check the [API Documentation](../docs/API_REFERENCE.md)
-- Review the [Getting Started Guide](../docs/GETTING_STARTED.md)
-- Submit issues on GitHub
+Some examples include performance benchmarks:
+
+```bash
+# Run benchmarks
+cargo bench
+
+# Specific benchmark
+cargo bench --bench workflow_performance
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Connection Errors**: Ensure all required services are running
+2. **Missing API Keys**: Check environment variables are set
+3. **Compilation Errors**: Verify feature flags are correct
+4. **Integration Test Failures**: Start test servers with `./scripts/start_test_servers.sh`
+
+### Getting Help
+
+1. **Check Documentation**: Each example has detailed README files
+2. **Review Error Messages**: Examples include comprehensive error handling
+3. **Check Logs**: Enable debug logging with `RUST_LOG=debug`
+4. **Ask for Help**: Open an issue on GitHub
+
+## 🔗 Additional Resources
+
+- **[Main Documentation](../docs/)** - Core system documentation
+- **[API Reference](../docs/api/)** - Detailed API documentation
+- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute examples
+- **[Security Guidelines](../SECURITY.md)** - Security best practices
+
+## 📝 License
+
+All examples are provided under the same license as the main project. See [LICENSE](../LICENSE) for details.
+
+---
+
+**Happy Learning!** 🎉
+
+Start with the [hello-world example](01-getting-started/hello-world/) and work your way through the learning path. Each example builds on the previous ones, providing a comprehensive understanding of the AI Workflow Engine.

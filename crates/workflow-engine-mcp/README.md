@@ -1,14 +1,16 @@
 # workflow-engine-mcp
 
-Model Context Protocol (MCP) integration for the workflow engine.
+Production-ready Model Context Protocol (MCP) implementation for connecting to external AI tools and services.
 
 ## Features
 
-- **Complete MCP Implementation**: Full support for the Model Context Protocol specification
-- **Multiple Transports**: HTTP, WebSocket, and stdio transport types
-- **Connection Pooling**: Managed connections with health monitoring and load balancing  
-- **Built-in Servers**: Ready-to-use MCP server implementations
-- **Client Libraries**: High-level client implementations for external MCP servers
+- **Complete MCP Implementation**: Full support for the Model Context Protocol specification with all message types
+- **Multiple Transport Types**: HTTP, WebSocket, and stdio transports for maximum compatibility
+- **Advanced Connection Management**: Pooling, health monitoring, automatic reconnection, and load balancing
+- **Built-in Server Framework**: Expose workflow nodes as MCP tools with automatic metadata generation
+- **High-Level Client Libraries**: Type-safe client implementations for seamless external service integration
+- **Production Features**: Circuit breakers, retry policies, metrics, and comprehensive error handling
+- **Performance Optimized**: Connection pooling, message batching, and efficient serialization
 
 ## Quick Start
 
@@ -17,25 +19,92 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 workflow-engine-mcp = "0.6.0"
+workflow-engine-core = "0.6.0"
 tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
 ```
 
-Create an MCP client:
+### Basic HTTP Client
 
 ```rust
 use workflow_engine_mcp::prelude::*;
+use serde_json::json;
 
 #[tokio::main]
-async fn main() -> Result<(), McpClientError> {
-    // HTTP transport
-    let client = HttpMcpClient::new("http://localhost:8080/mcp")?;
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create HTTP MCP client
+    let mut client = HttpMcpClient::new("http://localhost:8002/mcp")?;
+    
+    // Initialize connection
+    client.initialize().await?;
+    
+    // Discover available tools
     let tools = client.list_tools().await?;
     println!("Available tools: {:?}", tools);
     
-    // WebSocket transport
-    let ws_client = WebSocketMcpClient::new("ws://localhost:8080/mcp").await?;
-    let result = ws_client.call_tool("analyze_data", json!({"data": "sample"})).await?;
+    // Call a tool with parameters
+    let result = client.call_tool("search_knowledge_base", json!({
+        "query": "How to setup authentication",
+        "limit": 5
+    })).await?;
     
+    println!("Search results: {:?}", result);
+    Ok(())
+}
+```
+
+### WebSocket Client with Auto-Reconnection
+
+```rust
+use workflow_engine_mcp::clients::websocket::WebSocketMcpClient;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create WebSocket client with auto-reconnection
+    let mut client = WebSocketMcpClient::builder()
+        .endpoint("ws://localhost:8003/mcp")
+        .auto_reconnect(true)
+        .reconnect_interval(Duration::from_secs(5))
+        .heartbeat_interval(Duration::from_secs(30))
+        .build()
+        .await?;
+    
+    // Send real-time notification
+    let response = client.call_tool("send_slack_message", json!({
+        "channel": "#alerts",
+        "message": "Workflow completed successfully!",
+        "priority": "normal"
+    })).await?;
+    
+    println!("Message sent: {:?}", response);
+    Ok(())
+}
+```
+
+### Stdio Client for Python MCP Servers
+
+```rust
+use workflow_engine_mcp::clients::stdio::StdioMcpClient;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Launch Python MCP server as subprocess
+    let mut client = StdioMcpClient::builder()
+        .command("python")
+        .args(&["-m", "notion_mcp_server"])
+        .working_directory("./mcp-servers/")
+        .environment("NOTION_API_TOKEN", "your-notion-token")
+        .auto_restart(true)
+        .build()
+        .await?;
+    
+    // Use Notion integration
+    let pages = client.call_tool("search_pages", json!({
+        "query": "project documentation",
+        "filter": {"object": "page"}
+    })).await?;
+    
+    println!("Found pages: {:?}", pages);
     Ok(())
 }
 ```

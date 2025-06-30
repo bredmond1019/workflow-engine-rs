@@ -15,15 +15,18 @@ A powerful AI workflow orchestration platform built in Rust, featuring event sou
 
 | Feature | `main` Branch (This) | [`federation-ui` Branch](../../tree/federation-ui) |
 |---------|-------------|---------------------|
-| **Architecture** | Monolithic | Microservices + GraphQL Federation |
-| **Frontend** | Basic/None | React with 174+ TDD tests |
-| **Security** | Basic | Enterprise-grade (70+ vulnerabilities prevented) |
-| **Testing** | Unit tests | Comprehensive TDD methodology |
-| **Deployment** | Simple Docker | Production-ready with monitoring |
-| **Documentation** | Getting started | Comprehensive API docs + examples |
-| **Use Case** | Learning, prototypes | Production, enterprise |
-| **Setup Time** | 5 minutes | 10-15 minutes |
-| **Complexity** | Low | High |
+| **🏗️ Architecture** | Monolithic + Optional Services | Microservices + GraphQL Federation |
+| **🎨 Frontend** | API-only (bring your own UI) | React with 174+ TDD tests |
+| **🔐 Security** | JWT + Rate Limiting | Enterprise-grade (70+ vulnerabilities prevented) |
+| **🧪 Testing** | Unit + Integration tests | Comprehensive TDD methodology |
+| **🚀 Deployment** | Single Docker Compose | Production-ready with full monitoring |
+| **📖 Documentation** | Comprehensive guides | API docs + examples + tutorials |
+| **🎯 Use Case** | Learning, prototypes, simple prod | Enterprise, complex production |
+| **⏱️ Setup Time** | 5 minutes | 10-15 minutes |
+| **📊 Complexity** | Low to Medium | High |
+| **🔧 Maintenance** | Minimal | Ongoing microservice management |
+| **📈 Scalability** | Vertical scaling | Horizontal + vertical scaling |
+| **💰 Cost** | Lower operational overhead | Higher infrastructure costs |
 
 ## 🎯 When to Use Each Branch
 
@@ -75,53 +78,150 @@ cargo run --bin workflow-engine
 
 ## 🏗️ Main Branch Architecture
 
+### System Overview
 ```
-┌─────────────────┐
-│   API Gateway   │ ← Single unified service
-│   (Port 8080)   │
-└─────────────────┘
-         │
-         ├── Event Store (PostgreSQL)
-         ├── JWT Authentication
-         ├── MCP Protocol Support
-         ├── AI Provider Integration
-         └── Workflow Execution Engine
+                    ┌─ Internet ─┐
+                    │            │
+                    ▼            ▼
+              ┌──────────┐  ┌──────────┐
+              │   HTTP   │  │   AI     │
+              │ Clients  │  │ Services │
+              └──────────┘  └──────────┘
+                    │            │
+                    ▼            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                AI Workflow Engine (Port 8080)                   │
+├─────────────────────────────────────────────────────────────────┤
+│  REST API │ Auth │ Workflows │ MCP Client │ Event Sourcing     │
+│           │ JWT  │ Engine    │ Framework  │ PostgreSQL         │
+└─────────────────────────────────────────────────────────────────┘
+                    │                        │
+                    ▼                        ▼
+         ┌─────────────────────┐   ┌─────────────────────┐
+         │  Optional Services  │   │   Monitoring Stack  │
+         │                     │   │                     │
+         │ • Content Proc.     │   │ • Prometheus        │
+         │ • Knowledge Graph   │   │ • Grafana           │
+         │ • Realtime Comm.    │   │ • Jaeger            │
+         └─────────────────────┘   └─────────────────────┘
 ```
 
-**Simple, monolithic architecture** - everything runs in one process for ease of development and deployment.
+### Core Data Flow
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Client    │    │     API     │    │  Workflow   │    │  External   │
+│  Request    │───▶│   Gateway   │───▶│   Engine    │───▶│  AI/Tools   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+      │                   │                   │                   │
+      │            ┌─────────────┐    ┌─────────────┐           │
+      │            │    Auth     │    │    Event    │           │
+      └────────────│ Middleware  │    │    Store    │───────────┘
+                   └─────────────┘    └─────────────┘
+                          │                   │
+                    ┌─────────────┐    ┌─────────────┐
+                    │    Rate     │    │  Monitoring │
+                    │  Limiting   │    │   & Logs    │
+                    └─────────────┘    └─────────────┘
+```
+
+### Component Relationships
+```
+workflow-engine-app (Binary Entry Point)
+    │
+    ├── workflow-engine-api (HTTP Server)
+    │   ├── Auth & Middleware
+    │   ├── REST Endpoints
+    │   ├── Health Checks
+    │   └── OpenAPI Documentation
+    │
+    ├── workflow-engine-core (Business Logic)
+    │   ├── Workflow Orchestration
+    │   ├── Event Sourcing
+    │   ├── Error Handling
+    │   └── AI Integration Utils
+    │
+    ├── workflow-engine-mcp (External Communication)
+    │   ├── HTTP/WebSocket/Stdio Transports
+    │   ├── Connection Pooling
+    │   └── Load Balancing
+    │
+    └── workflow-engine-nodes (Workflow Components)
+        ├── AI Agents (OpenAI, Anthropic)
+        ├── Template Processing
+        ├── Research Nodes
+        └── External MCP Clients
+```
+
+**Monolithic Design Benefits:**
+- Single process deployment
+- Simplified configuration
+- Easier debugging and development
+- Optional microservice integration
+- Production-ready out of the box
 
 ## 📦 Core Features (Main Branch)
 
-### AI Integration
-- **OpenAI Support**: GPT models with streaming responses
-- **Anthropic Support**: Claude models with advanced reasoning
-- **Token Management**: Usage tracking and cost optimization
-- **Template Engine**: Dynamic prompt generation
+### 🤖 AI Integration
+- **Multi-Provider Support**: OpenAI GPT models, Anthropic Claude, and custom AI services
+- **Streaming Responses**: Real-time AI output with backpressure handling
+- **Token Management**: Cost tracking, usage limits, and optimization analytics
+- **Template Engine**: Dynamic prompt generation with Handlebars syntax
+- **Error Recovery**: Automatic retry logic and graceful degradation
 
-### Event Sourcing
-- **PostgreSQL Event Store**: Reliable persistence with ACID guarantees
-- **Event Replay**: Reconstruct state from events
-- **Snapshots**: Performance optimization for large datasets
-- **CQRS Pattern**: Separate read/write models
+### 📊 Event Sourcing & CQRS
+- **PostgreSQL Event Store**: ACID-compliant event persistence with partitioning
+- **Event Replay**: Complete system state reconstruction from events
+- **Snapshots**: Performance optimization for large datasets and fast recovery
+- **CQRS Pattern**: Optimized read/write models with projection rebuilding
+- **Event Versioning**: Schema evolution and backward compatibility
 
-### MCP (Model Context Protocol)
-- **Multi-transport**: HTTP, WebSocket, and stdio support
-- **External Integrations**: Connect to external AI services
-- **Protocol Compliance**: Full MCP specification implementation
+### 🔌 MCP (Model Context Protocol)
+- **Multi-Transport**: HTTP REST, WebSocket, and stdio communication
+- **Connection Pooling**: Efficient resource management with health checks
+- **Load Balancing**: Distribute requests across multiple external services
+- **Protocol Compliance**: Full MCP 1.0 specification implementation
+- **External Tool Integration**: Seamless integration with external AI tools and services
 
-### Workflow Engine
-- **Node-based Execution**: Composable workflow components
-- **Type Safety**: Compile-time workflow validation
-- **Error Handling**: Graceful failure recovery
-- **Async Processing**: Non-blocking workflow execution
+### ⚡ Workflow Engine
+- **Node-Based Execution**: Composable, reusable workflow components
+- **Type Safety**: Compile-time validation and runtime type checking
+- **Error Handling**: Comprehensive error recovery with context preservation
+- **Async Processing**: Non-blocking execution with concurrent workflow support
+- **Dynamic Composition**: Runtime workflow building and modification
+
+### 🔐 Security & Authentication
+- **JWT Authentication**: Secure token-based authentication with refresh tokens
+- **Role-Based Authorization**: Fine-grained permissions and access control
+- **Rate Limiting**: Request throttling and abuse prevention
+- **CORS Support**: Cross-origin resource sharing configuration
+- **Audit Logging**: Complete activity tracking and compliance reporting
+
+### 📈 Monitoring & Observability
+- **Prometheus Metrics**: Comprehensive system and business metrics
+- **Distributed Tracing**: Request correlation with Jaeger integration
+- **Structured Logging**: JSON-formatted logs with correlation IDs
+- **Health Checks**: Multi-level health monitoring with detailed status
+- **Performance Monitoring**: Real-time performance dashboards
 
 ## 📚 Documentation
 
-- [**Getting Started Guide**](docs/getting-started.md) - Quick introduction
-- [**API Documentation**](docs/api.md) - REST API reference
-- [**Workflow Guide**](docs/workflows.md) - Building workflows
-- [**MCP Integration**](docs/mcp.md) - External service integration
-- [**Event Sourcing**](docs/event-sourcing.md) - Event-driven patterns
+### Getting Started
+- [**5-Minute Quick Start**](#-quick-start-main-branch) - Get running immediately
+- [**Tutorial Series**](docs/tutorials/) - Step-by-step learning guides
+- [**API Documentation**](http://localhost:8080/swagger-ui/) - Interactive REST API reference
+- [**CLAUDE.md**](CLAUDE.md) - Comprehensive AI assistant guidance
+
+### Component Documentation
+- [**workflow-engine-api**](crates/workflow-engine-api/CLAUDE.md) - HTTP API server
+- [**workflow-engine-core**](crates/workflow-engine-core/CLAUDE.md) - Core engine logic
+- [**workflow-engine-mcp**](crates/workflow-engine-mcp/CLAUDE.md) - MCP protocol implementation
+- [**workflow-engine-nodes**](crates/workflow-engine-nodes/CLAUDE.md) - Pre-built workflow nodes
+
+### Advanced Topics
+- [**Event Sourcing**](docs/tutorials/05-event-sourcing.md) - Event-driven architecture patterns
+- [**MCP Integration**](docs/tutorials/04-mcp-integration.md) - External service integration
+- [**Security Guide**](docs/SECURITY.md) - Security implementation details
+- [**Performance Guide**](docs/performance.md) - Optimization and scaling
 
 ## 🔧 Development
 
@@ -145,19 +245,79 @@ cargo clippy                 # Lint code
 
 ## 🚀 Deployment
 
-### Docker (Recommended)
+### Production Deployment (Docker)
 ```bash
+# Production stack with all services
 docker-compose up -d
+
+# Check all services are healthy
+docker-compose ps
+
+# View system logs
+docker-compose logs -f ai-workflow-system
+
+# Monitor resources
+docker stats
 ```
 
-### Local Development
+### Development Deployment
 ```bash
-# Set environment variables
-export DATABASE_URL="postgresql://user:pass@localhost/ai_workflow_db"
-export JWT_SECRET="your-secret-key"
-
-# Run the application
+# Quick development setup
 cargo run --bin workflow-engine
+
+# Or with environment file
+cp .env.example .env
+# Edit .env with your configuration
+cargo run --bin workflow-engine
+```
+
+### Environment Configuration
+```bash
+# Required variables
+DATABASE_URL=postgresql://aiworkflow:aiworkflow123@localhost:5432/ai_workflow
+JWT_SECRET=your-secure-256-bit-secret-key
+
+# Optional AI provider keys
+OPENAI_API_KEY=sk-your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+
+# Optional microservice URLs (if using services)
+CONTENT_PROCESSING_URL=http://localhost:8082
+KNOWLEDGE_GRAPH_URL=http://localhost:3002
+REALTIME_COMM_URL=http://localhost:8081
+
+# Monitoring configuration
+RUST_LOG=info
+PROMETHEUS_ENDPOINT=http://localhost:9090
+JAEGER_ENDPOINT=http://localhost:14268/api/traces
+```
+
+### Service Health Checks
+```bash
+# Main API health
+curl http://localhost:8080/api/v1/health
+
+# Detailed system status
+curl http://localhost:8080/api/v1/health/detailed
+
+# Individual service health (if running microservices)
+curl http://localhost:8082/health  # Content Processing
+curl http://localhost:3002/health  # Knowledge Graph
+curl http://localhost:8081/health  # Realtime Communication
+```
+
+### Performance Tuning
+```bash
+# Build for production
+cargo build --release
+
+# Run with optimized settings
+RUST_LOG=warn cargo run --release --bin workflow-engine
+
+# Monitor performance
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3000
+# - Jaeger: http://localhost:16686
 ```
 
 ## 🆙 Upgrading to Federation-UI Branch
@@ -182,6 +342,32 @@ git checkout federation-ui
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## 🎓 Learning Path
+
+### New to AI Workflows?
+1. Start with the `main` branch (you're here!)
+2. Follow the [5-minute quick start](#-quick-start-main-branch)
+3. Work through the [tutorial series](docs/tutorials/)
+4. Build your first workflow with the examples
+5. When ready for production scale, consider [`federation-ui`](../../tree/federation-ui)
+
+### Experienced with Microservices?
+- Jump to [`federation-ui` branch](../../tree/federation-ui) for enterprise features
+- Use `main` branch for prototyping and learning new concepts
+- Reference this branch for simplified architecture patterns
+
+## 📊 Project Status
+
+- **🟢 Main Branch**: Production-ready, actively maintained
+- **🟢 Federation-UI Branch**: Enterprise-ready, full-featured
+- **📈 Maturity**: Beta (API stable, features complete)
+- **🔄 Release Cycle**: Monthly releases with semantic versioning
+- **🛡️ Security**: Regular audits and vulnerability scanning
+- **📖 Documentation**: Comprehensive guides and examples
+
 ---
 
-**🎯 Remember**: Use `main` for simplicity, [`federation-ui`](../../tree/federation-ui) for production!
+**🎯 Quick Decision Guide**:
+- **Learning/Prototyping**: Use `main` branch (this one)
+- **Enterprise Production**: Use [`federation-ui` branch](../../tree/federation-ui)
+- **Simple Production**: `main` branch is production-ready too!

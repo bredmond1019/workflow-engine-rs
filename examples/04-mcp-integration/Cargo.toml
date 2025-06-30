@@ -1,0 +1,37 @@
+[package]
+name = "mcp-integration-examples"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+workflow-engine-core = { path = "../../crates/workflow-engine-core" }
+workflow-engine-mcp = { path = "../../crates/workflow-engine-mcp" }
+workflow-engine-nodes = { path = "../../crates/workflow-engine-nodes", features = ["external-mcp"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+futures = "0.3"
+
+[[bin]]
+name = "basic-mcp-client"
+path = "basic-mcp-client.rs"
+
+[[bin]]
+name = "external-tools"
+path = "external-tools.rs"
+
+[[bin]]
+name = "multi-source-search"
+path = "multi-source-search.rs"
+
+[[bin]]
+name = "custom-mcp-server"
+path = "custom-mcp-server.rs"
+
+[[bin]]
+name = "mcp-ai-integration"
+path = "mcp-ai-integration.rs"

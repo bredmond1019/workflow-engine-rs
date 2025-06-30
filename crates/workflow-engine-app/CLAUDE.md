@@ -199,43 +199,359 @@ Common issues and solutions:
 
 ### Production Deployment
 
-1. **Environment Setup**
-   ```bash
-   # Create production .env file
-   cp .env.example .env.production
-   # Edit with production values
-   ```
+#### 1. Environment Setup
 
-2. **Build Release Binary**
-   ```bash
-   cargo build --release --bin workflow-engine
-   # Binary at: target/release/workflow-engine
-   ```
+```bash
+# Create production environment file
+cat > .env.production << EOF
+# Database Configuration
+DATABASE_URL=postgresql://workflow_user:secure_password@localhost:5432/workflow_prod_db
+DB_MAX_CONNECTIONS=20
+DB_CONNECTION_TIMEOUT=30
 
-3. **Docker Deployment**
-   ```bash
-   docker build -t workflow-engine-app .
-   docker run -p 8080:8080 --env-file .env.production workflow-engine-app
-   ```
+# Authentication
+JWT_SECRET=$(openssl rand -hex 64)
+JWT_EXPIRATION=3600
+JWT_REFRESH_EXPIRATION=604800
 
-4. **Systemd Service**
-   ```ini
-   [Unit]
-   Description=AI Workflow Engine
-   After=network.target postgresql.service
+# Server Configuration
+HOST=0.0.0.0
+PORT=8080
 
-   [Service]
-   Type=simple
-   User=workflow
-   WorkingDirectory=/opt/workflow-engine
-   ExecStart=/opt/workflow-engine/workflow-engine
-   Restart=always
-   Environment="RUST_LOG=info"
-   EnvironmentFile=/opt/workflow-engine/.env
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=100
+RATE_LIMIT_BURST=20
 
-   [Install]
-   WantedBy=multi-user.target
-   ```
+# Monitoring
+METRICS_ENABLED=true
+TRACING_ENABLED=true
+LOG_LEVEL=info
+
+# External Services
+NOTION_MCP_URL=http://notion-mcp:8002
+SLACK_MCP_URL=http://slack-mcp:8003
+HELPSCOUT_MCP_URL=http://helpscout-mcp:8001
+
+# AI Services (Optional)
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+EOF
+```
+
+#### 2. Build and Package
+
+```bash
+# Build optimized release binary
+cargo build --release --bin workflow-engine
+
+# Verify binary
+./target/release/workflow-engine --version
+
+# Create deployment package
+mkdir -p deploy/bin deploy/config
+cp target/release/workflow-engine deploy/bin/
+cp .env.production deploy/config/
+cp -r config/ deploy/config/
+```
+
+#### 3. Docker Deployment
+
+**Multi-stage Dockerfile for Production:**
+
+```dockerfile
+FROM rust:1.75-slim as builder
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy source and build
+COPY . .
+RUN cargo build --release --bin workflow-engine
+
+# Runtime image
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libpq5 \
+    libssl3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -r -s /bin/false workflow
+
+# Copy binary and set permissions
+COPY --from=builder /app/target/release/workflow-engine /usr/local/bin/
+RUN chmod +x /usr/local/bin/workflow-engine
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Run as non-root user
+USER workflow
+EXPOSE 8080
+
+CMD ["workflow-engine"]
+```
+
+**Docker Compose for Production:**
+
+```yaml
+version: '3.8'
+
+services:
+  workflow-engine:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://workflow_user:${DB_PASSWORD}@postgres:5432/workflow_db
+      - JWT_SECRET=${JWT_SECRET}
+      - RUST_LOG=info
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - workflow-net
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: workflow_db
+      POSTGRES_USER: workflow_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - workflow-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - workflow-net
+
+  # Monitoring stack
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - workflow-net
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - workflow-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  workflow-net:
+    driver: bridge
+```
+
+#### 4. Kubernetes Deployment
+
+**Namespace and ConfigMap:**
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workflow-engine
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-config
+  namespace: workflow-engine
+data:
+  RUST_LOG: "info"
+  HOST: "0.0.0.0"
+  PORT: "8080"
+  RATE_LIMIT_PER_MINUTE: "100"
+  RATE_LIMIT_BURST: "20"
+  METRICS_ENABLED: "true"
+```
+
+**Deployment and Service:**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-engine
+  namespace: workflow-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: workflow-engine
+  template:
+    metadata:
+      labels:
+        app: workflow-engine
+    spec:
+      containers:
+      - name: workflow-engine
+        image: workflow-engine:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: workflow-config
+        - secretRef:
+            name: workflow-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/detailed
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-engine-service
+  namespace: workflow-engine
+spec:
+  selector:
+    app: workflow-engine
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: LoadBalancer
+```
+
+#### 5. Systemd Service
+
+```ini
+[Unit]
+Description=AI Workflow Engine
+Documentation=https://docs.rs/workflow-engine-app
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=workflow
+Group=workflow
+WorkingDirectory=/opt/workflow-engine
+ExecStart=/opt/workflow-engine/bin/workflow-engine
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart configuration
+Restart=always
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Environment
+Environment="RUST_LOG=info"
+EnvironmentFile=/opt/workflow-engine/config/.env.production
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/workflow-engine/logs
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=workflow-engine
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Installation Script:**
+
+```bash
+#!/bin/bash
+# install-workflow-engine.sh
+
+set -e
+
+# Create user
+sudo useradd -r -s /bin/false workflow
+
+# Create directories
+sudo mkdir -p /opt/workflow-engine/{bin,config,logs}
+sudo chown -R workflow:workflow /opt/workflow-engine
+
+# Copy files
+sudo cp deploy/bin/workflow-engine /opt/workflow-engine/bin/
+sudo cp deploy/config/.env.production /opt/workflow-engine/config/
+sudo cp workflow-engine.service /etc/systemd/system/
+
+# Set permissions
+sudo chmod +x /opt/workflow-engine/bin/workflow-engine
+sudo chmod 600 /opt/workflow-engine/config/.env.production
+
+# Enable and start service
+sudo systemctl daemon-reload
+sudo systemctl enable workflow-engine
+sudo systemctl start workflow-engine
+
+# Verify installation
+sleep 5
+sudo systemctl status workflow-engine
+curl -f http://localhost:8080/health
+```
 
 ### Performance Tuning
 

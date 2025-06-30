@@ -6,14 +6,29 @@ This file provides guidance to Claude Code when working with the Model Context P
 
 The `workflow-engine-mcp` crate is the core implementation of the Model Context Protocol (MCP) framework for the workflow engine. It provides a complete, production-ready MCP implementation with multi-transport support, connection pooling, and built-in server implementations.
 
-### Purpose and Role
+### Purpose and Role in the System
 
-- **Protocol Implementation**: Complete MCP specification compliance with all message types
-- **Transport Abstraction**: Unified interface for HTTP, WebSocket, and stdio transports
-- **Client Framework**: High-level MCP client implementations for external services
-- **Server Framework**: Tools for building MCP servers from workflow nodes
-- **Connection Management**: Advanced pooling, health monitoring, and load balancing
-- **Production Features**: Circuit breakers, retries, metrics, and error recovery
+- **Protocol Implementation**: Complete MCP specification compliance with all message types and protocol flows
+- **Transport Abstraction**: Unified interface supporting HTTP, WebSocket, and stdio transports
+- **Client Framework**: High-level MCP client implementations for connecting to external services
+- **Server Framework**: Tools for building MCP servers that expose workflow nodes as tools
+- **Connection Management**: Advanced pooling, health monitoring, load balancing, and automatic reconnection
+- **Production Features**: Circuit breakers, retries, metrics, error recovery, and comprehensive observability
+- **Performance Optimization**: Connection pooling, message batching, and efficient serialization
+
+### Crate Relationships
+
+This crate integrates with the workflow ecosystem:
+- **workflow-engine-core** (v0.6.0): Extends error types and provides MCP-specific error handling
+- **workflow-engine-api**: Used by the API server for external service integration
+- **workflow-engine-nodes**: Provides MCP client capabilities for external integrations
+- **Python MCP Servers**: Connects to external MCP servers (Notion, Slack, HelpScout) via multiple transports
+
+### External Dependencies
+- **MCP Servers** (Python): Located in `mcp-servers/` directory
+  - HelpScout MCP (port 8001): Customer support tool integration
+  - Notion MCP (port 8002): Knowledge base and documentation access
+  - Slack MCP (port 8003): Team communication and notification tools
 
 ## Architecture
 
@@ -170,17 +185,80 @@ cargo test mcp_connection -- --ignored
 
 ### Creating an MCP Client
 
+#### HTTP Client with Authentication
 ```rust
 use workflow_engine_mcp::prelude::*;
+use workflow_engine_mcp::clients::http::HttpMcpClient;
+use workflow_engine_mcp::config::McpConfig;
 
-// HTTP client
-let client = HttpMcpClient::new("http://localhost:8080/mcp")?;
+// Create HTTP client with configuration
+let config = McpConfig {
+    endpoint: "http://localhost:8002/mcp".to_string(),
+    auth_token: Some("your-api-token".to_string()),
+    timeout: Duration::from_secs(30),
+    max_retries: 3,
+    ..Default::default()
+};
 
-// WebSocket client  
-let ws_client = WebSocketMcpClient::new("ws://localhost:8080/mcp").await?;
+let mut client = HttpMcpClient::with_config(config)?;
 
-// Stdio client
-let stdio_client = StdioMcpClient::new("python", &["-m", "mcp_server"]).await?;
+// Initialize the connection
+client.initialize().await?;
+
+// List available tools
+let tools = client.list_tools().await?;
+println!("Available tools: {:?}", tools);
+
+// Call a specific tool
+let result = client.call_tool("search_notion", json!({
+    "query": "customer onboarding",
+    "limit": 10
+})).await?;
+```
+
+#### WebSocket Client with Automatic Reconnection
+```rust
+use workflow_engine_mcp::clients::websocket::WebSocketMcpClient;
+
+// WebSocket client with auto-reconnection
+let mut ws_client = WebSocketMcpClient::builder()
+    .endpoint("ws://localhost:8003/mcp")
+    .auto_reconnect(true)
+    .reconnect_interval(Duration::from_secs(5))
+    .max_reconnect_attempts(10)
+    .heartbeat_interval(Duration::from_secs(30))
+    .build()
+    .await?;
+
+// The client will automatically reconnect on connection loss
+let response = ws_client.call_tool("send_slack_message", json!({
+    "channel": "#general",
+    "message": "Workflow completed successfully!"
+})).await?;
+```
+
+#### Stdio Client for Python MCP Servers
+```rust
+use workflow_engine_mcp::clients::stdio::StdioMcpClient;
+
+// Start Python MCP server as subprocess
+let mut stdio_client = StdioMcpClient::builder()
+    .command("python")
+    .args(&["-m", "helpscout_mcp", "--port", "stdio"])
+    .working_directory("./mcp-servers/")
+    .environment("HELPSCOUT_API_KEY", "your-key")
+    .auto_restart(true)
+    .startup_timeout(Duration::from_secs(10))
+    .build()
+    .await?;
+
+// Use the client
+let tools = stdio_client.list_tools().await?;
+let ticket_result = stdio_client.call_tool("create_ticket", json!({
+    "subject": "Customer inquiry",
+    "message": "Customer needs help with their order",
+    "priority": "normal"
+})).await?;
 ```
 
 ### Building an MCP Server

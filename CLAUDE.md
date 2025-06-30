@@ -1,10 +1,16 @@
-# CLAUDE.md - Parent Guide
+# CLAUDE.md - AI Workflow Engine (Main Branch)
 
-This file provides high-level guidance to Claude Code (claude.ai/code) when working with code in this repository. For detailed component-specific guidance, refer to the individual CLAUDE.md files in each crate and service directory.
+This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the AI Workflow Engine project. This documentation reflects the **main branch** - the streamlined, monolithic version designed for learning, prototyping, and straightforward deployments.
 
 ## Project Overview
 
-This is a production-ready AI workflow orchestration system built in Rust with Python MCP (Model Context Protocol) servers. The system provides a foundation for building AI-powered applications with external service integrations.
+The AI Workflow Engine is a production-ready AI workflow orchestration platform built in Rust, featuring event sourcing, Model Context Protocol (MCP) integration, and advanced AI capabilities. The main branch provides a simplified, monolithic architecture that's ideal for getting started with AI workflows while maintaining enterprise-grade reliability.
+
+### Branch Context
+- **Current Branch**: `main` (Streamlined/Learning-focused)
+- **Enterprise Branch**: `federation-ui` (Microservices + React frontend + GraphQL Federation)
+- **Use Case**: Learning, prototyping, simple deployments
+- **Architecture**: Monolithic with optional microservices
 
 ## Component-Specific Documentation
 
@@ -87,19 +93,55 @@ Each crate and service has its own CLAUDE.md file with detailed guidance. Naviga
 
 ### Building and Running
 
+#### Quick Start (Monolithic)
 ```bash
+# Clone and navigate to the project
+git clone <repo-url>
+cd workflow-engine-rs
+
+# Ensure you're on the main branch
+git checkout main
+
 # Build the project
-cargo build
 cargo build --release
 
-# Run the main server
+# Run the main server (single process)
 cargo run --bin workflow-engine
 
-# Run with Docker Compose (recommended for full stack)
+# Access the API at http://localhost:8080
+```
+
+#### Full Stack with Docker (Recommended)
+```bash
+# Start the complete stack (includes optional microservices)
 docker-compose up -d
 
-# View logs
+# View logs for main application
 docker-compose logs -f ai-workflow-system
+
+# Check system health
+curl http://localhost:8080/api/v1/health
+
+# Access services:
+# - Main API: http://localhost:8080
+# - Swagger UI: http://localhost:8080/swagger-ui/
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3000 (admin/admin)
+```
+
+#### Environment Setup
+```bash
+# Create .env file with required variables
+cat > .env << EOF
+DATABASE_URL=postgresql://aiworkflow:aiworkflow123@localhost:5432/ai_workflow
+JWT_SECRET=your-secure-jwt-secret-key
+OPENAI_API_KEY=your_openai_key  # Optional
+ANTHROPIC_API_KEY=your_anthropic_key  # Optional
+EOF
+
+# Initialize database
+createdb ai_workflow
+psql ai_workflow < scripts/init-db.sql
 ```
 
 ### Testing
@@ -182,39 +224,111 @@ cd services/realtime_communication && cargo run
 # MCP Test Servers: HelpScout (8001), Notion (8002), Slack (8003)
 ```
 
-## Architecture Overview
+## System Architecture (Main Branch)
 
-This section provides a high-level overview. For detailed component information, refer to the individual CLAUDE.md files linked above.
+The main branch implements a streamlined, monolithic architecture that can optionally integrate with microservices. This design prioritizes simplicity and ease of deployment while maintaining production-grade capabilities.
+
+### Core Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI Workflow Engine (Main)                    │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────┐    ┌──────────────┐ │
+│  │   API Gateway   │    │  Workflow Core  │    │  MCP Client  │ │
+│  │  (Port 8080)    │◄──►│    Engine       │◄──►│   Framework  │ │
+│  │                 │    │                 │    │              │ │
+│  │ • REST APIs     │    │ • Orchestration │    │ • Multi-transport│
+│  │ • Authentication│    │ • Node Execution│    │ • Load Balancing│
+│  │ • Rate Limiting │    │ • Error Handling│    │ • Health Checks │
+│  │ • OpenAPI Docs  │    │ • Event Sourcing│    │                │
+│  └─────────────────┘    └─────────────────┘    └──────────────┘ │
+│            │                       │                     │      │
+│            ▼                       ▼                     ▼      │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌──────────────┐ │
+│  │   PostgreSQL    │    │   Node Library  │    │  AI Providers│ │
+│  │  Event Store    │    │                 │    │              │ │
+│  │                 │    │ • AI Agents     │    │ • OpenAI     │ │
+│  │ • Events        │    │ • Templates     │    │ • Anthropic  │ │
+│  │ • Snapshots     │    │ • Research      │    │ • Custom     │ │
+│  │ • Projections   │    │ • External MCP  │    │              │ │
+│  └─────────────────┘    └─────────────────┘    └──────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                Optional Microservices Layer                     │
+├─────────────────────────────────────────────────────────────────┤
+│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────────┐ │
+│ │ Content Proc.   │ │ Knowledge Graph │ │ Realtime Comm.      │ │
+│ │ (Port 8082)     │ │ (Port 3002)     │ │ (Port 8081)         │ │
+│ │                 │ │                 │ │                     │ │
+│ │ • Doc Analysis  │ │ • Graph DB      │ │ • WebSocket         │ │
+│ │ • AI Integration│ │ • GraphQL       │ │ • Actor Model       │ │
+│ │ • WASM Plugins  │ │ • Algorithms    │ │ • Presence Tracking │ │
+│ └─────────────────┘ └─────────────────┘ └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ### Core Components
 
-1. **HTTP API Server** - Main REST API gateway
-   - Details in: [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md)
-   - Key features: Actix-web, JWT auth, rate limiting, OpenAPI docs
+1. **API Gateway** (`workflow-engine-api`) - Central REST API server
+   - **Purpose**: Primary HTTP interface for all client interactions
+   - **Key Features**: JWT authentication, rate limiting, OpenAPI documentation, health checks
+   - **Location**: [crates/workflow-engine-api/](crates/workflow-engine-api/)
+   - **Documentation**: [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md)
 
-2. **MCP Framework** - Model Context Protocol implementation
-   - Details in: [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md)
-   - Key features: Multi-transport support, connection pooling, load balancing
+2. **Workflow Engine** (`workflow-engine-core`) - Core orchestration logic
+   - **Purpose**: Node-based workflow execution with event sourcing
+   - **Key Features**: Type-safe node system, error handling, AI integration, template engine
+   - **Location**: [crates/workflow-engine-core/](crates/workflow-engine-core/)
+   - **Documentation**: [workflow-engine-core CLAUDE.md](crates/workflow-engine-core/CLAUDE.md)
 
-3. **Workflow Engine** - Core orchestration logic
-   - Details in: [workflow-engine-core CLAUDE.md](crates/workflow-engine-core/CLAUDE.md)
-   - Key features: Node-based execution, type-safe registry, AI integration
+3. **MCP Framework** (`workflow-engine-mcp`) - Model Context Protocol implementation
+   - **Purpose**: Standardized communication with AI services and external tools
+   - **Key Features**: Multi-transport (HTTP/WebSocket/stdio), connection pooling, load balancing
+   - **Location**: [crates/workflow-engine-mcp/](crates/workflow-engine-mcp/)
+   - **Documentation**: [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md)
 
-4. **Node Library** - Pre-built workflow nodes
-   - Details in: [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
-   - Key features: AI agents, external MCP clients, templates
+4. **Node Library** (`workflow-engine-nodes`) - Pre-built workflow components
+   - **Purpose**: Ready-to-use workflow nodes for common operations
+   - **Key Features**: AI agents (OpenAI/Anthropic), template processing, research nodes
+   - **Location**: [crates/workflow-engine-nodes/](crates/workflow-engine-nodes/)
+   - **Documentation**: [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
 
-5. **Microservices** - Specialized processing services
-   - **Content Processing**: Details in [content_processing CLAUDE.md](services/content_processing/CLAUDE.md)
-   - **Knowledge Graph**: Details in [knowledge_graph CLAUDE.md](services/knowledge_graph/CLAUDE.md)
-   - **Realtime Communication**: Details in [realtime_communication CLAUDE.md](services/realtime_communication/CLAUDE.md)
+5. **Application Binary** (`workflow-engine-app`) - Main executable
+   - **Purpose**: Entry point that integrates all components
+   - **Key Features**: Configuration management, service startup, graceful shutdown
+   - **Location**: [crates/workflow-engine-app/](crates/workflow-engine-app/)
+   - **Documentation**: [workflow-engine-app CLAUDE.md](crates/workflow-engine-app/CLAUDE.md)
 
-### External Services
+### Optional Microservices
 
-MCP servers are implemented in Python (`mcp-servers/`):
-- **HelpScout** (port 8001): Customer support integration
-- **Notion** (port 8002): Knowledge base integration  
-- **Slack** (port 8003): Team communication
+The main branch can optionally integrate with specialized microservices for advanced features:
+
+1. **Content Processing Service** - Document analysis and AI integration
+   - **Purpose**: Intelligent document processing with WASM plugin support
+   - **Location**: [services/content_processing/](services/content_processing/)
+   - **Documentation**: [content_processing CLAUDE.md](services/content_processing/CLAUDE.md)
+
+2. **Knowledge Graph Service** - Graph-based knowledge management
+   - **Purpose**: Graph database operations with GraphQL support
+   - **Location**: [services/knowledge_graph/](services/knowledge_graph/)
+   - **Documentation**: [knowledge_graph CLAUDE.md](services/knowledge_graph/CLAUDE.md)
+
+3. **Realtime Communication Service** - WebSocket-based messaging
+   - **Purpose**: Real-time communication with actor model architecture
+   - **Location**: [services/realtime_communication/](services/realtime_communication/)
+   - **Documentation**: [realtime_communication CLAUDE.md](services/realtime_communication/CLAUDE.md)
+
+### External Integrations
+
+The system integrates with external services through the MCP (Model Context Protocol) framework:
+
+- **AI Providers**: OpenAI, Anthropic, and custom AI services
+- **External APIs**: RESTful services, webhooks, and third-party integrations
+- **MCP Servers**: Standardized protocol for external tool integration
+- **Monitoring Stack**: Prometheus, Grafana, Jaeger for observability
 
 ### Key Design Patterns
 
@@ -294,22 +408,62 @@ For detailed step-by-step instructions, see the relevant component CLAUDE.md fil
 4. **External integration**: Pattern for external MCP clients in `crates/workflow-engine-nodes/src/external_mcp_client.rs`
 5. **Microservice isolation**: Each service in `services/` has independent database and configuration
 
+## Development Workflow
+
+### Getting Started with the Main Branch
+
+1. **Initial Setup**: Use this guide for overall project understanding and setup
+2. **Choose Your Deployment**: Decide between monolithic (simple) or with microservices (advanced)
+3. **Component Deep-Dive**: Navigate to specific component CLAUDE.md files for detailed work
+4. **Cross-Component Integration**: Return to this guide for system-wide integration tasks
+
+### Main Branch Philosophy
+
+The main branch prioritizes:
+- **Simplicity**: Minimal configuration and setup requirements
+- **Learning**: Clear examples and straightforward architecture
+- **Rapid Prototyping**: Quick iteration and testing capabilities
+- **Production Viability**: Enterprise-grade features in a simplified package
+
+### Upgrade Path to Federation-UI
+
+When you need enterprise features:
+```bash
+# Switch to the enterprise branch
+git checkout federation-ui
+
+# Follow migration guide
+# Note: This includes breaking changes and additional complexity
+```
+
 ## How to Use This Documentation
 
-### When to Use This Parent Guide
-- **Initial project understanding**: Start here to understand the overall architecture
-- **Finding features**: Use the "Where to Search for Features" section to locate functionality
-- **Cross-component work**: When working across multiple crates/services
-- **General commands**: Reference the essential commands that apply system-wide
+### Start Here If You're:
+- **New to the project**: Read this entire guide for system overview
+- **Setting up development**: Use the Essential Commands section
+- **Looking for specific features**: Use the "Where to Search for Features" section
+- **Working across components**: Reference the architecture diagrams and component relationships
 
-### When to Use Component-Specific CLAUDE.md Files
-- **Deep diving into a crate/service**: Go directly to the component's CLAUDE.md
-- **Component-specific tasks**: Each CLAUDE.md has tailored development tasks
-- **Detailed architecture**: Component files have in-depth architectural details
-- **Testing strategies**: Each component has specific testing approaches
+### Navigate to Component Guides If You're:
+- **Implementing API endpoints**: See [workflow-engine-api CLAUDE.md](crates/workflow-engine-api/CLAUDE.md)
+- **Creating workflow nodes**: See [workflow-engine-nodes CLAUDE.md](crates/workflow-engine-nodes/CLAUDE.md)
+- **Working with MCP**: See [workflow-engine-mcp CLAUDE.md](crates/workflow-engine-mcp/CLAUDE.md)
+- **Modifying core logic**: See [workflow-engine-core CLAUDE.md](crates/workflow-engine-core/CLAUDE.md)
+- **Working with microservices**: See individual service CLAUDE.md files
 
-### Navigation Tips
-1. Start with this parent guide for orientation
-2. Use "Where to Search for Features" to find the right component
-3. Navigate to the specific component's CLAUDE.md for detailed work
-4. Return to this guide for cross-component integration tasks
+### Documentation Navigation Strategy
+
+1. **Orientation Phase**: Read this guide's architecture section and component overview
+2. **Planning Phase**: Use "Where to Search for Features" to identify relevant components
+3. **Implementation Phase**: Deep-dive into specific component CLAUDE.md files
+4. **Integration Phase**: Return here for cross-component patterns and system-wide testing
+5. **Deployment Phase**: Reference Essential Commands and environment configuration
+
+### Key Principles for Contributors
+
+- **Monolithic First**: Start with the main branch for development and learning
+- **Component Isolation**: Each crate has clear boundaries and responsibilities
+- **Event-Driven Design**: Leverage event sourcing for system state management
+- **Type Safety**: Use Rust's type system for compile-time guarantees
+- **Observability**: Implement comprehensive logging, metrics, and tracing
+- **Testing**: Follow the testing patterns established in each component

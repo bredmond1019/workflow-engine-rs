@@ -1,39 +1,94 @@
 # workflow-engine-app
 
-Complete application binary for the AI workflow engine.
+Production-ready AI workflow orchestration platform with complete observability and enterprise features.
 
 ## Features
 
-- **Full Application**: Complete AI workflow orchestration platform
-- **All Components**: Integrates all workflow engine crates
-- **Production Ready**: Monitoring, logging, authentication, and more
-- **Docker Support**: Container-ready with docker-compose setup
-- **Microservices**: Optional microservices architecture
+- **Complete Workflow Platform**: Full-featured AI workflow orchestration with node-based processing
+- **Enterprise Ready**: Authentication, rate limiting, monitoring, and production-grade security
+- **Microservices Architecture**: Scalable design with optional service decomposition
+- **Advanced Observability**: Prometheus metrics, structured logging, distributed tracing, and health monitoring
+- **Multi-transport Support**: HTTP, WebSocket, and stdio transport for external integrations
+- **Container Native**: Docker and Kubernetes ready with health checks and auto-scaling
+- **High Availability**: Built-in resilience patterns with circuit breakers and retry policies
 
 ## Quick Start
+
+### Prerequisites
+
+```bash
+# Install PostgreSQL
+sudo apt-get install postgresql postgresql-contrib
+
+# Create database
+sudo -u postgres createdb workflow_db
+
+# Set required environment variables
+export DATABASE_URL=postgresql://postgres:password@localhost/workflow_db
+export JWT_SECRET=$(openssl rand -hex 64)
+```
 
 ### Using Pre-built Binary
 
 ```bash
-# Download and run (when available on releases)
-curl -L https://github.com/bredmond1019/workflow-engine-rs/releases/latest/download/workflow-engine-app > workflow-engine-app
-chmod +x workflow-engine-app
-./workflow-engine-app
+# Download latest release
+curl -L https://github.com/bredmond1019/workflow-engine-rs/releases/latest/download/workflow-engine > workflow-engine
+chmod +x workflow-engine
+
+# Run with basic configuration
+./workflow-engine
 ```
 
 ### Building from Source
 
 ```bash
+# Clone and build
 git clone https://github.com/bredmond1019/workflow-engine-rs
 cd workflow-engine-rs
-cargo build --release --bin workflow-engine-app
-./target/release/workflow-engine-app
+
+# Build release binary
+cargo build --release --bin workflow-engine
+
+# Run the application
+./target/release/workflow-engine
 ```
 
-### Using Docker
+### Using Docker Compose (Recommended)
 
 ```bash
-docker run -p 8080:8080 workflow-engine-app:latest
+# Clone the repository
+git clone https://github.com/bredmond1019/workflow-engine-rs
+cd workflow-engine-rs
+
+# Start the full stack
+docker-compose up -d
+
+# View logs
+docker-compose logs -f workflow-engine
+
+# Access services
+# Main API: http://localhost:8080
+# Swagger UI: http://localhost:8080/swagger-ui/
+# Grafana: http://localhost:3000 (admin/admin)
+# Prometheus: http://localhost:9090
+```
+
+### Quick Test
+
+```bash
+# Check health
+curl http://localhost:8080/health
+
+# View API documentation
+open http://localhost:8080/swagger-ui/
+
+# Trigger a sample workflow
+curl -X POST http://localhost:8080/api/v1/workflows/trigger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workflow_name": "greeting_workflow", 
+    "data": {"name": "World", "message": "Hello from workflow engine!"}
+  }'
 ```
 
 ## Configuration

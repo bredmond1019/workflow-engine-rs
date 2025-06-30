@@ -8,12 +8,25 @@ The workflow-engine-core crate is the heart of the AI workflow orchestration sys
 
 ## Purpose and Role
 
-This crate serves as:
-- **Workflow Engine Foundation**: Core execution engine and node system
-- **Type Definitions**: Shared types and traits used across all crates
-- **AI Integration Layer**: Template engine and token management for AI services
-- **Error Handling Framework**: Comprehensive error types with retry and recovery
-- **Core Abstractions**: Node traits, task context, and workflow builder patterns
+This crate serves as the foundational layer for the entire workflow orchestration system:
+- **Workflow Engine Foundation**: Core execution engine with type-safe node system
+- **Type Definitions**: Shared types, traits, and abstractions used across all workspace crates
+- **AI Integration Layer**: Comprehensive template engine and token management for AI services
+- **Error Handling Framework**: Advanced error types with circuit breakers, retry policies, and recovery strategies
+- **Core Abstractions**: Node traits, task context, workflow builder patterns, and async support
+- **Authentication Utilities**: JWT handling and security primitives
+- **Configuration Management**: Environment-based configuration with validation
+- **Streaming Support**: Real-time data streaming with backpressure and recovery
+
+### Crate Relationships
+
+This crate provides the foundation for:
+- **workflow-engine-api**: Uses core types, error handling, auth utilities, and workflow engine
+- **workflow-engine-mcp**: Extends core error types and integrates with workflow nodes
+- **workflow-engine-nodes**: Implements the Node trait and uses AI integration utilities
+- **workflow-engine-app**: Depends on all features for complete functionality
+
+Note: This crate has no dependencies on other workspace crates to prevent circular dependencies.
 
 ## Key Components
 
@@ -115,47 +128,281 @@ Real-time data streaming:
 ## Core Abstractions and Patterns
 
 ### 1. Node Processing Pattern
+
+#### Basic Node Implementation
 ```rust
-impl Node for MyNode {
+use workflow_engine_core::prelude::*;
+
+#[derive(Debug)]
+struct DataProcessorNode {
+    config: ProcessorConfig,
+}
+
+impl Node for DataProcessorNode {
     fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
-        // Extract input data
-        let input: MyInput = context.get_event_data()?;
+        // Extract typed input data
+        let input: ProcessingRequest = context.get_event_data()
+            .map_err(|e| WorkflowError::InvalidInput { 
+                message: format!("Missing processing request: {}", e),
+                field: "processing_request".to_string(),
+                expected: "ProcessingRequest".to_string(),
+                received: "None".to_string(),
+            })?;
         
-        // Process data
-        let result = self.process_input(input)?;
+        // Process with error handling
+        let result = self.process_data(&input.data)
+            .map_err(|e| WorkflowError::ProcessingError {
+                message: format!("Data processing failed: {}", e),
+            }.with_context("node_id", self.node_name())
+             .with_context("input_size", input.data.len()))?;
         
-        // Store results
-        context.update_node("my_result", result);
+        // Store results with metadata
+        context.update_node("processed_data", result);
+        context.update_node("processing_metadata", json!({
+            "processed_at": chrono::Utc::now(),
+            "input_size": input.data.len(),
+            "output_size": result.len(),
+        }));
         
+        Ok(context)
+    }
+    
+    fn node_name(&self) -> String {
+        "DataProcessorNode".to_string()
+    }
+}
+```
+
+#### Async Node Implementation
+```rust
+use async_trait::async_trait;
+
+#[derive(Debug)]
+struct ApiCallNode {
+    client: reqwest::Client,
+    endpoint: String,
+}
+
+#[async_trait]
+impl AsyncNode for ApiCallNode {
+    async fn process_async(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        let request_data: ApiRequest = context.get_event_data()?;
+        
+        // Make async API call with timeout
+        let response = tokio::time::timeout(
+            Duration::from_secs(30),
+            self.client.post(&self.endpoint).json(&request_data).send()
+        ).await
+        .map_err(|_| WorkflowError::TimeoutError {
+            operation: "API call".to_string(),
+            timeout_duration: Duration::from_secs(30),
+        })?
+        .map_err(|e| WorkflowError::ExternalServiceError {
+            service: "API".to_string(),
+            operation: "POST request".to_string(),
+            error: e.to_string(),
+        })?;
+        
+        let result: ApiResponse = response.json().await
+            .map_err(|e| WorkflowError::DeserializationError {
+                message: format!("Failed to parse API response: {}", e),
+                data_type: "ApiResponse".to_string(),
+            })?;
+        
+        context.update_node("api_response", result);
         Ok(context)
     }
 }
 ```
 
 ### 2. Type-Safe Workflow Construction
+
+#### Simple Linear Workflow
 ```rust
-let workflow = TypedWorkflowBuilder::new("my_workflow")
+use workflow_engine_core::nodes::type_safe::*;
+
+let workflow = TypedWorkflowBuilder::new("data_processing_workflow")
+    .start_with_node(NodeId::new("input_validation"))
+    .connect_to(NodeId::new("data_processing"))
+    .connect_to(NodeId::new("output_formatting"))
+    .build()?;
+
+// Register nodes with type safety
+workflow.register_node(NodeId::new("input_validation"), ValidationNode::new());
+workflow.register_node(NodeId::new("data_processing"), DataProcessorNode::new(config));
+workflow.register_node(NodeId::new("output_formatting"), FormatterNode::new());
+```
+
+#### Complex Branching Workflow
+```rust
+let workflow = TypedWorkflowBuilder::new("conditional_workflow")
     .start_with_node(NodeId::new("input"))
-    .connect_to(NodeId::new("process"))
-    .connect_to(NodeId::new("output"))
+    .connect_to(NodeId::new("condition_check"))
+    // Branch based on condition
+    .connect_conditional(
+        NodeId::new("condition_check"),
+        vec![
+            (NodeId::new("path_a"), "condition == 'A'"),
+            (NodeId::new("path_b"), "condition == 'B'"),
+            (NodeId::new("default_path"), "true"), // Default case
+        ]
+    )
+    // Merge branches
+    .connect_to(NodeId::new("merge_results"))
     .build()?;
 ```
 
-### 3. Error Handling with Context
+#### Parallel Processing Workflow
 ```rust
-// Detailed error creation
-WorkflowError::ProcessingError {
-    message: "Failed to process data".to_string(),
-}.with_context("node_id", "processor")
+let workflow = TypedWorkflowBuilder::new("parallel_workflow")
+    .start_with_node(NodeId::new("input"))
+    .parallel_execution(vec![
+        NodeId::new("analysis_a"),
+        NodeId::new("analysis_b"),
+        NodeId::new("analysis_c"),
+    ])
+    .wait_for_all() // Wait for all parallel nodes to complete
+    .connect_to(NodeId::new("combine_results"))
+    .build()?;
+```
+
+### 3. Advanced Error Handling
+
+#### Error Context and Recovery
+```rust
+// Create error with rich context
+let error = WorkflowError::ProcessingError {
+    message: "Failed to process customer data".to_string(),
+}.with_context("customer_id", customer.id)
+ .with_context("node_id", "customer_processor")
  .with_context("attempt", 3)
+ .with_context("timestamp", Utc::now().to_rfc3339());
+
+// Implement error recovery
+impl Node for ResilientNode {
+    fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        let mut attempts = 0;
+        let max_attempts = 3;
+        
+        loop {
+            attempts += 1;
+            
+            match self.try_process(&context) {
+                Ok(result) => return Ok(result),
+                Err(e) if attempts < max_attempts => {
+                    log::warn!("Attempt {} failed, retrying: {}", attempts, e);
+                    std::thread::sleep(Duration::from_millis(100 * attempts as u64));
+                    continue;
+                },
+                Err(e) => return Err(e.with_context("total_attempts", attempts)),
+            }
+        }
+    }
+}
+```
+
+#### Circuit Breaker Pattern
+```rust
+use workflow_engine_core::error::circuit_breaker::CircuitBreaker;
+
+#[derive(Debug)]
+struct ProtectedNode {
+    inner_node: Box<dyn Node>,
+    circuit_breaker: CircuitBreaker,
+}
+
+impl Node for ProtectedNode {
+    fn process(&self, context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        self.circuit_breaker.call(|| {
+            self.inner_node.process(context.clone())
+        })
+    }
+}
 ```
 
 ### 4. Template-Based AI Integration
+
+#### Advanced Template Usage
 ```rust
-let template = Template::new("prompt_template")
-    .with_content("Process this {{input}} using {{method}}")
-    .with_variable("input", VariableType::String)
-    .with_variable("method", VariableType::String);
+use workflow_engine_core::ai::templates::*;
+
+// Create template with validation
+let template = TemplateBuilder::new("customer_support_prompt")
+    .with_content(r#"
+        You are a customer support assistant. 
+        
+        Customer: {{customer.name}} (ID: {{customer.id}})
+        Issue Type: {{issue.category}}
+        Priority: {{issue.priority}}
+        
+        Customer Message:
+        {{issue.message}}
+        
+        Previous Interactions: {{#each history}}
+        - {{date}}: {{summary}}
+        {{/each}}
+        
+        Please provide a helpful response addressing their concern.
+    "#)
+    .with_variable("customer", VariableType::Object)
+    .with_variable("issue", VariableType::Object)
+    .with_variable("history", VariableType::Array)
+    .with_helper("format_date", |date: &str| {
+        // Custom helper function
+        chrono::DateTime::parse_from_rfc3339(date)
+            .map(|dt| dt.format("%Y-%m-%d %H:%M").to_string())
+            .unwrap_or_else(|_| date.to_string())
+    })
+    .validate()?
+    .build()?;
+
+// Use template in node
+let rendered = template.render(&json!({
+    "customer": {
+        "name": "John Doe",
+        "id": "12345"
+    },
+    "issue": {
+        "category": "billing",
+        "priority": "high",
+        "message": "I was charged twice for my subscription"
+    },
+    "history": [
+        {"date": "2024-01-15T10:00:00Z", "summary": "Initial inquiry about billing"},
+        {"date": "2024-01-16T14:30:00Z", "summary": "Requested account review"}
+    ]
+}))?;
+```
+
+#### Token Management
+```rust
+use workflow_engine_core::ai::tokens::*;
+
+// Initialize token counter with pricing
+let token_counter = TokenCounter::new()
+    .with_provider(ModelProvider::OpenAI)
+    .with_pricing(PricingConfig {
+        input_cost_per_1k: 0.01,
+        output_cost_per_1k: 0.03,
+        currency: "USD".to_string(),
+    })
+    .with_budget(TokenBudget {
+        max_tokens_per_request: 8000,
+        max_cost_per_request: 1.0,
+        max_daily_cost: 100.0,
+    });
+
+// Count tokens before API call
+let input_tokens = token_counter.count_tokens(&prompt_text)?;
+token_counter.check_budget(input_tokens, estimated_output_tokens)?;
+
+// Track actual usage
+let usage = ApiUsage {
+    input_tokens,
+    output_tokens: actual_output_tokens,
+    total_cost: calculated_cost,
+};
+token_counter.record_usage(usage)?;
 ```
 
 ## Error Handling Approach

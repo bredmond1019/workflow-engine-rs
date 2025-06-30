@@ -6,14 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 The workflow-engine-nodes crate provides built-in workflow node implementations for the AI workflow orchestration system. It contains ready-to-use nodes for AI agent integrations, external MCP connections, research capabilities, and template processing.
 
-## Purpose and Role
+## Purpose and Role in the System
 
-This crate serves as the node library for the workflow engine, providing:
-- Pre-built node implementations for common workflow tasks
-- AI service integrations (OpenAI, Anthropic, AWS Bedrock)
-- External MCP server connectivity for tool access
-- Research and analysis capabilities
-- Template processing for content generation
+This crate serves as the comprehensive node library for the workflow engine, providing:
+- **Pre-built Node Implementations**: Ready-to-use nodes for common workflow tasks and patterns
+- **AI Service Integrations**: Native support for OpenAI, Anthropic, and AWS Bedrock with automatic token management
+- **External MCP Connectivity**: Seamless integration with external MCP servers for tool access and service communication
+- **Research and Analysis**: Specialized nodes for web research, data analysis, and content processing
+- **Template Processing**: Advanced template rendering for content generation and AI prompt engineering
+- **Utility Nodes**: Common processing patterns like validation, transformation, and routing
+
+### Crate Relationships
+
+This crate builds upon the foundation provided by other workspace crates:
+- **workflow-engine-core** (v0.6.0): Implements the `Node` and `AsyncNode` traits, uses AI utilities and error handling
+- **workflow-engine-mcp** (v0.6.0): Leverages MCP client framework for external service integration
+- **workflow-engine-api**: Nodes are registered and executed via the API server's workflow engine
+
+### External Integrations
+- **AI Services**: OpenAI GPT models, Anthropic Claude, AWS Bedrock
+- **MCP Servers**: Notion (port 8002), Slack (port 8003), HelpScout (port 8001)
+- **External APIs**: Research services, data sources, notification systems
 
 ## Available Node Types
 
@@ -46,41 +59,130 @@ Located in `src/template.rs`:
 
 ## AI Agent Implementations
 
-### OpenAI Integration
+### OpenAI Integration with Advanced Features
+
 ```rust
 use workflow_engine_nodes::ai_agents::openai::OpenAIAgentNode;
 use workflow_engine_core::nodes::agent::{AgentConfig, ModelProvider};
+use workflow_engine_core::ai::tokens::{TokenBudget, PricingConfig};
 
+// Configure OpenAI agent with token management
 let config = AgentConfig {
-    system_prompt: "You are a helpful assistant".to_string(),
+    system_prompt: "You are a customer support specialist. Analyze customer inquiries and provide helpful, accurate responses.".to_string(),
     model_provider: ModelProvider::OpenAI,
-    model_name: "gpt-4".to_string(),
-    mcp_server_uri: None, // Optional MCP server for tools
+    model_name: "gpt-4-1106-preview".to_string(),
+    temperature: 0.7,
+    max_tokens: 1000,
+    mcp_server_uri: Some("http://localhost:8002".to_string()), // Notion MCP for knowledge base
+    token_budget: Some(TokenBudget {
+        max_tokens_per_request: 8000,
+        max_cost_per_request: 0.50,
+        max_daily_cost: 50.0,
+    }),
+    pricing: Some(PricingConfig {
+        input_cost_per_1k: 0.01,
+        output_cost_per_1k: 0.03,
+        currency: "USD".to_string(),
+    }),
 };
 
 let agent = OpenAIAgentNode::new(config)?;
+
+// Use in workflow
+impl Node for CustomerSupportWorkflow {
+    fn process(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        // Extract customer inquiry
+        let inquiry: CustomerInquiry = context.get_event_data()?;
+        
+        // Prepare AI prompt with context
+        context.update_node("ai_prompt", json!({
+            "customer_message": inquiry.message,
+            "customer_history": inquiry.history,
+            "urgency": inquiry.priority,
+            "category": inquiry.category
+        }));
+        
+        // Process with OpenAI agent
+        let ai_result = self.openai_agent.process(context)?;
+        
+        // Extract AI response
+        let response = ai_result.get_node_data::<serde_json::Value>("ai_response")?;
+        
+        Ok(ai_result)
+    }
+}
 ```
 
-### Anthropic Integration
+### Anthropic Integration with Tool Usage
+
 ```rust
 use workflow_engine_nodes::ai_agents::anthropic::AnthropicAgentNode;
-use workflow_engine_core::nodes::agent::{AgentConfig, ModelProvider};
+use workflow_engine_mcp::prelude::*;
 
-let config = AgentConfig {
-    system_prompt: "You are Claude".to_string(),
-    model_provider: ModelProvider::Anthropic,
-    model_name: "claude-3-opus-20240229".to_string(),
-    mcp_server_uri: None,
-};
+// Create Anthropic agent with external tools
+let mut agent = AnthropicAgentNode::builder()
+    .model("claude-3-opus-20240229")
+    .system_prompt("You are an expert data analyst. Use available tools to gather and analyze information.")
+    .temperature(0.3)
+    .max_tokens(2000)
+    .build()?;
 
-let agent = AnthropicAgentNode::new(config);
+// Add MCP client for external tools
+let mcp_client = HttpMcpClient::new("http://localhost:8003")?; // Slack integration
+agent.set_mcp_client(Box::new(mcp_client));
+
+// Advanced usage with tool selection
+impl AsyncNode for DataAnalysisNode {
+    async fn process_async(&self, mut context: TaskContext) -> Result<TaskContext, WorkflowError> {
+        let analysis_request: AnalysisRequest = context.get_event_data()?;
+        
+        // Prepare context with tool availability
+        context.update_node("available_tools", json!([
+            "search_data_sources",
+            "run_statistical_analysis", 
+            "generate_visualization",
+            "send_slack_notification"
+        ]));
+        
+        context.update_node("analysis_prompt", json!({
+            "data_sources": analysis_request.data_sources,
+            "analysis_type": analysis_request.analysis_type,
+            "output_format": analysis_request.output_format
+        }));
+        
+        // Claude will automatically select and use appropriate tools
+        let result = self.anthropic_agent.process_async(context).await?;
+        
+        Ok(result)
+    }
+}
 ```
 
-Both agents support:
-- MCP tool integration via `set_mcp_client()`
-- Flexible prompt extraction from task context
-- Automatic tool selection based on keywords
-- Async processing with sync Node interface
+### AWS Bedrock Integration (Future)
+
+```rust
+use workflow_engine_nodes::ai_agents::bedrock::BedrockAgentNode;
+
+// Multi-model Bedrock configuration
+let bedrock_agent = BedrockAgentNode::builder()
+    .region("us-east-1")
+    .model("anthropic.claude-v2")  // Or "amazon.titan-text-express-v1"
+    .system_prompt("You are a compliance specialist reviewing documents.")
+    .max_tokens(4000)
+    .aws_profile("default")
+    .build()?;
+```
+
+### Common AI Agent Features
+
+All AI agent nodes support:
+
+1. **MCP Tool Integration**: Automatic tool discovery and execution
+2. **Token Management**: Budget tracking and cost optimization
+3. **Prompt Engineering**: Template-based prompt construction
+4. **Context Preservation**: Conversation history and state management
+5. **Error Recovery**: Retry policies and fallback strategies
+6. **Performance Monitoring**: Token usage analytics and latency tracking
 
 ## External MCP Client Integration
 

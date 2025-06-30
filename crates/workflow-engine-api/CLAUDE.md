@@ -1,18 +1,33 @@
 # CLAUDE.md - workflow-engine-api
 
-This file provides guidance for Claude Code when working with the workflow-engine-api crate.
+This file provides comprehensive guidance for Claude Code when working with the workflow-engine-api crate, the main HTTP API server for the AI workflow orchestration system.
 
 ## Crate Overview
 
-The workflow-engine-api crate is the main HTTP API server for the AI workflow orchestration system. It provides a production-ready REST API with authentication, monitoring, and workflow execution capabilities built on top of Actix-web.
+The workflow-engine-api crate serves as the production-ready REST API server that orchestrates AI workflows. Built on Actix-web, it provides a robust foundation for enterprise-grade workflow automation with comprehensive authentication, monitoring, and service management capabilities.
 
-### Purpose and Role
+### Purpose and Role in the System
 
-- **Primary API Gateway**: Serves as the main entry point for all HTTP requests
-- **Workflow Orchestration**: Triggers and monitors workflow executions
-- **Service Bootstrap**: Manages dependency injection and service lifecycle
-- **Authentication & Authorization**: JWT-based security with middleware
-- **Monitoring & Observability**: Prometheus metrics, health checks, and distributed tracing
+- **Primary API Gateway**: Central HTTP entry point for all client interactions
+- **Workflow Orchestration**: Manages workflow lifecycle from trigger to completion
+- **Service Bootstrap**: Advanced dependency injection and service discovery
+- **Authentication & Authorization**: Enterprise-grade JWT security with fine-grained permissions
+- **Monitoring & Observability**: Full observability stack with metrics, tracing, and health monitoring
+- **Event-Driven Architecture**: Complete event sourcing implementation for audit and replay
+- **Multi-tenancy Support**: Tenant isolation and data partitioning capabilities
+
+### Crate Relationships
+
+This crate integrates with other workspace crates as follows:
+
+- **workflow-engine-core** (v0.6.0): Provides core workflow engine, task context, error handling, and AI integration utilities
+- **workflow-engine-mcp** (v0.6.0): Used for external MCP server integration in workflow nodes
+- **workflow-engine-nodes**: Consumed via the workflow engine for built-in node implementations
+
+For microservices architecture, it also integrates with:
+- **content_processing** service: Document analysis and processing
+- **knowledge_graph** service: Graph-based knowledge management
+- **realtime_communication** service: WebSocket-based real-time features
 
 ## Key Components and Modules
 
@@ -173,12 +188,17 @@ App::new()
 
 ### Unit Tests
 ```bash
-# Run unit tests for API logic
+# Run all unit tests
 cargo test --package workflow-engine-api --lib
 
 # Test specific modules
 cargo test --package workflow-engine-api bootstrap::
 cargo test --package workflow-engine-api api::workflows
+cargo test --package workflow-engine-api db::events
+cargo test --package workflow-engine-api monitoring::
+
+# Run with coverage
+cargo tarpaulin --package workflow-engine-api --out Html
 ```
 
 ### Integration Tests
@@ -192,6 +212,9 @@ cargo test --package workflow-engine-api --test '*' -- --ignored
 # Test with external MCP servers
 ./scripts/start_test_servers.sh
 cargo test --package workflow-engine-api workflow_integration -- --ignored
+
+# Test event-driven workflows
+cargo test --package workflow-engine-api event_driven_integration -- --ignored
 ```
 
 ### API Testing
@@ -200,8 +223,31 @@ cargo test --package workflow-engine-api workflow_integration -- --ignored
 http POST localhost:8080/api/v1/auth/login email=test@example.com password=secret
 http POST localhost:8080/api/v1/workflows/trigger workflow_name=customer_support Authorization:"Bearer $TOKEN"
 
+# Test health endpoints
+http GET localhost:8080/health
+http GET localhost:8080/health/detailed
+
+# Test service discovery
+http GET localhost:8080/api/v1/registry/services
+
 # Load testing with vegeta
 echo "POST http://localhost:8080/api/v1/workflows/trigger" | vegeta attack -rate=100/s -duration=30s
+
+# Test with different content types
+http POST localhost:8080/api/v1/workflows/trigger Content-Type:application/json workflow_name=data_processing data:='{"input": "test"}'
+```
+
+### End-to-End Testing
+```bash
+# Full system tests (requires all services)
+docker-compose up -d
+cargo test --test end_to_end_workflow_test -- --ignored
+
+# Chaos testing
+cargo test --test chaos_test -- --ignored --nocapture
+
+# Performance testing
+cargo test --test load_test -- --ignored --nocapture
 ```
 
 ## Common Development Tasks
