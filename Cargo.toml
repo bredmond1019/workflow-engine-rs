@@ -105,6 +105,7 @@ serial_test = "3.1"
 wiremock = "0.6"
 proptest = "1.4"
 test-case = "3.3"
+toml = "0.8.8"
 
 
 [workspace.metadata.docs.rs]

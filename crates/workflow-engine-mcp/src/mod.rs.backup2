@@ -253,14 +253,16 @@
 //!                 Ok(result) => Ok(result),
 //!                 Err(e) => {
 //!                     eprintln!("MCP tool call failed: {}", e);
-//!                     Err(WorkflowError::mcp_error_simple(format!("Tool call failed: {)", e)
+//!                     Err(WorkflowError::MCPError {
+//!                         message: format!("Tool call failed: {}", e)
 //!                     })
 //!                 }
 //!             }
 //!         }
 //!         Err(e) => {
 //!             eprintln!("MCP connection failed: {}", e);
-//!             Err(WorkflowError::mcp_connection_error_simple(format!("Connection failed: {)", e)
+//!             Err(WorkflowError::MCPConnectionError {
+//!                 message: format!("Connection failed: {}", e)
 //!             })
 //!         }
 //!     }

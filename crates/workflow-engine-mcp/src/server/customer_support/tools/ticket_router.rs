@@ -1,5 +1,5 @@
 use crate::server::ToolMetadata;
-use workflow_engine_core::{error::WorkflowError, nodes::Node, task::TaskContext};
+use workflow_engine_core::{error::{WorkflowError, ValidationErrorDetails}, nodes::Node, task::TaskContext};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -215,35 +215,33 @@ impl Node for TicketRouterNode {
         let ticket_id = context_data
             .as_ref()
             .and_then(|v| v["ticket_id"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: ticket_id".to_string(),
-                field: "ticket_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in ticket_router node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error(
+                "Missing required field: ticket_id",
+                "ticket_id",
+                "required field",
+                "in ticket_router node"
+            ))?.to_string();
             
         let department = context_data
             .as_ref()
             .and_then(|v| v["department"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: department".to_string(),
-                field: "department".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in ticket_router node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error(
+                "Missing required field: department",
+                "department",
+                "required field",
+                "in ticket_router node"
+            ))?.to_string();
             
         let routing_reason = context_data
             .as_ref()
             .and_then(|v| v["routing_reason"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
+            .ok_or_else(|| WorkflowError::ValidationError(Box::new(ValidationErrorDetails {
                 message: "Missing required field: routing_reason".to_string(),
                 field: "routing_reason".to_string(),
                 value: None,
                 constraint: "required field".to_string(),
                 context: "in ticket_router node".to_string(),
-            })?.to_string();
+            })))?.to_string();
         
         let priority = context_data
             .as_ref()

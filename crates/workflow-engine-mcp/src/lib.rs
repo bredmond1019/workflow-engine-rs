@@ -117,13 +117,13 @@ mod mcp_timeout_tests {
         
         // Verify it's the right type of error
         match result {
-            Err(WorkflowError::MCPConnectionError { message, .. }) => {
-                assert!(message.contains("timeout") || message.contains("Failed to create connection"), 
-                    "Error should indicate timeout or connection failure, got: {}", message);
+            Err(WorkflowError::MCPConnectionError(details)) => {
+                assert!(details.message.contains("timeout") || details.message.contains("Failed to create connection"), 
+                    "Error should indicate timeout or connection failure, got: {}", details.message);
             }
-            Err(WorkflowError::MCPError { message, .. }) => {
-                assert!(message.contains("timeout") || message.contains("connection"), 
-                    "Error should indicate timeout or connection failure, got: {}", message);
+            Err(WorkflowError::MCPError(details)) => {
+                assert!(details.message.contains("timeout") || details.message.contains("connection"), 
+                    "Error should indicate timeout or connection failure, got: {}", details.message);
             }
             Err(other) => panic!("Unexpected error type: {:?}", other),
             Ok(_) => panic!("Connection should not succeed"),
@@ -219,10 +219,10 @@ mod mcp_timeout_tests {
         assert!(result.is_err(), "Unregistered server should cause error");
         
         match result {
-            Err(WorkflowError::MCPError { message, operation, server_name, .. }) => {
-                assert_eq!(server_name, "nonexistent-server");
-                assert_eq!(operation, "get_connection");
-                assert!(message.contains("not registered"));
+            Err(WorkflowError::MCPError(details)) => {
+                assert_eq!(details.server_name, "nonexistent-server");
+                assert_eq!(details.operation, "get_connection");
+                assert!(details.message.contains("not registered"));
             }
             Err(other) => panic!("Expected MCPError, got: {:?}", other),
             Ok(_) => panic!("Should not succeed for unregistered server"),

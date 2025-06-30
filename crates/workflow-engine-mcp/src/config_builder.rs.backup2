@@ -239,12 +239,14 @@ impl McpConfigBuilder {
     pub fn build(self) -> Result<McpConfig, WorkflowError> {
         // Validate client name
         if self.client_name.is_empty() {
-            return Err(WorkflowError::configuration_error(
-                "Client name cannot be empty",
-                "client_name",
-                "builder",
-                "non-empty string"
-            ));
+            return Err(WorkflowError::ConfigurationError {
+                message: "Client name cannot be empty".to_string(),
+                config_key: "client_name".to_string(),
+                config_source: "builder".to_string(),
+                expected_format: "non-empty string".to_string(),
+                received_value: Some(self.client_name.clone()),
+                source: None,
+            });
         }
 
         // Validate client version

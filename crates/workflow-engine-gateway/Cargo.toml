@@ -40,7 +40,7 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
 # Other crates
-workflow-engine-core = { path = "../workflow-engine-core" }
+workflow-engine-core = { path = "../workflow-engine-core", version = "0.6.0" }
 
 # For async streams
 futures-util = { workspace = true }
