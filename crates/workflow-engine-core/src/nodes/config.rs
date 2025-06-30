@@ -99,18 +99,48 @@ impl NodeConfig {
 
     /// Validate the configuration
     pub fn validate(&self) -> Result<(), crate::error::WorkflowError> {
+        self.validate_router_configuration()?;
+        self.validate_timeouts_and_retries()?;
+        self.validate_resource_limits()?;
+        self.validate_metadata_security()?;
+        self.validate_tags_security()?;
+        Ok(())
+    }
+
+    fn validate_router_configuration(&self) -> Result<(), crate::error::WorkflowError> {
         // Validate router configuration
         if !self.is_router && self.connections.len() > 1 {
             return Err(crate::error::WorkflowError::InvalidRouter {
                 node: format!("{:?}", self.node_type),
             });
         }
+        Ok(())
+    }
 
-        // Validate timeout
+    fn validate_timeouts_and_retries(&self) -> Result<(), crate::error::WorkflowError> {
+        // Configuration constants for validation
+        const MAX_TIMEOUT_SECONDS: u64 = 3600; // 1 hour max timeout
+        const MAX_RETRY_ATTEMPTS: u32 = 100;   // Reasonable retry limit
+        
+        // Validate timeout configuration
         if let Some(timeout) = self.timeout {
             if timeout.as_secs() == 0 {
-                return Err(crate::error::WorkflowError::configuration_error_simple(
-                    "Timeout must be greater than 0"
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Timeout must be greater than 0",
+                    "timeout",
+                    "node_configuration",
+                    "positive duration",
+                    Some("0_seconds".to_string()),
+                ));
+            }
+            
+            if timeout.as_secs() > MAX_TIMEOUT_SECONDS {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Timeout exceeds maximum of {} seconds", MAX_TIMEOUT_SECONDS),
+                    "timeout",
+                    "node_configuration",
+                    format!("timeout <= {} seconds", MAX_TIMEOUT_SECONDS),
+                    Some(format!("{}_seconds", timeout.as_secs())),
                 ));
             }
         }
@@ -118,22 +148,49 @@ impl NodeConfig {
         // Validate retry configuration
         if let Some(attempts) = self.retry_attempts {
             if attempts == 0 {
-                return Err(crate::error::WorkflowError::configuration_error_simple(
-                    "Retry attempts must be greater than 0"
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Retry attempts must be greater than 0",
+                    "retry_attempts",
+                    "node_configuration",
+                    "positive number",
+                    Some("0".to_string()),
                 ));
             }
+            
+            if attempts > MAX_RETRY_ATTEMPTS {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Retry attempts exceed maximum of {}", MAX_RETRY_ATTEMPTS),
+                    "retry_attempts",
+                    "node_configuration",
+                    format!("retry attempts <= {}", MAX_RETRY_ATTEMPTS),
+                    Some(attempts.to_string()),
+                ));
+            }
+            
             if self.retry_delay.is_none() {
-                return Err(crate::error::WorkflowError::configuration_error_simple(
-                    "Retry delay must be specified when retry attempts are set"
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Retry delay must be specified when retry attempts are set",
+                    "retry_delay",
+                    "node_configuration",
+                    "positive duration",
+                    Some("missing".to_string()),
                 ));
             }
         }
 
+        Ok(())
+    }
+
+    fn validate_resource_limits(&self) -> Result<(), crate::error::WorkflowError> {
         // Validate priority
         if let Some(priority) = self.priority {
             if priority == 0 {
-                return Err(crate::error::WorkflowError::configuration_error_simple(
-                    "Priority must be greater than 0"
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Priority must be greater than 0",
+                    "priority",
+                    "node_configuration",
+                    "positive number (1-255)",
+                    Some("0".to_string()),
                 ));
             }
         }
@@ -141,13 +198,148 @@ impl NodeConfig {
         // Validate max concurrent executions
         if let Some(max) = self.max_concurrent_executions {
             if max == 0 {
-                return Err(crate::error::WorkflowError::configuration_error_simple(
-                    "Max concurrent executions must be greater than 0"
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Max concurrent executions must be greater than 0",
+                    "max_concurrent_executions",
+                    "node_configuration",
+                    "positive number",
+                    Some("0".to_string()),
+                ));
+            }
+            
+            // Check for excessive concurrent executions
+            const MAX_CONCURRENT_EXECUTIONS: usize = 10000;
+            if max > MAX_CONCURRENT_EXECUTIONS {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Max concurrent executions exceed limit of {}", MAX_CONCURRENT_EXECUTIONS),
+                    "max_concurrent_executions",
+                    "node_configuration",
+                    format!("concurrent executions <= {}", MAX_CONCURRENT_EXECUTIONS),
+                    Some(max.to_string()),
                 ));
             }
         }
 
         Ok(())
+    }
+
+    fn validate_metadata_security(&self) -> Result<(), crate::error::WorkflowError> {
+        // Security configuration constants
+        const MAX_METADATA_SIZE: usize = 1_000_000; // 1MB total metadata size limit
+        const RESERVED_KEYS: &[&str] = &[
+            "__system__", "_internal_", "NODE_TYPE", "_secret_", "__admin__",
+            "password", "token", "key", "credential"
+        ];
+
+        // Check total metadata size
+        let total_size: usize = self.metadata.iter()
+            .map(|(k, v)| k.len() + v.to_string().len())
+            .sum();
+        
+        if total_size > MAX_METADATA_SIZE {
+            return Err(crate::error::WorkflowError::configuration_error(
+                format!("Metadata size exceeds maximum of {} bytes", MAX_METADATA_SIZE),
+                "metadata",
+                "node_configuration",
+                format!("total size <= {} bytes", MAX_METADATA_SIZE),
+                Some(format!("{}_bytes", total_size)),
+            ));
+        }
+
+        // Check for reserved keys and malicious content
+        for (key, value) in &self.metadata {
+            // Check reserved keys
+            if RESERVED_KEYS.iter().any(|&reserved| key.to_lowercase().contains(reserved)) {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Metadata key '{}' contains reserved keyword", key),
+                    "metadata",
+                    "node_configuration",
+                    "keys without reserved keywords",
+                    Some(key.clone()),
+                ));
+            }
+
+            // Check for potentially malicious content
+            let value_str = value.to_string();
+            if self.contains_malicious_content(&value_str) {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Metadata value contains potentially malicious content"),
+                    "metadata",
+                    "node_configuration",
+                    "safe content without scripts or injection attempts",
+                    Some("malicious_content_detected".to_string()),
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn validate_tags_security(&self) -> Result<(), crate::error::WorkflowError> {
+        const MAX_TAG_LENGTH: usize = 100;
+        const MAX_TAGS_COUNT: usize = 50;
+
+        if self.tags.len() > MAX_TAGS_COUNT {
+            return Err(crate::error::WorkflowError::configuration_error(
+                format!("Too many tags (max: {})", MAX_TAGS_COUNT),
+                "tags",
+                "node_configuration",
+                format!("tag count <= {}", MAX_TAGS_COUNT),
+                Some(self.tags.len().to_string()),
+            ));
+        }
+
+        for tag in &self.tags {
+            if tag.len() > MAX_TAG_LENGTH {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    format!("Tag '{}' exceeds maximum length of {}", tag, MAX_TAG_LENGTH),
+                    "tags",
+                    "node_configuration",
+                    format!("tag length <= {}", MAX_TAG_LENGTH),
+                    Some(format!("length_{}", tag.len())),
+                ));
+            }
+
+            if self.contains_malicious_content(tag) {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Tag contains potentially malicious content",
+                    "tags",
+                    "node_configuration",
+                    "safe tag content",
+                    Some("malicious_tag_detected".to_string()),
+                ));
+            }
+
+            // Check for control characters
+            if tag.chars().any(|c| c.is_control()) {
+                return Err(crate::error::WorkflowError::configuration_error(
+                    "Tag contains invalid control characters",
+                    "tags",
+                    "node_configuration",
+                    "tags without control characters",
+                    Some("control_characters_detected".to_string()),
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn contains_malicious_content(&self, content: &str) -> bool {
+        let content_lower = content.to_lowercase();
+        
+        // Check for script injection patterns
+        let malicious_patterns = [
+            "<script", "javascript:", "vbscript:",
+            "onload=", "onerror=", "onclick=",
+            "'; drop table", "; drop table", "union select",
+            "rm -rf", "del /", "format c:",
+            "../../", "../", "..\\",
+            "eval(", "exec(", "system(",
+            "__import__", "subprocess",
+        ];
+
+        malicious_patterns.iter().any(|&pattern| content_lower.contains(pattern))
     }
 }
 

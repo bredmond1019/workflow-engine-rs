@@ -19,8 +19,9 @@ impl<'a> WorkflowValidator<'a> {
     }
 
     pub fn validate(&self) -> Result<(), WorkflowError> {
-        self.validate_dag()?;
         self.validate_connections()?;
+        self.validate_dag()?;
+        self.validate_complex_cycles()?;
         Ok(())
     }
 
@@ -105,13 +106,116 @@ impl<'a> WorkflowValidator<'a> {
     }
 
     fn validate_connections(&self) -> Result<(), WorkflowError> {
+        // Build a set of all node types for quick lookup
+        let all_node_types: HashSet<TypeId> = self.schema.nodes.iter().map(|nc| nc.node_type).collect();
+
         for node_config in &self.schema.nodes {
+            // Check router configuration
             if node_config.connections.len() > 1 && !node_config.is_router {
                 return Err(WorkflowError::InvalidRouter {
                     node: format!("{:?}", node_config.node_type),
                 });
             }
+
+            // Check that all connections point to existing nodes
+            for &connected_node in &node_config.connections {
+                if !all_node_types.contains(&connected_node) {
+                    return Err(WorkflowError::configuration_error(
+                        format!("Node {:?} connects to non-existent node {:?}", 
+                                node_config.node_type, connected_node),
+                        "connections",
+                        "workflow_validation",
+                        "connections to existing nodes only",
+                        Some(format!("invalid_connection_to_{:?}", connected_node)),
+                    ));
+                }
+            }
+
+            // Check that parallel nodes exist
+            for &parallel_node in &node_config.parallel_nodes {
+                if !all_node_types.contains(&parallel_node) {
+                    return Err(WorkflowError::configuration_error(
+                        format!("Node {:?} has non-existent parallel node {:?}", 
+                                node_config.node_type, parallel_node),
+                        "parallel_nodes",
+                        "workflow_validation",
+                        "parallel nodes must exist in workflow",
+                        Some(format!("invalid_parallel_node_{:?}", parallel_node)),
+                    ));
+                }
+            }
+
+            // Check for self-references
+            if node_config.connections.contains(&node_config.node_type) {
+                return Err(WorkflowError::CycleDetected);
+            }
+
+            if node_config.parallel_nodes.contains(&node_config.node_type) {
+                return Err(WorkflowError::configuration_error(
+                    format!("Node {:?} cannot reference itself in parallel nodes", 
+                            node_config.node_type),
+                    "parallel_nodes",
+                    "workflow_validation",
+                    "no self-references in parallel nodes",
+                    Some(format!("self_reference_{:?}", node_config.node_type)),
+                ));
+            }
         }
         Ok(())
+    }
+
+    fn validate_complex_cycles(&self) -> Result<(), WorkflowError> {
+        // More sophisticated cycle detection including multi-step cycles
+        for node_config in &self.schema.nodes {
+            if self.has_complex_cycle_from(node_config.node_type)? {
+                return Err(WorkflowError::CycleDetected);
+            }
+        }
+        Ok(())
+    }
+
+    fn has_complex_cycle_from(&self, start_node: TypeId) -> Result<bool, WorkflowError> {
+        let mut visited = HashSet::new();
+        let mut path = HashSet::new();
+        self.dfs_cycle_check(start_node, &mut visited, &mut path)
+    }
+
+    fn dfs_cycle_check(
+        &self,
+        node: TypeId,
+        visited: &mut HashSet<TypeId>,
+        path: &mut HashSet<TypeId>,
+    ) -> Result<bool, WorkflowError> {
+        if path.contains(&node) {
+            // We've found a cycle
+            return Ok(true);
+        }
+
+        if visited.contains(&node) {
+            // Already processed this node
+            return Ok(false);
+        }
+
+        visited.insert(node);
+        path.insert(node);
+
+        if let Some(node_config) = self.schema.nodes.iter().find(|nc| nc.node_type == node) {
+            // Check all connections
+            for &neighbor in &node_config.connections {
+                if self.dfs_cycle_check(neighbor, visited, path)? {
+                    return Ok(true);
+                }
+            }
+            
+            // Check parallel nodes for cycles too
+            for &parallel_node in &node_config.parallel_nodes {
+                if self.dfs_cycle_check(parallel_node, visited, path)? {
+                    return Ok(true);
+                }
+            }
+        }
+
+        path.remove(&node);
+        Ok(false)
     }
 }

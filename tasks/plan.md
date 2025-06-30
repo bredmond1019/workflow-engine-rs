@@ -114,12 +114,26 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 
 ```rust
 // Test areas:
-- [ ] 3a. JWT token validation edge cases
-- [ ] 3b. Workflow configuration validation
+- [x] 3a. JWT token validation edge cases ✅
+- [x] 3b. Workflow configuration validation ✅  
 - [ ] 3c. MCP protocol message validation  
 - [ ] 3d. Node parameter type safety
 - [ ] 3e. GraphQL query validation
 ```
+
+**TDD CYCLE COMPLETE** for 3a:
+- **RED**: ✅ Created failing tests for JWT token validation edge cases (empty bearer, malformed format, special characters)
+- **GREEN**: ✅ Fixed critical security vulnerability in JWT bearer token extraction, replaced .unwrap() with proper validation
+- **REFACTOR**: ✅ Applied "Tidy First" - extracted helper methods, improved token validation logic organization
+
+**Impact**: Eliminated 1 critical security vulnerability in JWT validation that could cause panics with malformed tokens. Fixed bearer token extraction to require "Bearer " prefix, added 16 comprehensive JWT tests covering all edge cases. Replaced 1 .unwrap() call with proper error handling.
+
+**TDD CYCLE COMPLETE** for 3b:
+- **RED**: ✅ Created failing tests for workflow configuration validation (25 comprehensive test scenarios)
+- **GREEN**: ✅ Implemented comprehensive validation for WorkflowSchema and NodeConfig including structure, security, and resource limits
+- **REFACTOR**: ✅ Applied "Tidy First" - extracted validation constants, organized validation methods by category, improved error messages
+
+**Impact**: Added robust validation layer preventing invalid workflow configurations. Protects against: empty/invalid workflow types, missing start nodes, circular dependencies, connection to non-existent nodes, malicious metadata content, excessive resource limits, invalid security patterns. Covers 25+ potential configuration vulnerabilities that could cause runtime issues or security problems.
 
 ### Phase 2: Documentation and API Polish (Task 4.3-4.4)
 

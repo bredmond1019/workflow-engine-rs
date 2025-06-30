@@ -506,6 +506,10 @@ impl Workflow {
     /// let workflow = Workflow::new(schema).expect("Failed to create workflow");
     /// ```
     pub fn new(schema: WorkflowSchema) -> Result<Self, WorkflowError> {
+        // First validate the schema structure itself
+        schema.validate()?;
+        
+        // Then validate the workflow graph logic
         let validator = WorkflowValidator::new(&schema);
         validator.validate()?;
 
