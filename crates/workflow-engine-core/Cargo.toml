@@ -64,6 +64,7 @@ actix-web-actors = { workspace = true, optional = true }
 [dev-dependencies]
 mockall = { workspace = true }
 criterion = { workspace = true }
+tokio-test = "0.4"
 
 [[bench]]
 name = "node_processing"

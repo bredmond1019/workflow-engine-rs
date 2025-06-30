@@ -116,7 +116,7 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 // Test areas:
 - [x] 3a. JWT token validation edge cases ✅
 - [x] 3b. Workflow configuration validation ✅  
-- [ ] 3c. MCP protocol message validation  
+- [x] 3c. MCP protocol message validation ✅
 - [ ] 3d. Node parameter type safety
 - [ ] 3e. GraphQL query validation
 ```
@@ -134,6 +134,13 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - **REFACTOR**: ✅ Applied "Tidy First" - extracted validation constants, organized validation methods by category, improved error messages
 
 **Impact**: Added robust validation layer preventing invalid workflow configurations. Protects against: empty/invalid workflow types, missing start nodes, circular dependencies, connection to non-existent nodes, malicious metadata content, excessive resource limits, invalid security patterns. Covers 25+ potential configuration vulnerabilities that could cause runtime issues or security problems.
+
+**TDD CYCLE COMPLETE** for 3c:
+- **RED**: ✅ Created failing tests for MCP protocol message validation (15 comprehensive test scenarios covering security and resource exhaustion)
+- **GREEN**: ✅ Implemented comprehensive MCP message validation including JSON-RPC compliance, method name validation, request ID security, Unicode safety, and resource limits
+- **REFACTOR**: ✅ Applied "Tidy First" - extracted validation logic into dedicated module `workflow_engine_core::mcp::validation` with proper error types, configurable limits, and reusable RequestTracker
+
+**Impact**: Added comprehensive MCP protocol security layer preventing message-based attacks. Protects against: oversized messages (DoS), deeply nested JSON (stack overflow), malicious request IDs (injection attacks), invalid Unicode (spoofing attacks), excessive tool arguments (resource exhaustion), malformed JSON-RPC messages, invalid protocol versions. Created reusable validation module with 15+ tests covering all attack vectors that could compromise MCP communication security.
 
 ### Phase 2: Documentation and API Polish (Task 4.3-4.4)
 
