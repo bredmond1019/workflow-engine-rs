@@ -28,6 +28,188 @@ pub struct AgentConfig {
     pub mcp_server_uri: Option<String>,
 }
 
+impl AgentConfig {
+    /// Validate the agent configuration for type safety and security
+    pub fn validate(&self) -> Result<(), WorkflowError> {
+        self.validate_system_prompt()?;
+        self.validate_model_name()?;
+        self.validate_mcp_server_uri()?;
+        Ok(())
+    }
+    
+    fn validate_system_prompt(&self) -> Result<(), WorkflowError> {
+        const MAX_PROMPT_LENGTH: usize = 100_000; // 100KB max prompt
+        if self.system_prompt.is_empty() {
+            return Err(WorkflowError::configuration_error(
+                "System prompt cannot be empty",
+                "system_prompt",
+                "agent_configuration",
+                "non-empty string",
+                Some("empty_string".to_string()),
+            ));
+        }
+        
+        if self.system_prompt.len() > MAX_PROMPT_LENGTH {
+            return Err(WorkflowError::configuration_error(
+                format!("System prompt exceeds maximum length of {} characters", MAX_PROMPT_LENGTH),
+                "system_prompt",
+                "agent_configuration", 
+                format!("length <= {} characters", MAX_PROMPT_LENGTH),
+                Some(format!("length_{}", self.system_prompt.len())),
+            ));
+        }
+        
+        // Check for potential injection in system prompt
+        if self.contains_potentially_malicious_content(&self.system_prompt) {
+            return Err(WorkflowError::configuration_error(
+                "System prompt contains potentially malicious content",
+                "system_prompt",
+                "agent_configuration",
+                "safe content without scripts or injection attempts",
+                Some("malicious_content_detected".to_string()),
+            ));
+        }
+        
+        Ok(())
+    }
+    
+    fn validate_model_name(&self) -> Result<(), WorkflowError> {
+        const MAX_MODEL_NAME_LENGTH: usize = 200; // 200 chars max model name
+        
+        if self.model_name.is_empty() {
+            return Err(WorkflowError::configuration_error(
+                "Model name cannot be empty",
+                "model_name",
+                "agent_configuration",
+                "non-empty string",
+                Some("empty_string".to_string()),
+            ));
+        }
+        
+        if self.model_name.len() > MAX_MODEL_NAME_LENGTH {
+            return Err(WorkflowError::configuration_error(
+                format!("Model name exceeds maximum length of {} characters", MAX_MODEL_NAME_LENGTH),
+                "model_name",
+                "agent_configuration",
+                format!("length <= {} characters", MAX_MODEL_NAME_LENGTH),
+                Some(format!("length_{}", self.model_name.len())),
+            ));
+        }
+        
+        // Validate model name contains only safe characters
+        if !SecurityValidator::validate_identifier_chars(&self.model_name) {
+            return Err(WorkflowError::configuration_error(
+                "Model name contains invalid characters",
+                "model_name",
+                "agent_configuration",
+                "alphanumeric characters, hyphens, underscores, and periods only",
+                Some(self.model_name.clone()),
+            ));
+        }
+        
+        Ok(())
+    }
+    
+    fn validate_mcp_server_uri(&self) -> Result<(), WorkflowError> {
+        const MAX_URI_LENGTH: usize = 2_048; // 2KB max URI length
+        
+        if let Some(ref uri) = self.mcp_server_uri {
+            if let Err(error_msg) = SecurityValidator::validate_uri(uri, MAX_URI_LENGTH) {
+                return Err(WorkflowError::configuration_error(
+                    error_msg,
+                    "mcp_server_uri",
+                    "agent_configuration",
+                    "valid and safe URI",
+                    Some(uri.clone()),
+                ));
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Check for potentially malicious content in strings
+    fn contains_potentially_malicious_content(&self, content: &str) -> bool {
+        SecurityValidator::contains_malicious_patterns(content)
+    }
+}
+
+/// Security validation helper for consistent security checks across the system
+struct SecurityValidator;
+
+impl SecurityValidator {
+    /// Check for potentially malicious content patterns
+    pub fn contains_malicious_patterns(content: &str) -> bool {
+        let content_lower = content.to_lowercase();
+        
+        // Script injection patterns
+        const SCRIPT_PATTERNS: &[&str] = &[
+            "<script", "javascript:", "vbscript:",
+            "onload=", "onerror=", "onclick=",
+        ];
+        
+        // SQL injection patterns  
+        const SQL_PATTERNS: &[&str] = &[
+            "'; drop table", "; drop table", "union select",
+        ];
+        
+        // System command patterns
+        const COMMAND_PATTERNS: &[&str] = &[
+            "rm -rf", "del /", "format c:",
+            "eval(", "exec(", "system(",
+            "__import__", "subprocess",
+        ];
+        
+        // Path traversal patterns
+        const PATH_PATTERNS: &[&str] = &[
+            "../../", "../", "..\\",
+        ];
+        
+        // Template injection patterns
+        const TEMPLATE_PATTERNS: &[&str] = &[
+            "{{", "}}", "${", "<%", "%>",
+        ];
+        
+        let all_patterns = [
+            SCRIPT_PATTERNS,
+            SQL_PATTERNS, 
+            COMMAND_PATTERNS,
+            PATH_PATTERNS,
+            TEMPLATE_PATTERNS,
+        ].concat();
+
+        all_patterns.iter().any(|&pattern| content_lower.contains(pattern))
+    }
+    
+    /// Validate URI format and security
+    pub fn validate_uri(uri: &str, max_length: usize) -> Result<(), String> {
+        if uri.len() > max_length {
+            return Err(format!("URI exceeds maximum length of {} characters", max_length));
+        }
+        
+        // Check allowed schemes
+        const ALLOWED_SCHEMES: &[&str] = &["http://", "https://", "ws://", "wss://"];
+        if !ALLOWED_SCHEMES.iter().any(|&scheme| uri.starts_with(scheme)) {
+            return Err("URI must use http, https, ws, or wss protocol".to_string());
+        }
+        
+        // Check for dangerous schemes
+        const DANGEROUS_SCHEMES: &[&str] = &["file://", "ftp://", "javascript:", "data:", "ldap://"];
+        for scheme in DANGEROUS_SCHEMES {
+            if uri.to_lowercase().starts_with(scheme) {
+                return Err(format!("Dangerous URI scheme '{}' is not allowed", scheme));
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Validate string contains only safe characters for identifiers
+    pub fn validate_identifier_chars(value: &str) -> bool {
+        value.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
+    }
+}
+
 /// Base trait for agent nodes that process tasks using AI models
 #[async_trait]
 pub trait AgentNode: Node {
@@ -50,12 +232,15 @@ pub struct BaseAgentNode {
 }
 
 impl BaseAgentNode {
-    pub fn new(config: AgentConfig) -> Self {
-        Self {
+    pub fn new(config: AgentConfig) -> Result<Self, WorkflowError> {
+        // Validate configuration before creating the node
+        config.validate()?;
+        
+        Ok(Self {
             config,
             client: Arc::new(reqwest::Client::new()),
             // mcp_client: None,
-        }
+        })
     }
 
     // MCP integration stub implementations - circular dependency prevents full implementation

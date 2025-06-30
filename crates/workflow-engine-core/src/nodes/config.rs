@@ -228,7 +228,8 @@ impl NodeConfig {
         const MAX_METADATA_SIZE: usize = 1_000_000; // 1MB total metadata size limit
         const RESERVED_KEYS: &[&str] = &[
             "__system__", "_internal_", "NODE_TYPE", "_secret_", "__admin__",
-            "password", "token", "key", "credential"
+            "password", "token", "key", "credential", "__proto__", "constructor",
+            "prototype", "__constructor__", "__defineGetter__", "__defineSetter__"
         ];
 
         // Check total metadata size

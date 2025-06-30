@@ -46,7 +46,7 @@ impl TemplateAgentNode {
         template_manager: Arc<TemplateManager>,
     ) -> Result<Self, WorkflowError> {
         let base_config = config.agent_config.clone();
-        let base_node = BaseAgentNode::new(base_config);
+        let base_node = BaseAgentNode::new(base_config)?; // Handle the Result
         
         Ok(Self {
             base_node,
@@ -217,7 +217,7 @@ impl AgentNode for TemplateAgentNode {
         modified_config.system_prompt = system_prompt;
         
         // Create a temporary base node with the modified config
-        let temp_node = BaseAgentNode::new(modified_config);
+        let temp_node = BaseAgentNode::new(modified_config)?; // Handle the Result
         
         // Process with the base node
         let mut result_context = temp_node.process_with_ai(context).await?;

@@ -15,11 +15,11 @@ pub struct AnthropicAgentNode {
 }
 
 impl AnthropicAgentNode {
-    pub fn new(config: AgentConfig) -> Self {
-        // Note: Unlike OpenAI, we don't return Result because BaseAgentNode::new doesn't fail
-        Self {
-            base_node: BaseAgentNode::new(config),
-        }
+    pub fn new(config: AgentConfig) -> Result<Self, WorkflowError> {
+        // BaseAgentNode::new now returns Result for validation
+        Ok(Self {
+            base_node: BaseAgentNode::new(config)?,
+        })
     }
 
     pub fn with_mcp_client(mut self, mcp_client: Box<dyn std::any::Any + Send + Sync>) -> Self {
@@ -76,7 +76,7 @@ mod tests {
             mcp_server_uri: None,
         };
 
-        let agent = AnthropicAgentNode::new(config);
+        let agent = AnthropicAgentNode::new(config).unwrap();
         assert_eq!(agent.get_agent_config().model_provider, ModelProvider::Anthropic);
     }
 }

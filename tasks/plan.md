@@ -117,7 +117,7 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - [x] 3a. JWT token validation edge cases ✅
 - [x] 3b. Workflow configuration validation ✅  
 - [x] 3c. MCP protocol message validation ✅
-- [ ] 3d. Node parameter type safety
+- [x] 3d. Node parameter type safety ✅
 - [ ] 3e. GraphQL query validation
 ```
 
@@ -141,6 +141,13 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - **REFACTOR**: ✅ Applied "Tidy First" - extracted validation logic into dedicated module `workflow_engine_core::mcp::validation` with proper error types, configurable limits, and reusable RequestTracker
 
 **Impact**: Added comprehensive MCP protocol security layer preventing message-based attacks. Protects against: oversized messages (DoS), deeply nested JSON (stack overflow), malicious request IDs (injection attacks), invalid Unicode (spoofing attacks), excessive tool arguments (resource exhaustion), malformed JSON-RPC messages, invalid protocol versions. Created reusable validation module with 15+ tests covering all attack vectors that could compromise MCP communication security.
+
+**TDD CYCLE COMPLETE** for 3d:
+- **RED**: ✅ Created failing tests for node parameter type safety issues (10 comprehensive test scenarios covering agent config validation, numeric bounds, deserialization safety, template safety, metadata validation, overflow protection, type coercion, serialization injection, resource exhaustion, and concurrent access)
+- **GREEN**: ✅ Implemented comprehensive parameter validation in AgentConfig with validate() method, added prototype pollution protection to NodeConfig reserved keys, modified BaseAgentNode::new() to return Result type for proper error handling
+- **REFACTOR**: ✅ Applied "Tidy First" - extracted SecurityValidator struct for reusable security checks, split AgentConfig validation into separate methods, organized security patterns into categorized constants for maintainability
+
+**Impact**: Added robust node parameter type safety preventing runtime panics and security vulnerabilities. Protects against: empty/invalid configuration values, length limit violations, malicious content injection (SQL, XSS, script injection), prototype pollution attacks, resource exhaustion through excessive parameters, unsafe type coercion, deserialization attacks, and concurrent access issues. Created comprehensive validation framework with SecurityValidator for reusable security patterns, proper error handling throughout BaseAgentNode creation, and 10+ tests covering all parameter safety scenarios that could cause type errors or security breaches.
 
 ### Phase 2: Documentation and API Polish (Task 4.3-4.4)
 

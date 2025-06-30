@@ -24,7 +24,7 @@ impl OpenAIAgentNode {
         }
         
         Ok(Self {
-            base_node: BaseAgentNode::new(config),
+            base_node: BaseAgentNode::new(config)?,
         })
     }
 
