@@ -1,4 +1,4 @@
-# AI Workflow Engine - Production-Ready AI Workflow Orchestration Platform
+# AI Workflow Engine - Federation-UI Branch (Production-Ready)
 
 [![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,7 +8,28 @@
 [![Tests](https://img.shields.io/badge/tests-174+_passing-brightgreen.svg)](https://github.com/bredmond1019/workflow-engine-rs/actions)
 [![Security](https://img.shields.io/badge/security-hardened-green.svg)](docs/SECURITY.md)
 
+> **🔥 You are viewing the `federation-ui` branch** - the advanced, production-ready version with GraphQL Federation, microservices, React frontend, and enterprise features. 
+> 
+> 👉 **Looking for the simpler version?** Switch to the [`main` branch](../../tree/main) for a streamlined, monolithic implementation.
+
 A cutting-edge AI workflow orchestration platform built in Rust, featuring **GraphQL Federation**, event sourcing, microservices architecture, React frontend, and Model Context Protocol (MCP) integration. Designed for production environments with enterprise-grade scalability, observability, and reliability.
+
+## 🌟 Branch Comparison
+
+| Feature | [`main` Branch](../../tree/main) | `federation-ui` Branch (This) |
+|---------|-------------|---------------------|
+| **Architecture** | Monolithic | Microservices + GraphQL Federation |
+| **Frontend** | Basic/None | React with 174+ TDD tests |
+| **Security** | Basic | Enterprise-grade (70+ vulnerabilities prevented) |
+| **Testing** | Unit tests | Comprehensive TDD methodology |
+| **Deployment** | Simple Docker | Production-ready with monitoring |
+| **Documentation** | Getting started | Comprehensive API docs + examples |
+| **Use Case** | Learning, prototypes | Production, enterprise |
+
+👨‍💻 **Choose `main` for**: Learning Rust workflows, simple prototypes, getting started quickly  
+🏢 **Choose `federation-ui` for**: Production deployments, enterprise features, scalable architecture
+
+📋 **See [FEDERATION_BRANCH_FEATURES.md](FEDERATION_BRANCH_FEATURES.md) for complete feature comparison**
 
 ## 🎉 Project Status
 
