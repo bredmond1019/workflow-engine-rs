@@ -4,7 +4,14 @@ This file provides guidance for Claude Code when working with the workflow-engin
 
 ## Crate Overview
 
-The workflow-engine-api crate is the main HTTP API server for the AI workflow orchestration system. It provides a production-ready REST API with authentication, monitoring, and workflow execution capabilities built on top of Actix-web.
+The workflow-engine-api crate is the main HTTP API server for the AI workflow orchestration system. It provides a production-ready REST and GraphQL API with authentication, monitoring, and workflow execution capabilities built on top of Actix-web.
+
+**Recent Improvements (v0.6.0)**:
+- **GraphQL Support**: Added GraphQL API alongside REST endpoints
+- **Enhanced Security**: TDD-driven authentication and authorization improvements
+- **Event Sourcing**: Complete CQRS implementation with snapshots and replay
+- **Error Handling**: Fixed 42 API-related compilation errors
+- **Test Coverage**: Comprehensive integration tests for all endpoints
 
 ### Purpose and Role
 
@@ -18,9 +25,10 @@ The workflow-engine-api crate is the main HTTP API server for the AI workflow or
 
 ### 1. API Module (`src/api/`)
 - **Core Endpoints**: Health checks, metrics, authentication, and workflow management
+- **GraphQL API** (`graphql/`): Full GraphQL schema with query and mutation support
 - **Middleware**: Authentication, rate limiting, CORS, and correlation ID tracking
 - **OpenAPI**: Auto-generated API documentation with Swagger UI
-- **Routes**: Modular route configuration for different API domains
+- **Routes**: Modular route configuration for REST and GraphQL endpoints
 
 ### 2. Bootstrap Module (`src/bootstrap/`)
 - **Service Container**: Dependency injection and service resolution
@@ -29,9 +37,14 @@ The workflow-engine-api crate is the main HTTP API server for the AI workflow or
 - **Lifecycle Management**: Service startup, shutdown, and health monitoring
 
 ### 3. Database Module (`src/db/`)
-- **Connection Pooling**: Efficient database connection management
-- **Event Sourcing**: Complete event-driven architecture implementation
-- **Multi-tenancy**: Tenant isolation and data partitioning
+- **Connection Pooling**: Efficient database connection management with r2d2
+- **Event Sourcing** (`events/`): Complete CQRS implementation with:
+  - Event store with versioning and migrations
+  - Snapshot management and triggers
+  - Event replay and projection rebuilding
+  - Cross-service event routing
+  - Dead letter queue for failed events
+- **Multi-tenancy** (`tenant.rs`): Schema, row-level, and hybrid isolation
 - **Repository Pattern**: Clean data access abstractions
 
 ### 4. Workflows Module (`src/workflows/`)
@@ -75,14 +88,16 @@ The workflow-engine-api crate is the main HTTP API server for the AI workflow or
 
 ## Main APIs and Endpoints
 
-### Authentication Endpoints
+### REST API Endpoints
+
+#### Authentication
 ```
 POST /api/v1/auth/login - User authentication
 POST /api/v1/auth/refresh - Token refresh
 POST /api/v1/auth/logout - User logout
 ```
 
-### Workflow Management
+#### Workflow Management
 ```
 POST /api/v1/workflows/trigger - Trigger workflow execution
 GET /api/v1/workflows/status/{id} - Get workflow status
@@ -90,12 +105,42 @@ GET /api/v1/workflows/results/{id} - Get workflow results
 GET /api/v1/workflows/templates - List available templates
 ```
 
-### Health & Monitoring
+#### Health & Monitoring
 ```
 GET /health - Basic health check
 GET /health/detailed - Detailed system health
 GET /metrics - Prometheus metrics
 GET /api/v1/uptime - System uptime information
+```
+
+### GraphQL API
+
+#### Endpoint
+```
+POST /graphql - GraphQL queries and mutations
+GET /graphql/playground - Interactive GraphQL IDE
+```
+
+#### Schema Examples
+```graphql
+# Query workflow status
+query GetWorkflow($id: ID!) {
+  workflow(id: $id) {
+    id
+    status
+    createdAt
+    updatedAt
+    results
+  }
+}
+
+# Trigger workflow
+mutation TriggerWorkflow($templateId: String!, $input: JSON!) {
+  triggerWorkflow(templateId: $templateId, input: $input) {
+    id
+    status
+  }
+}
 ```
 
 ### Service Discovery
@@ -296,6 +341,67 @@ JAEGER_ENDPOINT=http://jaeger:14268/api/traces
 NOTION_MCP_URL=http://notion-mcp:8002
 SLACK_MCP_URL=http://slack-mcp:8003
 HELPSCOUT_MCP_URL=http://helpscout-mcp:8001
+```
+
+## Event-Driven Architecture (New in v0.6.0)
+
+### Event Sourcing Implementation
+The API now includes a complete CQRS event sourcing system:
+
+```rust
+// Event store usage
+use crate::db::events::{EventStore, Event, EventType};
+
+// Store an event
+let event = Event {
+    id: Uuid::new_v4(),
+    aggregate_id: workflow_id,
+    event_type: EventType::WorkflowStarted,
+    event_data: json!({"template": "customer_support"}),
+    metadata: EventMetadata::new(),
+};
+
+event_store.append_event(&event).await?;
+
+// Query events
+let events = event_store.get_events_for_aggregate(workflow_id).await?;
+
+// Replay events to rebuild state
+let state = event_store.replay_events(workflow_id).await?;
+```
+
+### Snapshot Management
+```rust
+// Automatic snapshots after N events
+event_store.configure_snapshot_trigger(100);
+
+// Manual snapshot
+event_store.create_snapshot(aggregate_id).await?;
+
+// Load from snapshot + events
+let state = event_store.load_aggregate(aggregate_id).await?;
+```
+
+### Cross-Service Event Routing
+```rust
+// Route events to other services
+event_store.configure_routing(vec![
+    RoutingRule {
+        event_pattern: "Workflow.*",
+        target_service: "analytics-service",
+        transform: Some(transform_fn),
+    }
+]);
+```
+
+### Event Projections
+```rust
+// Define projections
+let projection = WorkflowStatusProjection::new();
+event_store.register_projection(projection);
+
+// Rebuild projections
+event_store.rebuild_all_projections().await?;
 ```
 
 ## Debugging Tips
