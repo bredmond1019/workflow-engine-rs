@@ -1,111 +1,146 @@
-# GraphQL Gateway - Federation Implementation
+# workflow-engine-gateway
 
-This is a GraphQL Federation gateway that composes multiple GraphQL services into a unified API, implementing Apollo Federation v2 specification.
+GraphQL Federation gateway for composing distributed GraphQL services into a unified API.
+
+[![Crates.io](https://img.shields.io/crates/v/workflow-engine-gateway.svg)](https://crates.io/crates/workflow-engine-gateway)
+[![Documentation](https://docs.rs/workflow-engine-gateway/badge.svg)](https://docs.rs/workflow-engine-gateway)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 ## Features
 
-- ✅ Apollo Federation v2 support
-- ✅ Schema composition from multiple subgraphs
-- ✅ Entity resolution across services
-- ✅ Query planning and optimization
-- ✅ `_service` and `_entities` query support
-- ✅ GraphQL Playground UI
-- ✅ Example queries and mutations
-- ✅ Subscription support (basic)
+- **Apollo Federation v2**: Full specification compliance with entity resolution
+- **Schema Composition**: Automatic merging of subgraph schemas
+- **Query Planning**: Intelligent query distribution and optimization
+- **Performance**: Query caching, batching, and parallel execution
+- **Health Monitoring**: Subgraph health checks with circuit breakers
+- **Security**: Authentication propagation and query complexity limits
+- **Developer Experience**: GraphQL Playground and introspection
+- **Production Ready**: Monitoring, tracing, and error handling
 
 ## Quick Start
 
-### 1. Start the Gateway
+Add this to your `Cargo.toml`:
 
-```bash
-# From the worktree-graphql directory
-cargo run --bin graphql-gateway
+```toml
+[dependencies]
+workflow-engine-gateway = "0.6.0"
+tokio = { version = "1.0", features = ["full"] }
 ```
 
-The gateway will start at `http://localhost:4000/graphql`
+Create a gateway server:
 
-### 2. Start the Workflow API with GraphQL
+```rust
+use workflow_engine_gateway::{Gateway, SubgraphConfig};
 
-In another terminal:
-```bash
-# Make sure the workflow API has GraphQL enabled
-cargo run --bin workflow-engine
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Configure subgraphs
+    let subgraphs = vec![
+        SubgraphConfig {
+            name: "workflow".to_string(),
+            url: "http://localhost:8080/graphql".to_string(),
+            schema_url: None,
+        },
+        SubgraphConfig {
+            name: "content".to_string(), 
+            url: "http://localhost:8082/graphql".to_string(),
+            schema_url: None,
+        },
+    ];
+    
+    // Create and start gateway
+    let gateway = Gateway::builder()
+        .port(4000)
+        .subgraphs(subgraphs)
+        .enable_playground(true)
+        .build()?;
+        
+    gateway.serve().await?;
+    Ok(())
+}
 ```
 
-The API should be running at `http://localhost:8080` with GraphQL at `/api/v1/graphql`
+## Usage Examples
 
-### 3. Access GraphQL Playground
-
-Open your browser to: `http://localhost:4000/graphql`
-
-### 4. Try Example Queries
+### Basic Queries
 
 ```graphql
-# Health check
-{
-  health
-}
-
-# Federation service query
-{
-  _service {
-    sdl
-  }
-}
-
-# Entity resolution
-query ResolveEntities($representations: [_Any!]!) {
-  _entities(representations: $representations) {
-    ... on Workflow {
-      id
-      name
-      status
-    }
-  }
-}
-
-# Get workflow by ID (federated)
+# Query across services with entity resolution
 {
   workflow(id: "123") {
     id
     name
     status
-  }
-}
-
-# List workflows
-{
-  workflows(limit: 5) {
-    items {
-      id
+    createdBy {      # Resolved from User service
+      email
       name
-      status
-      createdAt
     }
-    totalCount
+    content {        # Resolved from Content service
+      documents {
+        title
+        url
+      }
+    }
   }
 }
 
-# Create workflow
-mutation {
-  createWorkflow(name: "My Workflow", description: "Test workflow") {
-    id
-    name
-    status
+# Federation introspection
+{
+  _service {
+    sdl
   }
-}
-
-# Subscribe to workflow changes
-subscription {
-  workflowStatusChanged(workflowId: "123")
 }
 ```
 
-### 5. Test Federation
+### Advanced Configuration
 
-```bash
-# Run the federation test
-cargo run --example test_federation
+```rust
+use workflow_engine_gateway::{Gateway, GatewayConfig, SecurityConfig};
+
+let config = GatewayConfig {
+    port: 4000,
+    host: "0.0.0.0".to_string(),
+    playground: true,
+    introspection: true,
+    query_cache_size: 1000,
+    max_query_depth: 10,
+    enable_batching: true,
+};
+
+let security = SecurityConfig {
+    enable_auth: true,
+    auth_header: "Authorization".to_string(),
+    max_query_complexity: 1000,
+    rate_limit_per_minute: 60,
+};
+
+let gateway = Gateway::builder()
+    .config(config)
+    .security(security)
+    .health_check_interval(Duration::from_secs(30))
+    .build()?;
+
+```
+
+### Custom Directives
+
+```rust
+use workflow_engine_gateway::DirectiveHandler;
+
+struct RateLimitDirective;
+
+impl DirectiveHandler for RateLimitDirective {
+    fn name(&self) -> &str {
+        "rateLimit"
+    }
+    
+    async fn process(&self, ctx: &DirectiveContext, next: Next) -> Result<Value> {
+        // Apply rate limiting logic
+        next.run(ctx).await
+    }
+}
+
+gateway.register_directive(Box::new(RateLimitDirective));
 ```
 
 ## Architecture
@@ -117,87 +152,143 @@ cargo run --example test_federation
        │ GraphQL Query
        ▼
 ┌─────────────────────────┐
-│   GraphQL Gateway       │ (Port 4000)
-│  - Query planning       │
-│  - Schema composition   │
-│  - Request routing      │
+│   GraphQL Gateway       │
+│  • Query planning       │
+│  • Schema composition   │
+│  • Entity resolution    │
+│  • Response caching     │
 └─────────┬───────────────┘
-          │ Subgraph Query
-          ▼
-┌─────────────────────────┐
-│  Workflow API Subgraph  │ (Port 8080)
-│  - Workflow queries     │
-│  - Workflow mutations   │
-└─────────────────────────┘
+          │ Parallel execution
+    ┌─────┴─────┬─────────┐
+    ▼           ▼         ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│Workflow │ │ Content │ │Knowledge│
+│Subgraph │ │Subgraph │ │Subgraph │
+└─────────┘ └─────────┘ └─────────┘
 ```
 
-## Next Steps for Production
+## Federation Features
 
-1. **Schema Federation**
-   - Add `@key` directives for entity resolution
-   - Implement `_entities` and `_service` queries
-   - Add schema composition at startup
+### Entity Resolution
+```graphql
+# Define entities with @key directive
+type Workflow @key(fields: "id") {
+  id: ID!
+  name: String!
+  createdBy: User! @external
+}
 
-2. **Enhanced Subgraphs**
-   - Add Content Processing subgraph
-   - Add Knowledge Graph subgraph
-   - Add Real-time Communication subgraph
+type User @key(fields: "id") {
+  id: ID!
+  workflows: [Workflow!]!
+}
+```
 
-3. **Production Features**
-   - Authentication/Authorization
-   - Query complexity analysis
-   - Rate limiting
-   - Caching with DataLoader
-   - Distributed tracing
-   - Error handling
+### Schema Extensions
+```graphql
+# Extend types across services
+extend type Workflow {
+  analytics: WorkflowAnalytics!
+}
 
-4. **Performance**
-   - Query batching
-   - Response caching
-   - Connection pooling
-   - Parallel subgraph execution
+extend type User {
+  preferences: UserPreferences!
+}
+```
 
-## Example: Running the Demo
+## Feature Flags
+
+- `default = ["playground", "introspection"]` - Development features
+- `playground` - GraphQL Playground UI
+- `introspection` - Schema introspection
+- `auth` - Authentication support
+- `tracing` - Distributed tracing
+- `cache` - Query result caching
+- `full` - All features enabled
+
+## Performance
+
+### Query Optimization
+- Automatic query planning for optimal execution
+- Parallel subgraph queries when possible
+- Intelligent result caching
+- Request batching to reduce round trips
+
+### Monitoring
+```bash
+# Metrics endpoint
+GET /metrics
+
+# Health check
+GET /health
+
+# Detailed health with subgraph status
+GET /health/detailed
+```
+
+## Testing
 
 ```bash
-# Terminal 1: Start the gateway
-cargo run --bin graphql-gateway
+# Unit tests
+cargo test -p workflow-engine-gateway
 
-# Terminal 2: Run the example client
-cargo run --example federated_query
+# Integration tests
+cargo test -p workflow-engine-gateway -- --ignored
 
-# Or use curl
-curl -X POST http://localhost:4000/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query": "{ health }"}'
+# Federation validation
+cargo run --example validate_federation
+
+# Load testing
+cargo run --example load_test_gateway
 ```
 
 ## Configuration
 
-Subgraphs are configured in `src/main.rs`:
-
-```rust
-let subgraphs = vec![
-    SubgraphConfig {
-        name: "workflow".to_string(),
-        url: "http://localhost:8080/graphql".to_string(),
-        schema_url: None,
-    },
-    // Add more subgraphs here
-];
-```
-
-## Development
-
+### Environment Variables
 ```bash
-# Run tests
-cargo test
+GATEWAY_PORT=4000
+GATEWAY_HOST=0.0.0.0
+ENABLE_PLAYGROUND=true
+ENABLE_INTROSPECTION=false
 
-# Check code
-cargo clippy
+# Subgraph URLs
+WORKFLOW_SUBGRAPH_URL=http://workflow-api:8080/graphql
+CONTENT_SUBGRAPH_URL=http://content-api:8082/graphql
 
-# Format code
-cargo fmt
+# Performance
+QUERY_CACHE_SIZE=1000
+MAX_QUERY_DEPTH=10
+QUERY_TIMEOUT_MS=30000
+
+# Security
+JWT_PUBLIC_KEY=<public-key>
+MAX_QUERY_COMPLEXITY=1000
 ```
 
-This is a POC/MVP implementation. For production use, implement proper federation with Apollo Federation spec or similar.
+## Documentation
+
+For comprehensive documentation, visit [docs.rs/workflow-engine-gateway](https://docs.rs/workflow-engine-gateway).
+
+## Examples
+
+See the [examples directory](examples/) for:
+- Federation validation
+- Performance testing
+- Custom directive implementation
+- Subgraph integration patterns
+
+## Dependencies
+
+This crate depends on:
+- `workflow-engine-core` - Core types
+- `juniper` - GraphQL implementation
+- `tokio` - Async runtime
+- `reqwest` - HTTP client for subgraphs
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
+
+## License
+
+Licensed under the MIT License. See [LICENSE](../../LICENSE) for details.
