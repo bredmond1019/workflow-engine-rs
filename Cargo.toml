@@ -67,6 +67,10 @@ tokio-util = { version = "0.7", features = ["codec", "io"] }
 futures-util = "0.3.28"
 bytes = "1.6"
 
+# GraphQL features
+async-graphql = { version = "7.0", features = ["apollo_tracing", "apollo_persisted_queries"] }
+async-graphql-axum = "7.0"
+
 # Utility libraries
 once_cell = "1.19.0"
 dotenvy = "0.15.1"

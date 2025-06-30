@@ -5575,6 +5575,7 @@ dependencies = [
  "actix",
  "actix-web",
  "actix-web-actors",
+ "async-graphql",
  "async-stream",
  "async-trait",
  "aws-config",

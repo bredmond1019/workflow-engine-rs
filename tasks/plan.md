@@ -118,7 +118,7 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - [x] 3b. Workflow configuration validation ✅  
 - [x] 3c. MCP protocol message validation ✅
 - [x] 3d. Node parameter type safety ✅
-- [ ] 3e. GraphQL query validation
+- [x] 3e. GraphQL query validation ✅
 ```
 
 **TDD CYCLE COMPLETE** for 3a:
@@ -148,6 +148,13 @@ From tasks/completed/phase-7/tasks-list.md, **Tasks 1-3 are complete** (compilat
 - **REFACTOR**: ✅ Applied "Tidy First" - extracted SecurityValidator struct for reusable security checks, split AgentConfig validation into separate methods, organized security patterns into categorized constants for maintainability
 
 **Impact**: Added robust node parameter type safety preventing runtime panics and security vulnerabilities. Protects against: empty/invalid configuration values, length limit violations, malicious content injection (SQL, XSS, script injection), prototype pollution attacks, resource exhaustion through excessive parameters, unsafe type coercion, deserialization attacks, and concurrent access issues. Created comprehensive validation framework with SecurityValidator for reusable security patterns, proper error handling throughout BaseAgentNode creation, and 10+ tests covering all parameter safety scenarios that could cause type errors or security breaches.
+
+**TDD CYCLE COMPLETE** for 3e:
+- **RED**: ✅ Created failing tests for GraphQL query validation covering depth limits, complexity analysis, introspection security, mutation safety, subscription security, syntax validation, resource exhaustion, and malformed queries (5 comprehensive test scenarios)
+- **GREEN**: ✅ Implemented comprehensive GraphQL validation system with QueryValidator, ValidationConfig, depth calculation, complexity analysis, introspection policy enforcement, mutation/subscription security checks, and resource limit validation
+- **REFACTOR**: ✅ Applied "Tidy First" - organized validation logic into separate modules (validation.rs, security.rs, limits.rs), created reusable policy enforcers (IntrospectionPolicy, MutationPolicy, SubscriptionPolicy), and separated concerns for depth, complexity, and security analysis
+
+**Impact**: Added comprehensive GraphQL query validation and security layer preventing various attack vectors. Protects against: deeply nested queries (DoS), excessive query complexity (resource exhaustion), introspection attacks (information disclosure), dangerous mutations (bulk operations, SQL injection), resource-intensive subscriptions (DoS), malformed syntax (parsing errors), excessive aliases/selections (DoS), and variable complexity attacks. Created complete validation framework with configurable policies, security threat detection, memory usage estimation, and proper error handling with 5+ tests covering all GraphQL security scenarios that could compromise the federation gateway.
 
 ### Phase 2: Documentation and API Polish (Task 4.3-4.4)
 

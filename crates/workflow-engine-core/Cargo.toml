@@ -46,6 +46,7 @@ log = { workspace = true }
 reqwest = { workspace = true }
 futures-util = { workspace = true }
 bytes = { workspace = true }
+async-graphql = { workspace = true }
 
 # Workspace dependencies
 # workflow-engine-mcp = { path = "../workflow-engine-mcp" }  # Removed to avoid circular dependency

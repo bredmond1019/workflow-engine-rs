@@ -896,7 +896,7 @@ mod tests {
             mcp_server_uri: None,
         };
 
-        let agent = BaseAgentNode::new(config);
+        let agent = BaseAgentNode::new(config).expect("Failed to create agent");
         assert_eq!(
             agent.get_agent_config().model_provider,
             ModelProvider::OpenAI

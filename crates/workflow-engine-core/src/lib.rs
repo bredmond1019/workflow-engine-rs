@@ -57,6 +57,7 @@ pub mod auth;
 pub mod models;
 pub mod config;
 pub mod mcp;
+pub mod graphql;
 #[cfg(feature = "streaming")]
 #[cfg_attr(docsrs, doc(cfg(feature = "streaming")))]
 pub mod streaming;
