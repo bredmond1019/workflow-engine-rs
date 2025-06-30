@@ -1,10 +1,10 @@
 # CLAUDE.md - Content Processing Service
 
-This file provides guidance to Claude Code (claude.ai/code) when working with the content processing service, a high-performance microservice for intelligent document analysis and content extraction.
+This file provides guidance to Claude Code (claude.ai/code) when working with the content processing service, a high-performance microservice for intelligent document analysis and content extraction that serves as a GraphQL Federation subgraph.
 
 ## Service Overview
 
-The Content Processing Service is a Rust-based microservice that provides comprehensive document analysis capabilities with WASM plugin support. It's designed to process various content formats and extract meaningful insights using NLP and AI techniques.
+The Content Processing Service is a Rust-based microservice that provides comprehensive document analysis capabilities with WASM plugin support. It's designed to process various content formats and extract meaningful insights using NLP and AI techniques. The service operates as part of the GraphQL Federation architecture, exposing its capabilities through both REST and GraphQL APIs.
 
 ### Key Capabilities
 
@@ -14,6 +14,8 @@ The Content Processing Service is a Rust-based microservice that provides compre
 - **Vector Embeddings**: Semantic search support with pgvector
 - **Batch Processing**: Concurrent processing with job queuing
 - **SQLx Database**: Type-safe database operations with PostgreSQL
+- **GraphQL Federation**: Subgraph implementation with entity resolution and schema composition
+- **Security Hardening**: JWT authentication, input validation, rate limiting, and sandboxed plugin execution
 
 ## Architecture Components
 
@@ -122,7 +124,9 @@ sqlx migrate run
 
 ## API Endpoints
 
-### POST /analyze
+### REST API
+
+#### POST /analyze
 Main content analysis endpoint:
 ```json
 {
@@ -137,20 +141,75 @@ Main content analysis endpoint:
 }
 ```
 
-### GET /health
+#### GET /health
 Service health check with subsystem status
 
-### GET /metrics
+#### GET /metrics
 Prometheus metrics for monitoring
+
+### GraphQL API (Port 8082/graphql)
+
+The service implements a GraphQL Federation subgraph with the following capabilities:
+
+#### Federation Schema
+- **Entities**: `ContentMetadata`, `ProcessingJob`, extended `User` and `Workflow` types
+- **Key Directives**: Uses `@key` for entity identification
+- **Federation Resolvers**: Implements `_service` and `_entities` for query planning
+
+#### Key Queries
+```graphql
+# Get content by ID
+query GetContent($id: ID!) {
+  content(id: $id) {
+    id
+    title
+    qualityScore
+    difficultyLevel
+    concepts {
+      name
+      relevance
+    }
+  }
+}
+
+# Search content
+query SearchContent($query: String!) {
+  searchContent(query: $query) {
+    content {
+      id
+      title
+      summary
+    }
+    totalCount
+  }
+}
+```
+
+#### Key Mutations
+```graphql
+# Analyze content
+mutation AnalyzeContent($input: AnalyzeContentInput!) {
+  analyzeContent(input: $input) {
+    success
+    jobId
+    content {
+      id
+      qualityScore
+    }
+  }
+}
+```
 
 ## Integration with Main Workflow Engine
 
-This service integrates with the main workflow engine as an external processing node:
+This service integrates with the main workflow engine and GraphQL Federation gateway:
 
-1. **MCP Communication**: The workflow engine can invoke this service via MCP protocol
-2. **Direct HTTP**: REST API calls for synchronous processing
-3. **Async Jobs**: Queue-based processing for large documents
-4. **Shared Database**: Can optionally share PostgreSQL instance with proper schema isolation
+1. **GraphQL Federation**: Primary integration through Apollo Federation Gateway (port 4000)
+2. **MCP Communication**: The workflow engine can invoke this service via MCP protocol
+3. **Direct HTTP**: REST API calls for synchronous processing
+4. **Async Jobs**: Queue-based processing for large documents
+5. **Shared Database**: Can optionally share PostgreSQL instance with proper schema isolation
+6. **Entity Resolution**: Supports cross-service queries through federation `@key` directives
 
 ### Usage in Workflows
 
@@ -326,13 +385,71 @@ docker run -d \
 - Custom Grafana dashboards available
 - Alert on high error rates or latency
 
+## GraphQL Federation Integration
+
+### Subgraph Configuration
+The service operates as a federation subgraph with:
+- **Apollo Federation v2**: Full support for `@key`, `@extends`, `@external` directives
+- **Entity Resolution**: Implements `_entities` resolver for cross-service queries
+- **Schema SDL**: Exposed via `_service` query for gateway composition
+
+### Cross-Service Queries
+```graphql
+# Example: Get user with their processed content
+query UserWithContent($userId: ID!) {
+  user(id: $userId) {
+    id
+    name
+    processingJobs {
+      id
+      status
+      content {
+        title
+        qualityScore
+      }
+    }
+  }
+}
+```
+
+### Federation Testing
+```bash
+# Test federation integration
+cargo test graphql_federation_test -- --ignored
+
+# Verify subgraph schema
+curl http://localhost:8082/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ _service { sdl } }"}'
+```
+
 ## Security Considerations
 
+### Authentication & Authorization
+1. **JWT Validation**: All GraphQL requests require valid JWT tokens
+2. **Multi-tenant Isolation**: Content scoped by tenant ID from JWT claims
+3. **Rate Limiting**: Configurable per-tenant and global limits
+4. **CORS Protection**: Configurable allowed origins
+
+### Content Security
 1. **Input Validation**: All content is validated before processing
-2. **Plugin Sandboxing**: WASM plugins run in isolated environment
+2. **Plugin Sandboxing**: WASM plugins run in isolated environment with:
+   - Memory limits (default 10MB per plugin)
+   - CPU time limits
+   - No filesystem access
+   - No network access
 3. **Resource Limits**: Memory and CPU limits enforced
 4. **SQL Injection**: SQLx provides compile-time query verification
 5. **Content Size Limits**: Configurable max content size (default 10MB)
+
+### Security Headers
+```rust
+// Automatically applied to all responses
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Content-Security-Policy: default-src 'none'
+```
 
 ## Future Enhancements
 

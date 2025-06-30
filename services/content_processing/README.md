@@ -1,10 +1,10 @@
 # Content Processing Service
 
-A high-performance microservice for intelligent document analysis and content extraction, featuring a WASM plugin system for extensible processing capabilities.
+A high-performance microservice for intelligent document analysis and content extraction, featuring a WASM plugin system for extensible processing capabilities. This service operates as a GraphQL Federation subgraph, providing both REST and GraphQL APIs for seamless integration.
 
 ## Overview
 
-The Content Processing Service provides advanced document analysis capabilities including:
+The Content Processing Service provides advanced document analysis capabilities as part of the AI Workflow Orchestration platform's microservices architecture:
 
 - **Multi-format Support**: Process HTML, PDF, Markdown, Video, Code, Plain Text, JSON, and XML
 - **Intelligent Analysis**: Extract concepts, keywords, entities, and generate summaries
@@ -14,6 +14,8 @@ The Content Processing Service provides advanced document analysis capabilities 
 - **Vector Embeddings**: Generate and store semantic embeddings for similarity search
 - **Batch Processing**: Process multiple documents concurrently with job queuing
 - **Real-time Caching**: Redis-backed caching for improved performance
+- **GraphQL Federation**: Seamless integration with the federation gateway
+- **Enterprise Security**: JWT authentication, rate limiting, and sandboxed execution
 
 ## Quick Start
 
@@ -89,12 +91,15 @@ cargo run
 
 ## API Endpoints
 
-### POST /analyze
+### REST API
+
+#### POST /analyze
 Analyze content and extract insights.
 
 ```bash
 curl -X POST http://localhost:8082/analyze \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "content": "Your document content here",
     "content_type": "PlainText",
@@ -106,19 +111,71 @@ curl -X POST http://localhost:8082/analyze \
   }'
 ```
 
-### GET /health
+#### GET /health
 Check service health status.
 
 ```bash
 curl http://localhost:8082/health
 ```
 
-### GET /metrics
+#### GET /metrics
 Get Prometheus metrics.
 
 ```bash
 curl http://localhost:8082/metrics
 ```
+
+### GraphQL API
+
+The service exposes a GraphQL endpoint at `/graphql` that integrates with the Apollo Federation gateway.
+
+#### Example Queries
+
+```graphql
+# Analyze content
+mutation AnalyzeContent {
+  analyzeContent(input: {
+    content: "Your document content here"
+    contentType: PLAIN_TEXT
+    options: {
+      extractConcepts: true
+      generateSummary: true
+    }
+  }) {
+    success
+    jobId
+    content {
+      id
+      qualityScore
+      difficultyLevel
+      concepts {
+        name
+        relevance
+      }
+    }
+  }
+}
+
+# Search content
+query SearchContent {
+  searchContent(query: "machine learning", limit: 10) {
+    content {
+      id
+      title
+      summary
+      qualityScore
+    }
+    totalCount
+  }
+}
+```
+
+#### Federation Support
+
+The service implements Apollo Federation v2 with:
+- Entity resolution for `ContentMetadata` and `ProcessingJob`
+- Extension of `User` and `Workflow` types from other services
+- Full support for cross-service queries through the gateway
 
 ## Configuration
 
@@ -133,6 +190,9 @@ curl http://localhost:8082/metrics
 | `MAX_CONTENT_SIZE` | Maximum content size (bytes) | `10485760` (10MB) |
 | `WORKER_THREADS` | Number of worker threads | CPU count |
 | `PLUGIN_DIR` | WASM plugin directory | `/app/plugins` |
+| `JWT_SECRET` | JWT signing secret | Required |
+| `RATE_LIMIT` | Requests per minute | `100` |
+| `FEDERATION_ENABLED` | Enable GraphQL Federation | `true` |
 
 ## Development Setup
 
@@ -179,6 +239,44 @@ sqlx migrate run
 - **Latency**: p50 < 100ms, p99 < 500ms
 - **Memory**: ~256MB baseline, scales with content
 - **Concurrent Jobs**: Configurable, default 100
+
+## Security Features
+
+- **JWT Authentication**: All API endpoints require valid JWT tokens
+- **Rate Limiting**: Configurable per-tenant and global limits
+- **Input Validation**: Comprehensive validation for all content types
+- **WASM Sandboxing**: Plugins run in isolated environments with resource limits
+- **SQL Injection Protection**: Compile-time query verification with SQLx
+- **CORS Protection**: Configurable allowed origins
+- **Security Headers**: Automatic security headers on all responses
+
+## Deployment
+
+The service is designed for containerized deployment and includes:
+- Multi-stage Docker builds for optimized images
+- Kubernetes manifests with HPA and PDB
+- Health checks and readiness probes
+- Prometheus metrics and Grafana dashboards
+- Zero-downtime deployment strategies
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
+
+## Integration with Federation Gateway
+
+This service automatically registers with the Apollo Federation gateway on startup:
+
+```bash
+# Verify federation integration
+curl http://localhost:4000/health/detailed
+
+# Query through the gateway
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "{ content(id: \"123\") { title qualityScore } }"
+  }'
+```
 
 ## License
 
