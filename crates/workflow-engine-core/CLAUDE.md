@@ -6,6 +6,13 @@ This file provides guidance for Claude Code when working with the workflow-engin
 
 The workflow-engine-core crate is the heart of the AI workflow orchestration system. It provides the fundamental building blocks for creating, executing, and managing AI-powered workflows. This crate contains zero external service dependencies and focuses on core workflow engine logic, AI integration utilities, and shared types used throughout the system.
 
+**Recent Improvements (v0.6.0)**:
+- **Boxed Error Refactoring**: WorkflowError reduced from 144 to ~16 bytes using boxed error details
+- **Enhanced Security**: TDD-driven security validation across all components
+- **GraphQL Support**: Added GraphQL query validation and security features
+- **MCP Protocol Validation**: Comprehensive protocol validation for Model Context Protocol
+- **Type Safety**: Enhanced compile-time guarantees with improved node parameter validation
+
 ## Purpose and Role
 
 This crate serves as:
@@ -58,14 +65,24 @@ Tools for AI service integration:
 - **API Clients** (`api_clients/`): Provider-specific implementations (OpenAI, Anthropic, AWS)
 
 ### 5. Error Handling (`src/error/`)
-Comprehensive error management:
-- **Types** (`types.rs`): Main `WorkflowError` enum with all error variants
+Comprehensive error management with optimized memory usage:
+- **Types** (`types.rs`): Main `WorkflowError` enum (now ~16 bytes with boxing)
+- **Boxed Types** (`boxed.rs`): Boxed error details for large variants
 - **Enhanced Types** (`enhanced_types.rs`): Extended error information
 - **Circuit Breaker** (`circuit_breaker.rs`): Fault tolerance patterns
 - **Retry** (`retry.rs`): Configurable retry policies
 - **Recovery** (`recovery.rs`): Error recovery strategies
 - **Context** (`context.rs`): Error context and debugging info
 - **Metrics** (`metrics.rs`): Error tracking and monitoring
+
+**Breaking Change**: Error variants now use boxed details. Update pattern matching:
+```rust
+// Before
+WorkflowError::ValidationError { message, field, value, constraint, context }
+
+// After  
+WorkflowError::ValidationError(Box<ValidationErrorDetails>)
+```
 
 ### 6. Configuration (`src/config/`)
 Configuration management:
@@ -98,6 +115,19 @@ Real-time data streaming:
 - **SSE** (`sse.rs`): Server-sent events support
 - **Backpressure** (`backpressure.rs`): Flow control mechanisms
 - **Recovery** (`recovery.rs`): Stream recovery strategies
+
+### 11. GraphQL Support (`src/graphql/`)
+GraphQL query processing and validation:
+- **Validation** (`validation.rs`): Query structure and depth validation
+- **Security** (`security.rs`): Query security checks and sanitization
+- **Limits** (`limits.rs`): Rate limiting and complexity constraints
+- **Parser** (`parser.rs`): GraphQL query parsing utilities
+
+### 12. MCP Protocol (`src/mcp/`)
+Model Context Protocol validation:
+- **Validation** (`validation.rs`): Protocol message validation
+- **Types** (`types.rs`): MCP-specific type definitions
+- **Security** (`security.rs`): Protocol security constraints
 
 ## Important Files and Their Functions
 
@@ -141,13 +171,22 @@ let workflow = TypedWorkflowBuilder::new("my_workflow")
     .build()?;
 ```
 
-### 3. Error Handling with Context
+### 3. Error Handling with Context (Updated for v0.6.0)
 ```rust
-// Detailed error creation
-WorkflowError::ProcessingError {
+// New boxed error creation pattern
+use workflow_engine_core::error::{WorkflowError, ProcessingErrorDetails};
+
+let error = WorkflowError::ProcessingError(Box::new(ProcessingErrorDetails {
     message: "Failed to process data".to_string(),
-}.with_context("node_id", "processor")
- .with_context("attempt", 3)
+    node_id: Some("processor".to_string()),
+    node_type: "DataProcessor".to_string(),
+    source: None,
+}));
+
+// With error context helper
+let error = WorkflowError::processing_error("Failed to process data")
+    .with_node_id("processor")
+    .with_node_type("DataProcessor");
 ```
 
 ### 4. Template-Based AI Integration
@@ -188,6 +227,13 @@ The crate uses a comprehensive error handling strategy:
 - Token counter tests verify usage tracking
 - Workflow execution tests cover full scenarios
 
+### TDD Test Suites (New in v0.6.0)
+- **Clippy Large Error Test**: Validates error size optimization
+- **GraphQL Query Validation**: Comprehensive query security tests
+- **MCP Protocol Validation**: Protocol compliance testing
+- **Node Parameter Type Safety**: Compile-time type checking
+- **Workflow Configuration Validation**: Configuration correctness
+
 ### Test Organization
 ```bash
 # Run all core tests
@@ -196,6 +242,11 @@ cargo test -p workflow-engine-core
 # Run specific module tests
 cargo test -p workflow-engine-core nodes::
 cargo test -p workflow-engine-core ai::templates::
+
+# Run TDD test suites
+cargo test -p workflow-engine-core graphql_query_validation
+cargo test -p workflow-engine-core mcp_protocol_validation
+cargo test -p workflow-engine-core node_parameter_type_safety
 
 # Run with coverage
 cargo tarpaulin -p workflow-engine-core
@@ -210,12 +261,14 @@ cargo tarpaulin -p workflow-engine-core
 4. Write unit tests for the node
 5. Update workflow examples
 
-### 2. Adding Error Variants
-1. Add variant to `WorkflowError` in `src/error/types.rs`
-2. Implement `Display` formatting for the variant
-3. Add error creation convenience methods if needed
-4. Update error handling in affected code
-5. Add tests for new error cases
+### 2. Adding Error Variants (Updated for v0.6.0)
+1. For large error variants, create a boxed type in `src/error/boxed.rs`
+2. Add variant to `WorkflowError` in `src/error/types.rs` using `Box<YourErrorDetails>`
+3. Implement `Display` for the boxed error type
+4. Add error creation convenience methods if needed
+5. Update error handling in affected code (pattern matching changes)
+6. Add tests for new error cases
+7. Verify error size with `cargo test clippy_large_error`
 
 ### 3. Extending Task Context
 1. Add new fields to `TaskContext` struct in `src/task.rs`
