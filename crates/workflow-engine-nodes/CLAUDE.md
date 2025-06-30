@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 The workflow-engine-nodes crate provides built-in workflow node implementations for the AI workflow orchestration system. It contains ready-to-use nodes for AI agent integrations, external MCP connections, research capabilities, and template processing.
 
+**Recent Improvements (v0.6.0)**:
+- **Enhanced Type Safety**: Compile-time parameter validation for all nodes
+- **Security Improvements**: Input validation and sanitization for external integrations
+- **Error Handling**: Proper error propagation using optimized WorkflowError types
+- **Test Coverage**: Comprehensive unit tests with mocked dependencies
+- **External MCP**: Improved connection handling and retry logic
+
 ## Purpose and Role
 
 This crate serves as the node library for the workflow engine, providing:
@@ -147,10 +154,11 @@ registry.register("external_mcp", || Box::new(BaseExternalMcpClient::new(mcp_con
 ## Testing Approach
 
 ### Unit Tests
-Each node implementation includes unit tests alongside the source:
-- AI agents: Test configuration, MCP client setup
-- External MCP: Test connection, retry logic, transport types
+Each node implementation includes comprehensive unit tests:
+- AI agents: Test configuration, MCP client setup, parameter validation
+- External MCP: Test connection, retry logic, transport types, security
 - Mock MCP clients for isolated testing
+- Input validation and sanitization tests
 
 ### Integration Tests
 For testing with real MCP servers:
@@ -160,11 +168,15 @@ For testing with real MCP servers:
 
 # Run integration tests
 cargo test --package workflow-engine-nodes -- --ignored
+
+# Run specific node tests
+cargo test --package workflow-engine-nodes openai -- --ignored
+cargo test --package workflow-engine-nodes external_mcp -- --ignored
 ```
 
-### Test Patterns
+### Test Patterns (Enhanced in v0.6.0)
 ```rust
-// Mock external dependencies
+// Mock external dependencies with validation
 use mockall::mock;
 
 mock! {
@@ -174,14 +186,35 @@ mock! {
     impl McpClient for TestMcpClient {
         async fn connect(&mut self) -> Result<(), WorkflowError>;
         async fn list_tools(&mut self) -> Result<Vec<ToolDefinition>, WorkflowError>;
-        // ... other methods
+        async fn call_tool(&mut self, name: &str, params: Option<Value>) -> Result<Value, WorkflowError>;
     }
 }
 
-// Test with mocks
-let mut mock_client = MockTestMcpClient::new();
-mock_client.expect_connect().returning(|| Ok(()));
+// Test with mocks and validation
+#[tokio::test]
+async fn test_node_parameter_validation() {
+    let mut mock_client = MockTestMcpClient::new();
+    mock_client.expect_connect()
+        .returning(|| Ok(()));
+    mock_client.expect_call_tool()
+        .withf(|name, params| {
+            // Validate parameters
+            name == "analyze" && params.is_some()
+        })
+        .returning(|_, _| Ok(json!({"result": "success"})));
+    
+    // Test node with mock
+    let node = ExternalMcpNode::new_with_client(Box::new(mock_client));
+    let result = node.process(context).unwrap();
+    assert!(result.has_data("output"));
+}
 ```
+
+### Security Testing
+- Input sanitization for all user-provided data
+- Parameter validation before external API calls
+- Authentication token handling and masking
+- Error message sanitization to prevent information leakage
 
 ## Common Development Tasks
 
@@ -301,15 +334,18 @@ async fn test_real_notion_integration() {
 }
 ```
 
-## Best Practices
+## Best Practices (Updated for v0.6.0)
 
 1. **Feature Flags**: Use feature flags for optional dependencies
-2. **Error Handling**: Propagate errors appropriately, use WorkflowError types
+2. **Error Handling**: Use boxed WorkflowError variants for rich context
 3. **Async/Sync Bridge**: Handle async operations in sync Node interface carefully
 4. **Configuration**: Make nodes configurable via builders or config structs
 5. **Documentation**: Document node capabilities and requirements
 6. **Testing**: Provide both unit tests with mocks and integration test examples
 7. **Retry Logic**: Implement appropriate retry strategies for external services
+8. **Security**: Validate and sanitize all inputs, mask sensitive data in logs
+9. **Type Safety**: Use compile-time type checking for parameters
+10. **Performance**: Cache MCP connections, use connection pooling
 
 ## Performance Considerations
 
