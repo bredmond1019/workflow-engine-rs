@@ -1,10 +1,10 @@
 # Knowledge Graph Service
 
-A high-performance graph database microservice for managing concept relationships, learning paths, and knowledge exploration using Dgraph.
+A high-performance graph database microservice for managing concept relationships, learning paths, and knowledge exploration using Dgraph. The service operates as a GraphQL Federation subgraph, enabling seamless integration with the AI Workflow Orchestration platform.
 
 ## Overview
 
-The Knowledge Graph Service provides a comprehensive solution for building and querying educational knowledge graphs. It enables intelligent learning path generation, prerequisite tracking, and concept relationship management through advanced graph algorithms.
+The Knowledge Graph Service provides a comprehensive solution for building and querying educational knowledge graphs. It enables intelligent learning path generation, prerequisite tracking, and concept relationship management through advanced graph algorithms. As part of the federation architecture, it extends entities from other services and provides cross-service query capabilities.
 
 ### Key Features
 
@@ -14,7 +14,8 @@ The Knowledge Graph Service provides a comprehensive solution for building and q
 - **Concept Relationships**: Prerequisites, related topics, and difficulty progression
 - **Similarity Search**: Vector embedding support for finding similar concepts
 - **Performance Optimized**: Connection pooling, caching, and query optimization
-- **GraphQL API**: Full GraphQL support for flexible queries
+- **GraphQL Federation**: Apollo Federation v2 subgraph with entity resolution
+- **Enterprise Security**: JWT authentication, rate limiting, and query complexity analysis
 
 ### Technology Stack
 
@@ -84,11 +85,38 @@ cargo run
 
 ## API Endpoints
 
-### GraphQL Endpoint
-- `POST /graphql` - Main GraphQL endpoint
+### GraphQL Federation Endpoint
+- `POST /graphql` - Main GraphQL endpoint with federation support
+
+The service implements a complete Apollo Federation v2 subgraph:
+- **Entities**: `Concept`, `LearningResource`, `UserProgress` with `@key` directives
+- **Extended Types**: Extends `User` from the main API with learning progress
+- **Cross-Service Queries**: Query through the federation gateway (port 4000)
+
+#### Example Federation Query
+```graphql
+# Query through gateway - combines data from multiple services
+query UserLearningDashboard($userId: ID!) {
+  user(id: $userId) {
+    id
+    name                    # From main API
+    email                   # From main API
+    learningProgress {      # From knowledge graph
+      totalConceptsCompleted
+      currentLearningPaths {
+        toConcept {
+          name
+          difficulty
+        }
+      }
+    }
+  }
+}
+```
 
 ### REST Endpoints
 - `GET /health` - Health check
+- `GET /health/detailed` - Detailed component health
 - `GET /metrics` - Prometheus metrics
 - `POST /api/v1/search` - Concept search
 - `GET /api/v1/concept/:id` - Get concept details
@@ -163,6 +191,16 @@ DATABASE_URL=postgresql://user:pass@localhost/knowledge_graph
 SERVICE_PORT=3002
 LOG_LEVEL=info
 ENABLE_METRICS=true
+
+# Security Configuration
+JWT_SECRET=your-secret-key
+RATE_LIMIT_RPM=100
+MAX_QUERY_DEPTH=15
+MAX_QUERY_COMPLEXITY=1000
+
+# Federation Configuration
+FEDERATION_ENABLED=true
+GATEWAY_URL=http://localhost:4000
 ```
 
 ## Testing
@@ -175,9 +213,20 @@ cargo test
 # Integration tests (requires Dgraph)
 cargo test -- --ignored
 
+# Federation tests
+cargo test graphql_federation_test -- --ignored
+
 # Specific test categories
 cargo test algorithms
 cargo test graph_integration -- --ignored
+
+# Test federation through gateway
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "{ concept(id: \"123\") { name difficulty } }"
+  }'
 ```
 
 ## Monitoring
@@ -189,6 +238,36 @@ The service exposes Prometheus metrics at `/metrics`:
 - Connection pool statistics
 - Cache hit/miss rates
 - Error rates by operation
+
+## Security Features
+
+- **JWT Authentication**: All API endpoints require valid JWT tokens
+- **Rate Limiting**: Configurable request limits per tenant and globally
+- **Query Complexity Analysis**: Protection against expensive queries
+- **Input Validation**: Comprehensive validation for all graph mutations
+- **TLS Encryption**: All communications encrypted in transit
+- **Multi-tenant Isolation**: Data scoped by tenant ID from JWT claims
+
+## Deployment
+
+The service supports multiple deployment strategies:
+
+- **Docker**: Multi-stage builds with optimized runtime images
+- **Kubernetes**: Includes HPA, PDB, and network policies
+- **Docker Compose**: Complete stack with Dgraph and dependencies
+
+### Federation Integration
+
+The service automatically registers with the Apollo Federation gateway:
+
+```bash
+# Verify federation health
+curl http://localhost:4000/health/detailed
+
+# Check subgraph registration
+curl http://localhost:4000/graphql \
+  -d '{"query": "{ _service { sdl } }"}'
+```
 
 ## Contributing
 

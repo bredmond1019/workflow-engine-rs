@@ -1,6 +1,6 @@
 # CLAUDE.md - Knowledge Graph Service
 
-This file provides guidance to Claude Code when working with the Knowledge Graph service, a high-performance graph database microservice for managing concept relationships and learning paths using Dgraph.
+This file provides guidance to Claude Code when working with the Knowledge Graph service, a high-performance graph database microservice for managing concept relationships and learning paths using Dgraph. The service operates as a GraphQL Federation subgraph, providing seamless integration with the federation gateway.
 
 ## Service Overview
 
@@ -9,7 +9,8 @@ The Knowledge Graph Service is a critical microservice in the AI workflow system
 - Advanced graph algorithms for learning path generation
 - Relationship tracking between concepts (prerequisites, related topics)
 - Performance-optimized query execution with caching
-- GraphQL and REST API interfaces
+- GraphQL Federation subgraph with entity resolution
+- Enterprise-grade security with JWT authentication and rate limiting
 
 ## Purpose and Role
 
@@ -34,11 +35,12 @@ This service acts as the knowledge foundation for AI-powered educational applica
 - **Topological Sort**: Prerequisite ordering with cycle detection
 - **Graph Traversal**: BFS/DFS for exploration and analysis
 
-### 3. API Layer (`src/api.rs`)
-- **GraphQL Endpoint**: Primary interface at `/graphql`
+### 3. API Layer (`src/api/`)
+- **GraphQL Endpoint**: Primary interface at `/graphql` with federation support
 - **REST Endpoints**: Simplified access for common operations
 - **Authentication**: JWT-based with role permissions
 - **Rate Limiting**: Tier-based request throttling
+- **Federation**: Full Apollo Federation v2 implementation with `_service` and `_entities` resolvers
 
 ### 4. Service Core (`src/service.rs`)
 - **Query Engine**: Optimized query execution with caching
@@ -100,14 +102,40 @@ The service includes sophisticated GraphQL response parsing:
 
 ## API Endpoints
 
-### GraphQL
+### GraphQL Federation Endpoint
 ```
 POST /graphql
+```
+
+The service implements a complete GraphQL Federation subgraph with:
+- **Entities**: `Concept`, `LearningResource`, `UserProgress` with `@key` directives
+- **Extended Types**: Extends `User` from the main API with learning-specific fields
+- **Federation Queries**: `_service` for schema introspection, `_entities` for entity resolution
+
+#### Example Federation Queries
+```graphql
+# Cross-service query through gateway
+query UserLearningStatus($userId: ID!) {
+  user(id: $userId) {
+    id
+    name  # From main API
+    learningProgress {  # From knowledge graph
+      totalConceptsCompleted
+      currentLearningPaths {
+        toConcept {
+          name
+          difficulty
+        }
+      }
+    }
+  }
+}
 ```
 
 ### REST Endpoints
 ```
 GET  /health                    # Health check
+GET  /health/detailed           # Detailed component health
 GET  /metrics                   # Prometheus metrics
 POST /api/v1/search            # Concept search
 GET  /api/v1/concept/:id       # Get concept details
@@ -117,11 +145,13 @@ GET  /api/v1/related/:id       # Find related concepts
 
 ## Integration with Main Engine
 
-The Knowledge Graph service integrates with the workflow engine through:
-1. **Service Discovery**: Registered in the service registry
-2. **MCP Protocol**: Exposed as an MCP server for workflow nodes
-3. **Event Integration**: Publishes concept updates to event bus
-4. **Shared Database**: Uses same PostgreSQL for vector embeddings
+The Knowledge Graph service integrates with the workflow engine and federation gateway through:
+1. **GraphQL Federation**: Primary integration via Apollo Gateway (port 4000)
+2. **Service Discovery**: Registered in the service registry
+3. **MCP Protocol**: Exposed as an MCP server for workflow nodes
+4. **Event Integration**: Publishes concept updates to event bus
+5. **Shared Database**: Uses same PostgreSQL for vector embeddings
+6. **Cross-Service Queries**: Supports federated queries across services
 
 ### Workflow Node Usage
 ```rust
@@ -162,6 +192,29 @@ cargo test -- --ignored
 ### Performance Tests
 ```bash
 cargo test performance -- --ignored --nocapture
+```
+
+### Federation Tests
+```bash
+# Test federation integration
+cargo test graphql_federation_test -- --ignored
+
+# Verify subgraph schema
+curl http://localhost:3002/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ _service { sdl } }"}'
+
+# Test entity resolution
+curl http://localhost:3002/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query($_representations: [_Any!]!) { _entities(representations: $_representations) { ... on Concept { id name } } }",
+    "variables": {
+      "_representations": [
+        { "__typename": "Concept", "id": "123" }
+      ]
+    }
+  }'
 ```
 
 ## Common Development Tasks
@@ -314,6 +367,25 @@ export RUST_LOG=knowledge_graph=debug
 export RUST_LOG=knowledge_graph::algorithms=trace
 ```
 
+## Security Features
+
+### Authentication & Authorization
+1. **JWT Validation**: All GraphQL/REST requests require valid JWT tokens
+2. **Role-Based Access**: Different permissions for read/write operations
+3. **Multi-tenant Support**: Data isolation based on tenant ID from JWT
+4. **Rate Limiting**: Per-tenant and global request limits
+
+### Data Security
+1. **Input Validation**: All mutations validated for malicious content
+2. **Query Depth Limiting**: Prevents deeply nested queries
+3. **Query Complexity Analysis**: Rejects overly complex queries
+4. **Parameterized Queries**: Protection against injection attacks
+
+### Network Security
+1. **TLS Encryption**: All communications encrypted in transit
+2. **CORS Configuration**: Restrictive cross-origin policies
+3. **Security Headers**: Standard security headers on all responses
+
 ## Best Practices
 
 1. **Query Optimization**: Use indexes and limit result sets
@@ -323,6 +395,8 @@ export RUST_LOG=knowledge_graph::algorithms=trace
 5. **Monitoring**: Track algorithm performance and query patterns
 6. **Testing**: Include both unit and integration tests
 7. **Documentation**: Update API docs when adding endpoints
+8. **Federation**: Test entity resolution when modifying types
+9. **Security**: Always validate JWT tokens and enforce rate limits
 
 ## Troubleshooting
 
