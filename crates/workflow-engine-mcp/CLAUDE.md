@@ -6,6 +6,13 @@ This file provides guidance to Claude Code when working with the Model Context P
 
 The `workflow-engine-mcp` crate is the core implementation of the Model Context Protocol (MCP) framework for the workflow engine. It provides a complete, production-ready MCP implementation with multi-transport support, connection pooling, and built-in server implementations.
 
+**Recent Improvements (v0.6.0)**:
+- **Enhanced Security**: TDD-driven validation for all MCP protocol messages
+- **Connection Pool Improvements**: Better health monitoring and circuit breaker integration
+- **Error Handling**: Fixed 182 MCP-related compilation errors with proper error propagation
+- **Test Coverage**: Comprehensive test suites for protocol validation and connection management
+- **Type Safety**: Improved compile-time guarantees for tool parameters and responses
+
 ### Purpose and Role
 
 - **Protocol Implementation**: Complete MCP specification compliance with all message types
@@ -126,7 +133,7 @@ McpResponse::Error { id, error }           // Error response
 
 ### Unit Tests
 
-Each module includes comprehensive unit tests:
+Each module includes comprehensive unit tests with enhanced security validation:
 
 ```bash
 # Run unit tests for the MCP crate
@@ -134,6 +141,10 @@ cargo test -p workflow-engine-mcp
 
 # Run with verbose output
 cargo test -p workflow-engine-mcp -- --nocapture
+
+# Run specific test categories
+cargo test -p workflow-engine-mcp protocol_validation
+cargo test -p workflow-engine-mcp connection_security
 ```
 
 ### Integration Tests
@@ -144,19 +155,29 @@ MCP integration tests require external servers:
 # Start Python MCP test servers
 ./scripts/start_test_servers.sh
 
-# Run MCP integration tests
-cargo test mcp_integration -- --ignored
+# Run MCP integration tests (use --test-threads=1 to avoid race conditions)
+cargo test mcp_integration -- --ignored --test-threads=1
 cargo test mcp_communication -- --ignored
 cargo test mcp_connection -- --ignored
+cargo test external_mcp_integration -- --ignored
 ```
 
 ### Test Categories
 
-1. **Protocol tests**: Message serialization, version negotiation
-2. **Transport tests**: Connection lifecycle, error handling
-3. **Pool tests**: Connection management, health checks
-4. **Client tests**: End-to-end client functionality
-5. **Server tests**: Tool registration and execution
+1. **Protocol tests**: Message serialization, version negotiation, security validation
+2. **Transport tests**: Connection lifecycle, error handling, TLS validation
+3. **Pool tests**: Connection management, health checks, circuit breaker behavior
+4. **Client tests**: End-to-end client functionality, retry logic
+5. **Server tests**: Tool registration and execution, parameter validation
+6. **Security tests**: Input validation, authentication, authorization
+
+### TDD Test Improvements (v0.6.0)
+
+- **Protocol Validation**: Comprehensive validation of all MCP message types
+- **Connection Security**: TLS certificate validation and secure transport
+- **Parameter Type Safety**: Compile-time checking of tool parameters
+- **Error Propagation**: Proper error context throughout the stack
+- **Health Monitoring**: Enhanced health check coverage
 
 ## Common Development Tasks
 
@@ -235,23 +256,31 @@ impl HealthChecker for MyHealthChecker {
 
 ## Error Handling
 
-### Transport Errors
+### Transport Errors (Updated for v0.6.0)
 
-All transport errors implement rich error context:
+All transport errors now use the optimized WorkflowError types with proper context:
 
 ```rust
-TransportError::IoError { message, operation, source }
-TransportError::WebSocketError { message, endpoint, operation, source }
-TransportError::ConnectionError { message, endpoint, transport_type, retry_count }
-TransportError::ProtocolError { message, operation, expected, received }
+// Transport errors are now part of WorkflowError
+WorkflowError::MCPTransportError(Box<MCPTransportErrorDetails>)
+WorkflowError::MCPConnectionError(Box<MCPConnectionErrorDetails>)
+WorkflowError::MCPProtocolError(Box<MCPProtocolErrorDetails>)
+
+// Error creation with context
+let error = WorkflowError::mcp_connection_error()
+    .with_server("helpscout")
+    .with_transport("websocket")
+    .with_endpoint("ws://localhost:8001")
+    .with_retry_count(3);
 ```
 
 ### Error Recovery
 
 - Automatic reconnection for transient failures
-- Circuit breakers for cascading failure prevention
+- Circuit breakers for cascading failure prevention  
 - Exponential backoff with jitter
 - Health-based connection selection
+- Detailed error context for debugging
 
 ## Performance Considerations
 
@@ -324,13 +353,17 @@ features = ["http", "websocket", "stdio"]
 - `stdio`: Standard I/O transport support
 - `all`: All transport types
 
-## Security Considerations
+## Security Considerations (Enhanced in v0.6.0)
 
 1. **Authentication**: Use Bearer tokens for HTTP, connection auth for WebSocket
-2. **TLS**: Always use HTTPS/WSS in production
+2. **TLS**: Always use HTTPS/WSS in production (now with certificate validation)
 3. **Process isolation**: Stdio processes run with limited permissions
-4. **Input validation**: All MCP messages are validated against schema
+4. **Input validation**: All MCP messages are validated against schema with security checks
 5. **Rate limiting**: Implement at transport or pool level
+6. **Protocol validation**: Comprehensive validation of all message types
+7. **Parameter sanitization**: Tool parameters are validated and sanitized
+8. **Connection security**: Enhanced security for all transport types
+9. **Error masking**: Sensitive information is masked in error messages
 
 ## Integration with Workflow Engine
 
