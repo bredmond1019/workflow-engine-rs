@@ -4,6 +4,13 @@
 **/*.rs.bk
 *.pdb
 Cargo.lock
+# Rust analyzer
+rust-project.json
+# Flamegraph profiling
+flamegraph.svg
+perf.data*
+# Benchmarking
+criterion/
 
 # IDE
 .idea/
@@ -17,6 +24,13 @@ Cargo.lock
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.test
+# API Keys (additional protection)
+api-keys.txt
+secrets.json
+*.key
 
 # Python
 __pycache__/
@@ -64,6 +78,12 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+# PostgreSQL
+*.pgdump
+*.sql.bak
 
 # OS
 .DS_Store
@@ -87,7 +107,12 @@ junit.xml
 *.old
 
 # Docker
-.dockerignore
+# Note: Don't ignore .dockerignore itself, just volumes/data
+docker-compose.override.yml
+.docker/
+volumes/
+# Docker buildx cache
+.buildx-cache/
 
 # Project specific
 .aider*
@@ -106,3 +131,52 @@ services/*/*.db
 # Monitoring
 grafana-storage/
 prometheus-data/
+# Loki logs
+loki-data/
+# Tempo traces
+tempo-data/
+# Alertmanager
+alertmanager-data/
+
+# AI/ML specific
+# Model files
+*.model
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+# Vector databases
+vector-db/
+embeddings/
+*.faiss
+*.npy
+# AI training data
+training-data/
+datasets/
+checkpoints/
+
+# Security
+# Certificate files
+*.pem
+*.crt
+*.cer
+*.key
+*.p12
+*.pfx
+# JWT secrets
+jwt-secret*
+# OAuth tokens
+oauth-tokens*
+
+# Development tools
+# Profiling
+*.prof
+*.out
+# Memory dumps
+*.hprof
+core.*
+# Local development
+.dev/
+scratch/
+playground/
