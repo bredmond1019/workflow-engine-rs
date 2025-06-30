@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 ## Service Overview
 
-The Real-time Communication Service is a high-performance WebSocket-based messaging microservice built with Rust and Actix-Web. It implements an actor model architecture designed to handle 10,000+ concurrent connections with low latency and high throughput. This service provides real-time messaging capabilities for the AI workflow orchestration system.
+The Real-time Communication Service is a high-performance WebSocket-based messaging microservice built with Rust and Actix-Web. It implements an actor model architecture designed to handle 10,000+ concurrent connections with low latency and high throughput. The service operates as a GraphQL Federation subgraph, providing both real-time WebSocket communication and GraphQL APIs with comprehensive subscription support for the AI workflow orchestration system.
 
 ## Purpose and Role
 
@@ -14,6 +14,8 @@ This service acts as the real-time communication backbone for the workflow engin
 - Bi-directional communication between AI agents and users
 - Collaborative features for multi-user workflows
 - Event streaming for workflow monitoring
+- GraphQL subscriptions for real-time data
+- Cross-service messaging through federation gateway
 
 ## Key Components
 
@@ -110,11 +112,47 @@ ws://localhost:8081/ws?token=<JWT_TOKEN>
 
 ## API Endpoints
 
+### GraphQL Federation Endpoint
+- `POST /graphql` - GraphQL endpoint with federation support
+- Implements Apollo Federation v2 with subscriptions
+- Entities: `Message`, `Conversation`, `Session` with `@key` directives
+- Extends `User` entity from main API with presence and messaging fields
+
+#### GraphQL Schema Highlights
+```graphql
+# Real-time subscriptions
+subscription MessageReceived($conversationIds: [ID!]) {
+  messageReceived(conversationIds: $conversationIds) {
+    id
+    content
+    senderId
+    timestamp
+  }
+}
+
+# Presence tracking
+subscription PresenceUpdated($userIds: [ID!]!) {
+  presenceUpdated(userIds: $userIds) {
+    userId
+    status
+    lastSeenAt
+  }
+}
+
+# Cross-service user extension
+extend type User @key(fields: "id") {
+  conversations: [Conversation!]!
+  unreadMessageCount: Int!
+  status: UserStatus
+}
+```
+
 ### WebSocket
 - `GET /ws` - WebSocket connection endpoint (requires JWT token)
 
 ### HTTP
 - `GET /health` - Service health check
+- `GET /health/detailed` - Detailed component health
 - `GET /metrics` - Prometheus metrics
 - `GET /info` - Server information and configuration
 
@@ -134,10 +172,12 @@ The service publishes real-time events about:
 4. **System Monitoring**: Admin topics for system-wide events
 
 ### Integration Points
-- Redis pub/sub for cross-service messaging
-- JWT tokens shared with main API service
-- Common user/tenant context
-- Metrics aggregation in Prometheus
+- **GraphQL Federation**: Primary integration via Apollo Gateway (port 4000)
+- **Redis pub/sub**: Cross-service messaging and event distribution
+- **JWT tokens**: Shared authentication with main API service
+- **Common user/tenant context**: Multi-tenant messaging isolation
+- **Metrics aggregation**: Prometheus metrics collection
+- **Subscription Gateway**: Real-time subscriptions through federation
 
 ## Testing Approach
 
@@ -170,6 +210,27 @@ cargo test test_concurrent_connections -- --ignored --nocapture
 - Circuit breaker triggers
 - Session persistence
 - Presence tracking
+- GraphQL federation integration
+- Subscription functionality
+
+### Federation Tests
+```bash
+# Test federation integration
+cargo test graphql_federation_test -- --ignored
+
+# Verify subgraph schema
+curl http://localhost:8081/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ _service { sdl } }"}'
+
+# Test subscriptions through gateway
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "subscription { messageReceived(conversationIds: [\"123\"]) { id content } }"
+  }'
+```
 
 ## Common Development Tasks
 
@@ -278,8 +339,10 @@ HOST=0.0.0.0
 PORT=8081
 MAX_CONNECTIONS=10000
 
-# Authentication
+# Authentication & Security
 JWT_SECRET=your-secret-key
+ENABLE_TLS=true
+ALLOWED_ORIGINS=["http://localhost:3000", "https://app.example.com"]
 
 # Redis connection
 REDIS_URL=redis://localhost:6379
@@ -292,6 +355,13 @@ CLIENT_TIMEOUT=60s
 RATE_LIMIT_ENABLED=true
 RATE_LIMIT_WINDOW=60s
 RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_BURST=200
+
+# GraphQL Federation
+FEDERATION_ENABLED=true
+GATEWAY_URL=http://localhost:4000
+SUBSCRIPTION_ENDPOINT=/graphql
+MAX_SUBSCRIPTION_DEPTH=10
 
 # Logging
 RUST_LOG=info,realtime_communication=debug
@@ -348,20 +418,29 @@ RUST_LOG=info,realtime_communication=debug
 
 ## Security Considerations
 
-### Authentication
-- JWT validation on connection
-- Token refresh handling
-- Role-based access control
+### Authentication & Authorization
+- **JWT Validation**: All WebSocket and GraphQL connections require valid JWT tokens
+- **Token Refresh**: Automatic token refresh with secure reconnection
+- **Role-Based Access**: Topic subscriptions and message access based on user roles
+- **Multi-tenant Isolation**: Conversation and message scoping by tenant ID
 
-### Authorization
-- Topic-level permissions
-- Message filtering by user role
-- Resource-based access control
+### WebSocket Security
+- **TLS Encryption**: WSS protocol enforced in production environments
+- **Origin Validation**: Strict CORS policies for WebSocket connections
+- **Connection Limits**: Per-user and global connection limits
+- **Message Validation**: All incoming messages validated against schema
+
+### GraphQL Security
+- **Query Depth Limiting**: Prevents deeply nested subscription queries
+- **Rate Limiting**: Per-operation rate limits for queries and subscriptions
+- **Schema Introspection**: Disabled in production for security
+- **Input Sanitization**: All user inputs sanitized before processing
 
 ### Data Protection
-- TLS for production WebSocket
-- Message encryption options
-- Audit logging for sensitive operations
+- **Message Encryption**: Optional end-to-end encryption for sensitive conversations
+- **Audit Logging**: Comprehensive logging for all messaging operations
+- **Data Retention**: Configurable message retention policies
+- **Privacy Controls**: User privacy settings enforcement
 
 ## Monitoring and Debugging
 

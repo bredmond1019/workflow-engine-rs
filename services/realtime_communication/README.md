@@ -1,10 +1,10 @@
 # Real-time Communication Service
 
-A high-performance WebSocket-based messaging microservice built with Rust and Actix-Web, designed to handle 10,000+ concurrent connections with an actor model architecture.
+A high-performance WebSocket-based messaging microservice built with Rust and Actix-Web, designed to handle 10,000+ concurrent connections with an actor model architecture. The service operates as a GraphQL Federation subgraph, providing both WebSocket and GraphQL APIs with comprehensive subscription support.
 
 ## Overview
 
-The Real-time Communication Service provides WebSocket-based real-time messaging capabilities for the AI System Rust platform. It implements a scalable actor-based architecture with support for topic subscriptions, direct messaging, presence tracking, and room-based communication.
+The Real-time Communication Service provides WebSocket-based real-time messaging capabilities for the AI Workflow Orchestration platform. It implements a scalable actor-based architecture with support for topic subscriptions, direct messaging, presence tracking, and room-based communication. As part of the federation architecture, it extends user entities and provides real-time subscriptions through the GraphQL gateway.
 
 ### Key Features
 
@@ -18,6 +18,8 @@ The Real-time Communication Service provides WebSocket-based real-time messaging
 - **JWT Authentication**: Secure token-based authentication with refresh support
 - **Circuit Breaker**: Protection against cascading failures
 - **Message Routing**: Rule-based message routing with filtering and transformation
+- **GraphQL Federation**: Apollo Federation v2 subgraph with subscriptions
+- **Real-time Subscriptions**: Live updates for messages, presence, and typing indicators
 - **Metrics & Monitoring**: Prometheus metrics and health endpoints
 
 ## Quick Start
@@ -242,6 +244,74 @@ docker run -p 8081:8081 realtime-communication:latest
 
 ## API Endpoints
 
+### GraphQL Federation Endpoint
+- `POST /graphql` - GraphQL endpoint with federation support and subscriptions
+
+The service implements a complete Apollo Federation v2 subgraph with:
+- **Entities**: `Message`, `Conversation`, `Session` with `@key` directives
+- **Extended Types**: Extends `User` from the main API with messaging and presence fields
+- **Subscriptions**: Real-time subscriptions for messages, presence, and typing indicators
+
+#### Example GraphQL Subscriptions
+
+```graphql
+# Subscribe to new messages in specific conversations
+subscription MessageReceived {
+  messageReceived(conversationIds: ["conv-123", "conv-456"]) {
+    id
+    content
+    senderId
+    timestamp
+    user {
+      id
+      name  # From main API through federation
+    }
+  }
+}
+
+# Subscribe to user presence updates
+subscription PresenceUpdated {
+  presenceUpdated(userIds: ["user-123", "user-456"]) {
+    userId
+    status
+    lastSeenAt
+    devices {
+      deviceId
+      connectionType
+    }
+  }
+}
+
+# Subscribe to typing indicators
+subscription TypingIndicator {
+  typingIndicator(conversationIds: ["conv-123"]) {
+    conversationId
+    userId
+    isTyping
+  }
+}
+```
+
+#### Cross-Service User Extension
+
+```graphql
+# Query user with messaging data through federation
+query UserWithMessaging($userId: ID!) {
+  user(id: $userId) {
+    id
+    name                    # From main API
+    email                   # From main API
+    status                  # From realtime communication
+    conversations {         # From realtime communication
+      id
+      name
+      lastActivityAt
+      unreadMessageCount
+    }
+  }
+}
+```
+
 ### WebSocket Endpoint
 - `GET /ws` - WebSocket connection endpoint
   - Query params: `token` (JWT access token)
@@ -249,8 +319,57 @@ docker run -p 8081:8081 realtime-communication:latest
 
 ### REST Endpoints
 - `GET /health` - Health check endpoint
+- `GET /health/detailed` - Detailed component health
 - `GET /metrics` - Prometheus metrics endpoint
 - `GET /info` - Server information and configuration
+
+## Security Features
+
+- **JWT Authentication**: All WebSocket and GraphQL connections require valid JWT tokens
+- **Rate Limiting**: Multi-level rate limiting for connections, messages, and subscriptions
+- **Origin Validation**: Strict CORS policies for WebSocket connections
+- **TLS Encryption**: WSS protocol enforced in production environments
+- **Input Sanitization**: All user inputs validated and sanitized
+- **Query Depth Limiting**: Protection against deeply nested GraphQL queries
+- **Multi-tenant Isolation**: Message and conversation scoping by tenant ID
+
+## Deployment
+
+The service supports multiple deployment strategies:
+
+- **Docker**: Multi-stage builds with optimized runtime images
+- **Kubernetes**: Includes HPA, PDB, and network policies
+- **WebSocket Load Balancing**: Sticky sessions for WebSocket connections
+
+### Federation Integration
+
+The service automatically registers with the Apollo Federation gateway:
+
+```bash
+# Verify federation health
+curl http://localhost:4000/health/detailed
+
+# Test subscription through gateway
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "query": "subscription { messageReceived(conversationIds: [\"123\"]) { id content } }"
+  }'
+
+# Check subgraph schema
+curl http://localhost:8081/graphql \
+  -d '{"query": "{ _service { sdl } }"}'
+```
+
+### WebSocket Protocol Documentation
+
+The WebSocket protocol supports both direct connections and federation integration:
+
+- **Direct WebSocket**: `ws://localhost:8081/ws?token=JWT_TOKEN`
+- **Federation GraphQL**: Subscriptions through `http://localhost:4000/graphql`
+- **Actor Model**: Each connection runs in an isolated actor for fault tolerance
+- **Message Routing**: Topic-based pub/sub with filtering and transformation
 
 ## Contributing
 
