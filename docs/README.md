@@ -13,7 +13,7 @@ Welcome to the AI Workflow Engine documentation! This is your central hub for al
 ## 📚 Documentation Index
 
 ### 🏗️ Architecture & Design
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Comprehensive system architecture with diagrams
+- **[ARCHITECTURE.md](development/ARCHITECTURE.md)** - Comprehensive system architecture with diagrams
 - **[FEDERATION.md](../FEDERATION.md)** - GraphQL Federation implementation guide
 - **[System Design](architecture.md)** - Additional architecture details
 - **[API Reference](api-reference.md)** - Complete API documentation
@@ -23,24 +23,26 @@ Welcome to the AI Workflow Engine documentation! This is your central hub for al
 - **[CLAUDE.md](../CLAUDE.md)** - AI assistant guide and project overview
 - **[Quick Start Guide](../QUICK_START.md)** - Get running in 5 minutes
 - **[Development Setup](../DEVELOPMENT_SETUP.md)** - Complete dev environment setup
-- **[Tutorial Series](tutorials/00-index.md)** - Step-by-step learning path
+- **[Tutorial Series](guides/tutorials/00-index.md)** - Step-by-step learning path
 
 ### 🧪 Testing & Quality
 - **[USER_TESTING.md](../USER_TESTING.md)** - Comprehensive validation guide
 - **[QUICK_TEST_REFERENCE.md](../QUICK_TEST_REFERENCE.md)** - Essential test commands
 - **[TEST_COVERAGE_REPORT.md](../TEST_COVERAGE_REPORT.md)** - Detailed coverage analysis
-- **[Testing Guide](TESTING.md)** - How to run and write tests
+- **[Testing Guide](development/TESTING.md)** - How to run and write tests
 
 ### 📊 Operations & Monitoring
-- **[Performance Guide](performance.md)** - Optimization and benchmarks
+- **[Performance Guide](development/performance.md)** - Optimization and benchmarks
 - **[DEVOPS_SETUP_REPORT.md](../DEVOPS_SETUP_REPORT.md)** - Infrastructure setup
 - **[Monitoring Guide](../monitoring/README.md)** - Prometheus, Grafana, Jaeger
-- **[Security Guide](SECURITY.md)** - Security best practices
+- **[Security Guide](guides/SECURITY.md)** - Security best practices
 
 ### 📦 Publication & Release
-- **[PUBLICATION_STATUS.md](PUBLICATION_STATUS.md)** - Open source readiness (95% complete)
+- **[PUBLICATION_STATUS.md](deployment/PUBLICATION_STATUS.md)** - Open source readiness (95% complete)
 - **[Release Process](release-process.md)** - How we ship new versions
-- **[PRICING_ENGINE_IMPLEMENTATION.md](PRICING_ENGINE_IMPLEMENTATION.md)** - Token usage and pricing
+- **[PRICING_ENGINE_IMPLEMENTATION.md](guides/PRICING_ENGINE_IMPLEMENTATION.md)** - Token usage and pricing
+- **[SECURITY_GUIDE.md](SECURITY_GUIDE.md)** - Comprehensive security documentation
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Version upgrade instructions
 
 ### 🔧 Component Documentation
 
@@ -63,18 +65,18 @@ Welcome to the AI Workflow Engine documentation! This is your central hub for al
 ### 📖 Tutorials & Examples
 
 #### Tutorial Series
-1. **[Getting Started](tutorials/01-getting-started.md)** - Your first workflow
-2. **[Understanding Nodes](tutorials/02-understanding-nodes.md)** - Node architecture
-3. **[AI-Powered Automation](tutorials/03-ai-powered-automation.md)** - AI integration
-4. **[MCP Integration](tutorials/04-mcp-integration.md)** - External services
-5. **[Event Sourcing](tutorials/05-event-sourcing.md)** - CQRS/ES patterns
-6. **[Debugging & Monitoring](tutorials/06-debugging-and-monitoring.md)** - Observability
-7. **[Best Practices](tutorials/07-best-practices.md)** - Production tips
+1. **[Getting Started](guides/tutorials/01-getting-started.md)** - Your first workflow
+2. **[Understanding Nodes](guides/tutorials/02-understanding-nodes.md)** - Node architecture
+3. **[AI-Powered Automation](guides/tutorials/03-ai-powered-automation.md)** - AI integration
+4. **[MCP Integration](guides/tutorials/04-mcp-integration.md)** - External services
+5. **[Event Sourcing](guides/tutorials/05-event-sourcing.md)** - CQRS/ES patterns
+6. **[Debugging & Monitoring](guides/tutorials/06-debugging-and-monitoring.md)** - Observability
+7. **[Best Practices](guides/tutorials/07-best-practices.md)** - Production tips
 
 #### Workflow Examples
-- **[Workflow Diagrams](workflows/workflow_diagrams.md)** - Visual workflow examples
-- **[Advanced Workflows](workflows/advanced_workflow_diagram.md)** - Complex patterns
-- **[Additional Examples](workflows/additional_workflow_diagram.md)** - More use cases
+- **[Workflow Diagrams](guides/workflows/workflow_diagrams.md)** - Visual workflow examples
+- **[Advanced Workflows](guides/workflows/advanced_workflow_diagram.md)** - Complex patterns
+- **[Additional Examples](guides/workflows/additional_workflow_diagram.md)** - More use cases
 
 ### 🛠️ Development Resources
 
