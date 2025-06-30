@@ -33,23 +33,23 @@ impl CloseTicketNode {
         resolution: &str,
     ) -> Result<(), WorkflowError> {
         if resolution.trim().is_empty() {
-            return Err(WorkflowError::ValidationError {
-                message: "Resolution cannot be empty".to_string(),
-                field: "resolution".to_string(),
-                value: Some(resolution.to_string()),
-                constraint: "non-empty string".to_string(),
-                context: "in close_ticket validation".to_string(),
-            });
+            return Err(WorkflowError::validation_error_with_value(
+                "Resolution cannot be empty",
+                "resolution",
+                Some(resolution.to_string()),
+                "non-empty string",
+                "in close_ticket validation"
+            ));
         }
         
         if resolution.len() < 10 {
-            return Err(WorkflowError::ValidationError {
-                message: "Resolution must be at least 10 characters long".to_string(),
-                field: "resolution".to_string(),
-                value: Some(resolution.to_string()),
-                constraint: "minimum 10 characters".to_string(),
-                context: "in close_ticket validation".to_string(),
-            });
+            return Err(WorkflowError::validation_error_with_value(
+                "Resolution must be at least 10 characters long",
+                "resolution",
+                Some(resolution.to_string()),
+                "minimum 10 characters",
+                "in close_ticket validation"
+            ));
         }
         
         // Check if ticket exists and is eligible for closure
@@ -305,24 +305,12 @@ impl Node for CloseTicketNode {
         let ticket_id = context_data
             .as_ref()
             .and_then(|v| v["ticket_id"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: ticket_id".to_string(),
-                field: "ticket_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in close_ticket node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: ticket_id", "ticket_id", "required field", "in close_ticket node"))?.to_string();
             
         let resolution = context_data
             .as_ref()  
             .and_then(|v| v["resolution"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: resolution".to_string(),
-                field: "resolution".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in close_ticket node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: resolution", "resolution", "required field", "in close_ticket node"))?.to_string();
         
         let customer_satisfaction = context_data
             .as_ref()

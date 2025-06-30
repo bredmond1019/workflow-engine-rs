@@ -33,23 +33,23 @@ impl EscalateTicketNode {
         escalation_reason: &str,
     ) -> Result<(), WorkflowError> {
         if escalation_reason.trim().is_empty() {
-            return Err(WorkflowError::ValidationError {
-                message: "Escalation reason cannot be empty".to_string(),
-                field: "escalation_reason".to_string(),
-                value: Some(escalation_reason.to_string()),
-                constraint: "non-empty string".to_string(),
-                context: "in escalate_ticket validation".to_string(),
-            });
+            return Err(WorkflowError::validation_error_with_value(
+                "Escalation reason cannot be empty",
+                "escalation_reason",
+                Some(escalation_reason.to_string()),
+                "non-empty string",
+                "in escalate_ticket validation"
+            ));
         }
         
         if escalation_reason.len() < 10 {
-            return Err(WorkflowError::ValidationError {
-                message: "Escalation reason must be at least 10 characters long".to_string(),
-                field: "escalation_reason".to_string(),
-                value: Some(escalation_reason.to_string()),
-                constraint: "minimum 10 characters".to_string(),
-                context: "in escalate_ticket validation".to_string(),
-            });
+            return Err(WorkflowError::validation_error_with_value(
+                "Escalation reason must be at least 10 characters long",
+                "escalation_reason",
+                Some(escalation_reason.to_string()),
+                "minimum 10 characters",
+                "in escalate_ticket validation"
+            ));
         }
         
         // Check if ticket exists and is eligible for escalation
@@ -310,24 +310,12 @@ impl Node for EscalateTicketNode {
         let ticket_id = context_data
             .as_ref()
             .and_then(|v| v["ticket_id"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: ticket_id".to_string(),
-                field: "ticket_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in escalate_ticket node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: ticket_id", "ticket_id", "required field", "in escalate_ticket node"))?.to_string();
             
         let escalation_reason = context_data
             .as_ref()
             .and_then(|v| v["escalation_reason"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: escalation_reason".to_string(),
-                field: "escalation_reason".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in escalate_ticket node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: escalation_reason", "escalation_reason", "required field", "in escalate_ticket node"))?.to_string();
         
         let target_team = context_data
             .as_ref()

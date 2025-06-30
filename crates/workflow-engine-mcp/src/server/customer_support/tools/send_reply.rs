@@ -36,13 +36,13 @@ impl SendReplyNode {
         }
         
         if message.len() > 5000 {
-            return Err(WorkflowError::ValidationError {
-                message: "Reply message exceeds maximum length of 5000 characters".to_string(),
-                field: "message".to_string(),
-                value: Some(format!("{} characters", message.len())),
-                constraint: "maximum 5000 characters".to_string(),
-                context: "in send_reply validation".to_string(),
-            });
+            return Err(WorkflowError::validation_error_with_value(
+                "Reply message exceeds maximum length of 5000 characters",
+                "message",
+                Some(format!("{} characters", message.len())),
+                "maximum 5000 characters",
+                "in send_reply validation"
+            ));
         }
         
         // Check for inappropriate content (basic validation)
@@ -64,13 +64,13 @@ impl SendReplyNode {
             "chat" | "live_chat" => Ok("chat".to_string()),
             "phone" | "call" => Ok("phone".to_string()),
             "sms" | "text" => Ok("sms".to_string()),
-            _ => Err(WorkflowError::ValidationError {
-                message: format!("Unsupported communication channel: {}", channel),
-                field: "channel".to_string(),
-                value: Some(channel.to_string()),
-                constraint: "one of: email, chat, phone, sms".to_string(),
-                context: "in send_reply validation".to_string(),
-            }),
+            _ => Err(WorkflowError::validation_error_with_value(
+                format!("Unsupported communication channel: {}", channel),
+                "channel",
+                Some(channel.to_string()),
+                "one of: email, chat, phone, sms",
+                "in send_reply validation"
+            )),
         }
     }
     
@@ -90,12 +90,12 @@ impl SendReplyNode {
             "chat" => self.send_chat_reply(ticket_id, message, priority)?,
             "phone" => self.send_phone_reply(ticket_id, message, priority)?,
             "sms" => self.send_sms_reply(ticket_id, message, priority)?,
-            _ => return Err(WorkflowError::ProcessingError {
-                message: format!("Unknown channel: {}", channel),
-                node_id: Some("send_reply".to_string()),
-                node_type: "SendReplyNode".to_string(),
-                source: None,
-            }),
+            _ => return Err(WorkflowError::processing_error_with_context(
+                format!("Unknown channel: {}", channel),
+                "SendReplyNode",
+                Some("send_reply".to_string()),
+                None
+            )),
         };
         
         Ok(ReplyResult {
@@ -224,37 +224,19 @@ impl Node for SendReplyNode {
             .as_ref()
             .and_then(|v| v["ticket_id"].as_str())
             .map(|s| s.to_string())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: ticket_id".to_string(),
-                field: "ticket_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in send_reply node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: ticket_id", "ticket_id", "required field", "in send_reply node"))?;
             
         let message = context_data
             .as_ref()
             .and_then(|v| v["message"].as_str())
             .map(|s| s.to_string())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: message".to_string(),
-                field: "message".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in send_reply node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: message", "message", "required field", "in send_reply node"))?;
             
         let channel = context_data
             .as_ref()
             .and_then(|v| v["channel"].as_str())
             .map(|s| s.to_string())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: channel".to_string(),
-                field: "channel".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in send_reply node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: channel", "channel", "required field", "in send_reply node"))?;
         
         let priority = context_data
             .as_ref()

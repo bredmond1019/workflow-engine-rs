@@ -29,13 +29,13 @@ impl ProcessInvoiceNode {
     fn validate_request_type(&self, request_type: &str) -> Result<(), WorkflowError> {
         match request_type {
             "payment" | "dispute" | "inquiry" | "correction" => Ok(()),
-            _ => Err(WorkflowError::ValidationError {
-                message: format!("Invalid request type: {}. Must be one of: payment, dispute, inquiry, correction", request_type),
-                field: "request_type".to_string(),
-                value: Some(request_type.to_string()),
-                constraint: "one of: payment, dispute, inquiry, correction".to_string(),
-                context: "in process_invoice validation".to_string(),
-            }),
+            _ => Err(WorkflowError::validation_error_with_value(
+                format!("Invalid request type: {}. Must be one of: payment, dispute, inquiry, correction", request_type),
+                "request_type",
+                Some(request_type.to_string()),
+                "one of: payment, dispute, inquiry, correction",
+                "in process_invoice validation"
+            )),
         }
     }
     
@@ -51,12 +51,12 @@ impl ProcessInvoiceNode {
             "dispute" => self.process_dispute_request(invoice_id, customer_id, amount),
             "inquiry" => self.process_inquiry_request(invoice_id, customer_id),
             "correction" => self.process_correction_request(invoice_id, customer_id, amount),
-            _ => Err(WorkflowError::ProcessingError {
-                message: format!("Unhandled request type: {}", request_type),
-                node_id: Some("process_invoice".to_string()),
-                node_type: "ProcessInvoiceNode".to_string(),
-                source: None,
-            }),
+            _ => Err(WorkflowError::processing_error_with_context(
+                format!("Unhandled request type: {}", request_type),
+                "ProcessInvoiceNode",
+                Some("process_invoice".to_string()),
+                None
+            )),
         }
     }
     
@@ -301,35 +301,17 @@ impl Node for ProcessInvoiceNode {
         let invoice_id = context_data
             .as_ref()
             .and_then(|v| v["invoice_id"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: invoice_id".to_string(),
-                field: "invoice_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in process_invoice node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: invoice_id", "invoice_id", "required field", "in process_invoice node"))?.to_string();
             
         let customer_id = context_data
             .as_ref()
             .and_then(|v| v["customer_id"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: customer_id".to_string(),
-                field: "customer_id".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in process_invoice node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: customer_id", "customer_id", "required field", "in process_invoice node"))?.to_string();
             
         let request_type = context_data
             .as_ref()
             .and_then(|v| v["request_type"].as_str())
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing required field: request_type".to_string(),
-                field: "request_type".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in process_invoice node".to_string(),
-            })?.to_string();
+            .ok_or_else(|| WorkflowError::validation_error("Missing required field: request_type", "request_type", "required field", "in process_invoice node"))?.to_string();
         
         let amount = context_data
             .as_ref()

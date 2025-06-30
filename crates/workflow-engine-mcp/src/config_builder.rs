@@ -243,32 +243,31 @@ impl McpConfigBuilder {
                 "Client name cannot be empty",
                 "client_name",
                 "builder",
-                "non-empty string"
+                "non-empty string",
+                Some(self.client_name.clone())
             ));
         }
 
         // Validate client version
         if self.client_version.is_empty() {
-            return Err(WorkflowError::ConfigurationError {
-                message: "Client version cannot be empty".to_string(),
-                config_key: "client_version".to_string(),
-                config_source: "builder".to_string(),
-                expected_format: "non-empty string".to_string(),
-                received_value: Some(self.client_version.clone()),
-                source: None,
-            });
+            return Err(WorkflowError::configuration_error(
+                "Client version cannot be empty",
+                "client_version",
+                "builder",
+                "non-empty string",
+                Some(self.client_version.clone())
+            ));
         }
 
         // Validate client name format (basic validation)
         if !self.client_name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
-            return Err(WorkflowError::ConfigurationError {
-                message: "Client name can only contain alphanumeric characters, hyphens, and underscores".to_string(),
-                config_key: "client_name".to_string(),
-                config_source: "builder".to_string(),
-                expected_format: "alphanumeric characters, hyphens, and underscores only".to_string(),
-                received_value: Some(self.client_name.clone()),
-                source: None,
-            });
+            return Err(WorkflowError::configuration_error(
+                "Client name can only contain alphanumeric characters, hyphens, and underscores",
+                "client_name",
+                "builder",
+                "alphanumeric characters, hyphens, and underscores only",
+                Some(self.client_name.clone())
+            ));
         }
 
         // Validate servers if MCP is enabled
@@ -276,72 +275,66 @@ impl McpConfigBuilder {
             for (name, server_config) in &self.servers {
                 // Validate server name matches config name
                 if name != &server_config.name {
-                    return Err(WorkflowError::ConfigurationError {
-                        message: format!("Server name mismatch: key '{}' vs config name '{}'", name, server_config.name),
-                        config_key: format!("servers.{}", name),
-                        config_source: "builder".to_string(),
-                        expected_format: format!("name matching key '{}'", name),
-                        received_value: Some(server_config.name.clone()),
-                        source: None,
-                    });
+                    return Err(WorkflowError::configuration_error(
+                        format!("Server name mismatch: key '{}' vs config name '{}'", name, server_config.name),
+                        format!("servers.{}", name),
+                        "builder",
+                        format!("name matching key '{}'", name),
+                        Some(server_config.name.clone())
+                    ));
                 }
 
                 // Validate transport configurations
                 match &server_config.transport {
                     TransportType::WebSocket { url, .. } => {
                         if url.is_empty() {
-                            return Err(WorkflowError::ConfigurationError {
-                                message: format!("WebSocket URL cannot be empty for server '{}'", name),
-                                config_key: format!("servers.{}.transport.url", name),
-                                config_source: "builder".to_string(),
-                                expected_format: "non-empty WebSocket URL".to_string(),
-                                received_value: Some(url.clone()),
-                                source: None,
-                            });
+                            return Err(WorkflowError::configuration_error(
+                                format!("WebSocket URL cannot be empty for server '{}'", name),
+                                format!("servers.{}.transport.url", name),
+                                "builder",
+                                "non-empty WebSocket URL",
+                                Some(url.clone())
+                            ));
                         }
                         if !url.starts_with("ws://") && !url.starts_with("wss://") {
-                            return Err(WorkflowError::ConfigurationError {
-                                message: format!("WebSocket URL must start with 'ws://' or 'wss://' for server '{}'", name),
-                                config_key: format!("servers.{}.transport.url", name),
-                                config_source: "builder".to_string(),
-                                expected_format: "URL starting with ws:// or wss://".to_string(),
-                                received_value: Some(url.clone()),
-                                source: None,
-                            });
+                            return Err(WorkflowError::configuration_error(
+                                format!("WebSocket URL must start with 'ws://' or 'wss://' for server '{}'", name),
+                                format!("servers.{}.transport.url", name),
+                                "builder",
+                                "URL starting with ws:// or wss://",
+                                Some(url.clone())
+                            ));
                         }
                     }
                     TransportType::Http { base_url, .. } => {
                         if base_url.is_empty() {
-                            return Err(WorkflowError::ConfigurationError {
-                                message: format!("HTTP base URL cannot be empty for server '{}'", name),
-                                config_key: format!("servers.{}.transport.base_url", name),
-                                config_source: "builder".to_string(),
-                                expected_format: "non-empty HTTP URL".to_string(),
-                                received_value: Some(base_url.clone()),
-                                source: None,
-                            });
+                            return Err(WorkflowError::configuration_error(
+                                format!("HTTP base URL cannot be empty for server '{}'", name),
+                                format!("servers.{}.transport.base_url", name),
+                                "builder",
+                                "non-empty HTTP URL",
+                                Some(base_url.clone())
+                            ));
                         }
                         if !base_url.starts_with("http://") && !base_url.starts_with("https://") {
-                            return Err(WorkflowError::ConfigurationError {
-                                message: format!("HTTP base URL must start with 'http://' or 'https://' for server '{}'", name),
-                                config_key: format!("servers.{}.transport.base_url", name),
-                                config_source: "builder".to_string(),
-                                expected_format: "URL starting with http:// or https://".to_string(),
-                                received_value: Some(base_url.clone()),
-                                source: None,
-                            });
+                            return Err(WorkflowError::configuration_error(
+                                format!("HTTP base URL must start with 'http://' or 'https://' for server '{}'", name),
+                                format!("servers.{}.transport.base_url", name),
+                                "builder",
+                                "URL starting with http:// or https://",
+                                Some(base_url.clone())
+                            ));
                         }
                     }
                     TransportType::Stdio { command, .. } => {
                         if command.is_empty() {
-                            return Err(WorkflowError::ConfigurationError {
-                                message: format!("Stdio command cannot be empty for server '{}'", name),
-                                config_key: format!("servers.{}.transport.command", name),
-                                config_source: "builder".to_string(),
-                                expected_format: "non-empty command".to_string(),
-                                received_value: Some(command.clone()),
-                                source: None,
-                            });
+                            return Err(WorkflowError::configuration_error(
+                                format!("Stdio command cannot be empty for server '{}'", name),
+                                format!("servers.{}.transport.command", name),
+                                "builder",
+                                "non-empty command",
+                                Some(command.clone())
+                            ));
                         }
                     }
                 }
@@ -353,14 +346,13 @@ impl McpConfigBuilder {
                 .collect();
             
             if enabled_servers.is_empty() {
-                return Err(WorkflowError::ConfigurationError {
-                    message: "At least one server must be enabled when MCP is enabled".to_string(),
-                    config_key: "servers".to_string(),
-                    config_source: "builder".to_string(),
-                    expected_format: "at least one enabled server".to_string(),
-                    received_value: Some("no enabled servers".to_string()),
-                    source: None,
-                });
+                return Err(WorkflowError::configuration_error(
+                "At least one server must be enabled when MCP is enabled",
+                "servers",
+                "builder",
+                "at least one enabled server",
+                Some("no enabled servers".to_string())
+            ));
             }
         }
 
@@ -472,25 +464,23 @@ impl ConnectionConfigBuilder {
     fn build(self) -> Result<ConnectionConfig, WorkflowError> {
         // Validate connection settings
         if self.max_connections_per_server == 0 {
-            return Err(WorkflowError::ConfigurationError {
-                message: "Maximum connections per server must be greater than 0".to_string(),
-                config_key: "max_connections_per_server".to_string(),
-                config_source: "builder".to_string(),
-                expected_format: "positive integer".to_string(),
-                received_value: Some(self.max_connections_per_server.to_string()),
-                source: None,
-            });
+            return Err(WorkflowError::configuration_error(
+                "Maximum connections per server must be greater than 0",
+                "max_connections_per_server",
+                "builder",
+                "positive integer",
+                Some(self.max_connections_per_server.to_string())
+            ));
         }
 
         if self.retry_attempts > 0 && self.retry_delay.as_millis() == 0 {
-            return Err(WorkflowError::ConfigurationError {
-                message: "Retry delay must be greater than 0 when retry is enabled".to_string(),
-                config_key: "retry_delay".to_string(),
-                config_source: "builder".to_string(),
-                expected_format: "positive duration".to_string(),
-                received_value: Some(format!("{:?}", self.retry_delay)),
-                source: None,
-            });
+            return Err(WorkflowError::configuration_error(
+                "Retry delay must be greater than 0 when retry is enabled",
+                "retry_delay",
+                "builder",
+                "positive duration",
+                Some(format!("{:?}", self.retry_delay))
+            ));
         }
 
         Ok(ConnectionConfig {

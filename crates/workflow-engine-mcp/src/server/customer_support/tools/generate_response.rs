@@ -72,33 +72,15 @@ impl Node for GenerateCustomerResponseNode {
     fn process(&self, mut task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
         let customer_event = task_context
             .get_data::<CustomerCareEventData>("customer_event")?
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing customer_event data".to_string(),
-                field: "customer_event".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in generate_response node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing customer_event data", "customer_event", "required field", "in generate_response node"))?;
 
         let intent = task_context
             .get_data::<String>("intent")?
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing intent data".to_string(),
-                field: "intent".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in generate_response node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing intent data", "intent", "required field", "in generate_response node"))?;
 
         let reasoning = task_context
             .get_data::<String>("reasoning")?
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing reasoning data".to_string(),
-                field: "reasoning".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in generate_response node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing reasoning data", "reasoning", "required field", "in generate_response node"))?;
 
         let response = self.generate_response(customer_event, &intent, &reasoning)?;
 

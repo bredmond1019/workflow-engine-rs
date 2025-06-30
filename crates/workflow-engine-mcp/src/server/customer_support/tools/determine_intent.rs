@@ -70,13 +70,7 @@ impl Node for DetermineTicketIntentNode {
     fn process(&self, mut task_context: TaskContext) -> Result<TaskContext, WorkflowError> {
         let event_data = task_context
             .get_data::<CustomerCareEventData>("customer_event")?
-            .ok_or_else(|| WorkflowError::ValidationError {
-                message: "Missing customer_event data".to_string(),
-                field: "customer_event".to_string(),
-                value: None,
-                constraint: "required field".to_string(),
-                context: "in determine_intent node".to_string(),
-            })?;
+            .ok_or_else(|| WorkflowError::validation_error("Missing customer_event data", "customer_event", "required field", "in determine_intent node"))?;
 
         let analysis = self.determine_intent(event_data)?;
 

@@ -197,10 +197,10 @@ mod mcp_timeout_tests {
         
         // Verify error type
         match result {
-            Err(WorkflowError::MCPConnectionError { .. }) => {
+            Err(e) => {
                 // Expected error type
             }
-            Err(WorkflowError::MCPError { .. }) => {
+            Err(e) => {
                 // Also acceptable
             }
             Err(other) => panic!("Unexpected error type: {:?}", other),

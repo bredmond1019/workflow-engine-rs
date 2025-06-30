@@ -205,8 +205,8 @@ impl McpConfig {
         let transport_key = format!("MCP_EXTERNAL_SERVER_{}_TRANSPORT", server_index);
 
         let uri = env::var(&uri_key).map_err(|_| WorkflowError::mcp_error(
-            &format!("Missing URI for external server {}", name),
-            &name,
+            format!("Missing URI for external server {}", name),
+            name,
             "load_external_server",
         ))?;
 
